@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <defs>
+
+    <!-- Clip sphere wireframe to circle boundary -->
+    <clipPath id="clip">
+      <circle cx="500" cy="500" r="448"/>
+    </clipPath>
+
+    <!-- Wireframe line gradient: cyan top-left → purple → dark violet bottom-right -->
+    <linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="120" y1="100" x2="880" y2="900">
+      <stop offset="0%"   stop-color="#22D3EE"/>
+      <stop offset="48%"  stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+
+    <!-- Fade mask: top fully visible, bottom fades to transparent -->
+    <linearGradient id="fm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="white" stop-opacity="1"/>
+      <stop offset="44%"  stop-color="white" stop-opacity="1"/>
+      <stop offset="70%"  stop-color="white" stop-opacity="0.30"/>
+      <stop offset="86%"  stop-color="white" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fade">
+      <rect width="1000" height="1000" fill="url(#fm)"/>
+    </mask>
+
+    <!-- Depth mask: light comes from top-left, edges darken -->
+    <radialGradient id="dm" cx="42%" cy="36%" r="62%">
+      <stop offset="0%"   stop-color="white" stop-opacity="1"/>
+      <stop offset="58%"  stop-color="white" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.10"/>
+    </radialGradient>
+    <mask id="depth">
+      <rect width="1000" height="1000" fill="url(#dm)"/>
+    </mask>
+
+    <!-- Sparkle gradient: app brand colors, top-left cyan → bottom-right purple -->
+    <linearGradient id="sg" gradientUnits="userSpaceOnUse" x1="318" y1="305" x2="685" y2="695">
+      <stop offset="0%"   stop-color="#67E8F9"/>
+      <stop offset="38%"  stop-color="#A78BFA"/>
+      <stop offset="72%"  stop-color="#C084FC"/>
+      <stop offset="100%" stop-color="#E879F9"/>
+    </linearGradient>
+
+    <!-- Sparkle glow blur -->
+    <filter id="glow" x="-55%" y="-55%" width="210%" height="210%">
+      <feGaussianBlur stdDeviation="22" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Ambient purple glow behind sphere -->
+    <radialGradient id="bg" cx="50%" cy="46%" r="50%">
+      <stop offset="0%"   stop-color="#7C3AED" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="1000" fill="#000"/>
+
+  <!-- Ambient glow -->
+  <circle cx="500" cy="500" r="462" fill="url(#bg)"/>
+
+  <!-- ── Sphere wireframe ── -->
+  <!-- Two masks combined: fade (bottom) + depth (edges) -->
+  <g clip-path="url(#clip)" mask="url(#fade)">
+    <g mask="url(#depth)" fill="none" stroke="url(#wg)" stroke-width="1.25">
+
+      <!-- Latitude lines (horizontal ellipses)
+           y = 500 - 450·sin(α),  rx = 450·cos(α),  ry = rx·0.17 -->
+      <ellipse cx="500" cy="72"  rx="139" ry="24"/>
+      <ellipse cx="500" cy="110" rx="225" ry="38"/>
+      <ellipse cx="500" cy="166" rx="301" ry="51"/>
+      <ellipse cx="500" cy="236" rx="364" ry="62"/>
+      <ellipse cx="500" cy="317" rx="411" ry="70"/>
+      <ellipse cx="500" cy="406" rx="440" ry="75"/>
+      <ellipse cx="500" cy="500" rx="450" ry="77"/>   <!-- equator -->
+      <ellipse cx="500" cy="594" rx="440" ry="75"/>
+      <ellipse cx="500" cy="683" rx="411" ry="70"/>
+      <ellipse cx="500" cy="764" rx="364" ry="62"/>
+      <ellipse cx="500" cy="834" rx="301" ry="51"/>
+      <ellipse cx="500" cy="890" rx="225" ry="38"/>
+      <ellipse cx="500" cy="928" rx="139" ry="24"/>
+
+      <!-- Longitude lines (vertical ellipses, ry=450)
+           rx = 450·sin(λ), centered at sphere centre -->
+      <line x1="500" y1="52" x2="500" y2="948"/>   <!-- λ=0° (vertical axis) -->
+      <ellipse cx="500" cy="500" rx="94"  ry="450"/>
+      <ellipse cx="500" cy="500" rx="183" ry="450"/>
+      <ellipse cx="500" cy="500" rx="265" ry="450"/>
+      <ellipse cx="500" cy="500" rx="334" ry="450"/>
+      <ellipse cx="500" cy="500" rx="390" ry="450"/>
+      <ellipse cx="500" cy="500" rx="428" ry="450"/>
+      <ellipse cx="500" cy="500" rx="448" ry="450"/>
+
+    </g>
+  </g>
+
+  <!-- Outer boundary ring (faint) -->
+  <circle cx="500" cy="500" r="449" fill="none" stroke="#A855F7" stroke-opacity="0.28" stroke-width="1.2"/>
+
+  <!-- ── 4-pointed sparkle star ── -->
+  <!-- Outer tip distances: vertical ±192 px, horizontal ±182 px
+       Inner corner distance from centre: ~18 px along each 45° diagonal -->
+  <!-- Soft glow layer -->
+  <path d="M500,308 L513,487 L682,500 L513,513 L500,692 L487,513 L318,500 L487,487 Z"
+        fill="url(#sg)" opacity="0.42" filter="url(#glow)"/>
+  <!-- Crisp star on top -->
+  <path d="M500,308 L513,487 L682,500 L513,513 L500,692 L487,513 L318,500 L487,487 Z"
+        fill="url(#sg)"/>
+
+</svg>
