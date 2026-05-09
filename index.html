@@ -8,6 +8,25 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.addEventListener('error', function (e) {
+        var root = document.getElementById('root')
+        if (root && !root.hasChildNodes()) {
+          root.innerHTML =
+            '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">' +
+            '<div style="max-width:420px">' +
+            '<div style="font-size:3rem;margin-bottom:12px">⚙️</div>' +
+            '<h1 style="color:white;font-size:1.2rem;font-weight:700;margin-bottom:8px">App failed to start</h1>' +
+            '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;line-height:1.6;margin-bottom:16px">' +
+            'If you are self-hosting, add <code style="color:#A855F7">VITE_GROQ_API_KEY</code> and ' +
+            '<code style="color:#A855F7">VITE_INSTANTDB_APP_ID</code> in your Vercel environment variables, then redeploy.' +
+            '</p>' +
+            '<pre style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:rgba(255,255,255,0.35);font-size:0.7rem;text-align:left;overflow:auto">' +
+            (e.message || 'Unknown error') + '</pre>' +
+            '</div></div>'
+        }
+      })
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
