@@ -4,6 +4,7 @@ import { id } from '@instantdb/react'
 import ReactMarkdown from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ExerciseModal from '@/components/ExerciseModal'
 import {
   parseAnalysisSections,
   analysisComponents,
@@ -146,9 +147,10 @@ export default function ImportPlan() {
   const profileContext = buildProfileContext()
   const hasProfile     = !!profileContext
 
-  // Minimal plan components for the preview (no exercise guide modal needed here)
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
+
   const previewComponents = useMemo(
-    () => buildPlanComponents(() => undefined, undefined, {}, undefined),
+    () => buildPlanComponents(setSelectedExercise),
     [],
   )
 
@@ -308,6 +310,9 @@ export default function ImportPlan() {
   if (step === 'preview') {
     return (
       <main className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+        {selectedExercise && (
+          <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
+        )}
         <div className="flex items-center gap-3 mb-6">
           <BackButton onClick={() => setStep('upload')} />
           <div>
