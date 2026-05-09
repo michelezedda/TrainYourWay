@@ -34,6 +34,7 @@ const _schema = i.schema({
       parentPlanId: i.string().optional(),
       unavailableDays: i.string().optional(),
       dayOverrides: i.string().optional(),
+      otherSports: i.string().optional(),
     }),
   },
 })

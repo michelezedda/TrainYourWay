@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
-import { type WorkoutFormData, type SportActivity } from '@/lib/gemini'
+import { type WorkoutFormData } from '@/lib/gemini'
 import { saveNutritionProfile } from '@/lib/nutrition'
 
 type Unit = 'metric' | 'imperial'
@@ -22,7 +22,7 @@ interface FormData {
   daysPerWeek: string
   sessionDuration: string
   unavailableDays: string[]
-  otherSports: SportActivity[]
+  otherSports: string[]
   dietType: string
   foodAllergies: string[]
   customRestrictions: string
@@ -285,38 +285,19 @@ export default function Questionnaire() {
   }
 
   const toggleSport = (sportName: string) => {
-    setForm((p) => {
-      const exists = p.otherSports.find(s => s.sport === sportName)
-      return {
-        ...p,
-        otherSports: exists
-          ? p.otherSports.filter(s => s.sport !== sportName)
-          : [...p.otherSports, { sport: sportName, days: [] }],
-      }
-    })
+    setForm((p) => ({
+      ...p,
+      otherSports: p.otherSports.includes(sportName)
+        ? p.otherSports.filter(s => s !== sportName)
+        : [...p.otherSports, sportName],
+    }))
   }
 
   const addCustomSport = () => {
     const name = customSport.trim()
-    if (!name || form.otherSports.some(s => s.sport === name)) return
-    setForm((p) => ({ ...p, otherSports: [...p.otherSports, { sport: name, days: [] }] }))
+    if (!name || form.otherSports.includes(name)) return
+    setForm((p) => ({ ...p, otherSports: [...p.otherSports, name] }))
     setCustomSport('')
-  }
-
-  const removeSport = (sportName: string) => {
-    setForm((p) => ({ ...p, otherSports: p.otherSports.filter(s => s.sport !== sportName) }))
-  }
-
-  const toggleSportDay = (sportName: string, day: string) => {
-    setForm((p) => ({
-      ...p,
-      otherSports: p.otherSports.map(s =>
-        s.sport !== sportName ? s : {
-          ...s,
-          days: s.days.includes(day) ? s.days.filter(d => d !== day) : [...s.days, day],
-        }
-      ),
-    }))
   }
 
   const addCustomEquipment = () => {
@@ -411,7 +392,7 @@ export default function Questionnaire() {
       daysPerWeek: form.daysPerWeek,
       sessionDuration: form.sessionDuration,
       unavailableDays: form.unavailableDays,
-      otherSports: form.otherSports,
+      otherSports: form.otherSports.length > 0 ? form.otherSports : undefined,
       images: form.images,
       dietType: form.dietType,
       allergies: form.foodAllergies,
@@ -819,7 +800,7 @@ export default function Questionnaire() {
               {/* Sport chips */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {SPORT_OPTIONS.map(({ label, icon }) => {
-                  const selected = form.otherSports.some(s => s.sport === label)
+                  const selected = form.otherSports.includes(label)
                   return (
                     <button
                       key={label}
@@ -839,7 +820,7 @@ export default function Questionnaire() {
               </div>
 
               {/* Custom sport input */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-3">
                 <input
                   type="text"
                   value={customSport}
@@ -858,59 +839,25 @@ export default function Questionnaire() {
                 </button>
               </div>
 
-              {/* Selected sports with day pickers */}
               {form.otherSports.length > 0 && (
-                <div className="space-y-3">
-                  {form.otherSports.map((entry) => {
-                    const meta = SPORT_OPTIONS.find(s => s.label === entry.sport)
-                    return (
-                      <div
-                        key={entry.sport}
-                        className="rounded-2xl border border-white/10 p-3"
-                        style={{ background: 'rgba(255,255,255,0.03)' }}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.otherSports.filter(s => !SPORT_OPTIONS.some(o => o.label === s)).map(sport => (
+                    <span key={sport} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-purple-500/50 bg-purple-500/15 text-purple-300">
+                      {sport}
+                      <button
+                        type="button"
+                        onClick={() => toggleSport(sport)}
+                        className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors"
                       >
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-white font-medium text-sm flex items-center gap-1.5">
-                            {meta?.icon ?? '🏅'} {entry.sport}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeSport(entry.sport)}
-                            className="text-white/25 hover:text-red-400 transition-colors"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                        <p className="text-white/35 text-xs mb-2">Which days do you play or practice?</p>
-                        <div className="grid grid-cols-7 gap-1">
-                          {DAY_OPTIONS.map((day, i) => {
-                            const active = entry.days.includes(DAY_FULL[i])
-                            return (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleSportDay(entry.sport, DAY_FULL[i])}
-                                className={`py-1.5 rounded-xl text-[10px] font-bold uppercase border transition-all duration-200 ${
-                                  active
-                                    ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
-                                    : 'border-white/8 bg-white/2 text-white/30 hover:bg-white/6 hover:text-white/60'
-                                }`}
-                              >
-                                {day}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
+                        ×
+                      </button>
+                    </span>
+                  ))}
                 </div>
               )}
 
-              <p className="text-white/25 text-xs mt-2">
-                Helps schedule training to complement your activities and manage recovery.
+              <p className="text-white/25 text-xs mt-1">
+                The AI will account for these activities when designing your training schedule.
               </p>
             </div>
 

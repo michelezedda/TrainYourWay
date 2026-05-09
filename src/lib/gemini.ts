@@ -5,11 +5,6 @@ const groq = new Groq({
   dangerouslyAllowBrowser: true,
 })
 
-export interface SportActivity {
-  sport: string
-  days: string[]  // full day names e.g. ['Monday', 'Wednesday']
-}
-
 export interface WorkoutFormData {
   planName: string  // auto-generated descriptive name
   age: string
@@ -23,7 +18,7 @@ export interface WorkoutFormData {
   daysPerWeek: string
   sessionDuration: string
   unavailableDays?: string[]
-  otherSports?: SportActivity[]
+  otherSports?: string[]
   images: string[]
   dietType: string
   allergies: string[]
@@ -31,12 +26,9 @@ export interface WorkoutFormData {
   mealsPerDay: string
 }
 
-function formatSports(sports: SportActivity[] | undefined): string {
+function formatSports(sports: string[] | undefined): string {
   if (!sports || sports.length === 0) return ''
-  return sports
-    .filter(s => s.sport.trim())
-    .map(s => s.days.length > 0 ? `${s.sport} (${s.days.join(', ')})` : s.sport)
-    .join(', ')
+  return sports.filter(s => s.trim()).join(', ')
 }
 
 function bmiLabel(weight: string, height: string): string {

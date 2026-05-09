@@ -97,7 +97,7 @@ const staticCard = (children: unknown) => (
 )
 
 const scheduleCard = (
-  label: unknown,
+  label: React.ReactNode,
   exerciseName: string,
   onClick: (name: string) => void,
 ) => (
@@ -238,7 +238,7 @@ function ExerciseTableCard({
 
 export function buildPlanComponents(
   setSelectedExercise: (name: string) => void,
-  planId?: string,
+  _planId?: string,
   weights?: Record<string, string>,
   onWeightChange?: (exercise: string, value: string) => void,
 ): Components {

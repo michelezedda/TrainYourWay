@@ -1,15 +1,12 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import type { Components } from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
 import ExerciseModal from '@/components/ExerciseModal'
 import {
-  DAY_NAMES,
   parseAnalysisSections,
   SECTION_ICONS,
   analysisComponents,
-  CollapsibleSection,
   WorkoutDayView,
 } from '@/components/PlanView'
 import { buildPlanComponents, sanitizePlan } from '@/lib/planComponents'

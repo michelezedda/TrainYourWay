@@ -307,8 +307,6 @@ export default function Diet() {
           const mealKcal = mealEntries.reduce((a, e) => a + (e.kcal || 0), 0)
           const st = get(meal)
           const isActive = activeMeal === meal
-          const canEstimate = st.mode === 'manual' ? !!st.input.trim() : !!st.imageDataUrl
-
           return (
             <GlassCard key={meal} padding={false} className="overflow-hidden">
               {/* Meal header */}

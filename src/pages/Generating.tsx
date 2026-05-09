@@ -95,6 +95,7 @@ export default function Generating() {
               createdAt: Date.now(),
               parentPlanId: '',
               unavailableDays: JSON.stringify(payload.unavailableDays ?? []),
+              otherSports: payload.otherSports ? JSON.stringify(payload.otherSports) : undefined,
             }),
           )
           navigate('/results', { state: { plan, planId, analysis, formData: payload }, replace: true })
