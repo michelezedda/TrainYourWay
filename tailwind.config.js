@@ -34,6 +34,7 @@ export default {
         'pulse-slow': 'pulse 3s ease-in-out infinite',
         shimmer: 'shimmer 2s linear infinite',
         spin: 'spin 1s linear infinite',
+        'typing-dot': 'typingDot 1.1s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } },
@@ -44,6 +45,10 @@ export default {
         shimmer: {
           from: { backgroundPosition: '-200% 0' },
           to: { backgroundPosition: '200% 0' },
+        },
+        typingDot: {
+          '0%, 60%, 100%': { transform: 'translateY(0)', opacity: '0.35' },
+          '30%': { transform: 'translateY(-5px)', opacity: '1' },
         },
       },
     },

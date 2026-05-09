@@ -28,21 +28,20 @@ function KaiAvatar({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-end gap-2.5">
+    <div className="flex items-end gap-2.5 animate-fade-in">
       <KaiAvatar />
       <div
-        className="px-4 py-3 rounded-2xl rounded-bl-sm"
+        className="px-4 py-3.5 rounded-2xl rounded-bl-sm"
         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex gap-1.5 items-center h-4">
-          {[0, 0.18, 0.36].map((delay, i) => (
+          {[0, 220, 440].map((delayMs, i) => (
             <div
               key={i}
-              className="w-1.5 h-1.5 rounded-full"
+              className="w-2 h-2 rounded-full animate-typing-dot"
               style={{
-                background: 'rgba(168,85,247,0.7)',
-                animation: 'pulse 1.2s ease-in-out infinite',
-                animationDelay: `${delay}s`,
+                background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
+                animationDelay: `${delayMs}ms`,
               }}
             />
           ))}
@@ -121,7 +120,10 @@ export default function Chat() {
     setLoading(true)
 
     try {
-      const reply = await sendChatMessage(next, userContext)
+      const [reply] = await Promise.all([
+        sendChatMessage(next, userContext),
+        new Promise<void>(resolve => setTimeout(resolve, 700)),
+      ])
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
     } catch {
       setMessages(prev => [

@@ -1,9 +1,15 @@
 import Groq from 'groq-sdk'
 
-const groq = new Groq({
-  apiKey: import.meta.env.VITE_GROQ_API_KEY as string,
-  dangerouslyAllowBrowser: true,
-})
+let _groq: Groq | null = null
+function getGroq(): Groq {
+  if (!_groq) {
+    _groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY as string,
+      dangerouslyAllowBrowser: true,
+    })
+  }
+  return _groq
+}
 
 export interface WorkoutFormData {
   planName: string  // auto-generated descriptive name
@@ -197,7 +203,7 @@ export async function generateAnalysis(data: WorkoutFormData): Promise<string> {
   for (const dataUrl of data.images) {
     content.push({ type: 'image_url', image_url: { url: dataUrl } })
   }
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 2048,
@@ -215,7 +221,7 @@ export async function generateWorkoutPlan(data: WorkoutFormData): Promise<string
     })
   }
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 8192,
@@ -306,7 +312,7 @@ Rules:
 - Mark increased weights/reps/sets with *(up)* after the value
 - Every change must be explicit. No vague "adjust as needed".`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 8192,
@@ -361,7 +367,7 @@ Rules:
 - Each section: 3-5 sentences. Be concise and specific.
 - Bullet points use - not *.`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1536,
@@ -422,7 +428,7 @@ Rules:
     content.push({ type: 'image_url', image_url: { url: imageDataUrl } })
   }
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 200,
@@ -478,7 +484,7 @@ chest, front_delts, rear_delts, biceps, triceps, forearms,
 abs, obliques, hip_flexors, adductors, quads, calves_front,
 traps, rhomboids, lats, lower_back, glutes, hamstrings, calves`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 512,
@@ -530,7 +536,7 @@ FORMATTING:
 
 ${contextBlock}`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [
       { role: 'system', content: systemPrompt },
@@ -602,7 +608,7 @@ Rules:
     { type: 'image_url', image_url: { url: imageDataUrl } },
   ]
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 4096,
@@ -642,7 +648,7 @@ Rules:
 - Write in second person.
 - Each section: 2-4 sentences or bullet points.`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1536,
@@ -694,7 +700,7 @@ Rules:
     content.push({ type: 'image_url', image_url: { url: imageDataUrl } })
   }
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 768,
@@ -724,7 +730,7 @@ Requirements:
 Output ONLY the workout content. Start directly with **Warm-Up**. Do not include any day heading, preamble, or closing remarks.
 No markdown tables. No long dashes. Bullet points use - not *.`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 2048,
@@ -777,7 +783,7 @@ Rules:
 - Never use long dashes. Use commas or colons instead.
 - Keep changes minimal but impactful, respect the spirit of the original`
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 6144,
