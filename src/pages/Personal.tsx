@@ -233,29 +233,126 @@ function BoltIcon() {
   )
 }
 
-function StatsCard({ label, meals, workouts }: { label: string; meals: number; workouts: number }) {
+function DropIcon() {
   return (
-    <GlassCard>
-      <p className="text-white/30 text-[9px] uppercase tracking-widest mb-4">{label}</p>
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div>
-          <p
-            className="text-3xl font-black tabular-nums"
-            style={{ background: 'linear-gradient(135deg, #A855F7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            {meals}
-          </p>
-          <p className="text-white/40 text-xs mt-0.5">meals logged</p>
+    <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3C12 3 5 10 5 15a7 7 0 0014 0c0-5-7-12-7-12z" />
+    </svg>
+  )
+}
+
+function FlameIcon() {
+  return (
+    <svg className="w-4 h-4" style={{ color: '#fb923c' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+    </svg>
+  )
+}
+
+function RunIcon() {
+  return (
+    <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M13 5.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm-5 8.5l1-4 3 3 2-3 3 2M7 18l2-2m4 2l-1-3" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  )
+}
+
+const STEP_GOAL  = 8000
+const SLEEP_GOAL = 7
+
+function HealthLogSection({ userId, today }: { userId: string; today: string }) {
+  const { data } = db.useQuery({ healthLogs: { $: { where: { userId, date: today } } } })
+  const logs = (data?.healthLogs ?? []) as Array<{ id: string; steps: number; sleepHours: number }>
+  const existing = logs[0]
+  const steps      = existing?.steps      ?? 0
+  const sleepHours = existing?.sleepHours ?? 0
+
+  const upsert = async (patch: { steps?: number; sleepHours?: number }) => {
+    const next = { steps, sleepHours, ...patch }
+    if (existing) {
+      await db.transact(db.tx.healthLogs[existing.id].update(next))
+    } else {
+      await db.transact(db.tx.healthLogs[id()].update({ userId, date: today, ...next, createdAt: Date.now() }))
+    }
+  }
+
+  const stepPct  = Math.min(steps / STEP_GOAL, 1)
+  const sleepPct = Math.min(sleepHours / SLEEP_GOAL, 1)
+
+  return (
+    <GlassCard padding={false}>
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.12)' }}>
+            <RunIcon />
+          </div>
+          <span className="text-white/50 text-xs font-medium">Today's Health</span>
         </div>
+
+        {/* Steps */}
         <div>
-          <p
-            className="text-3xl font-black tabular-nums"
-            style={{ background: 'linear-gradient(135deg, #22D3EE, #34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            {workouts}
-          </p>
-          <p className="text-white/40 text-xs mt-0.5">workouts done</p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] text-white/40">Steps</span>
+            <span className="text-[11px] text-white/55">{steps.toLocaleString()} / {STEP_GOAL.toLocaleString()}</span>
+          </div>
+          <div className="h-1.5 rounded-full mb-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${stepPct * 100}%`, background: 'linear-gradient(90deg, #34d399, #22D3EE)', boxShadow: stepPct > 0 ? '0 0 8px rgba(52,211,153,0.4)' : 'none' }} />
+          </div>
+          <div className="flex gap-2">
+            {[2000, 4000, 6000, 8000, 10000].map(v => (
+              <button key={v} onClick={() => void upsert({ steps: v })}
+                className="flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all"
+                style={{
+                  background: steps >= v ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: steps >= v ? '#34d399' : 'rgba(255,255,255,0.3)',
+                  border: `1px solid ${steps >= v ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                }}>
+                {v >= 1000 ? `${v / 1000}k` : v}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Sleep */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] text-white/40">Sleep</span>
+            <span className="text-[11px] text-white/55">{sleepHours}h / {SLEEP_GOAL}h</span>
+          </div>
+          <div className="h-1.5 rounded-full mb-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${sleepPct * 100}%`, background: 'linear-gradient(90deg, #818cf8, #c084fc)', boxShadow: sleepPct > 0 ? '0 0 8px rgba(129,140,248,0.4)' : 'none' }} />
+          </div>
+          <div className="flex gap-2">
+            {[5, 6, 7, 8, 9].map(h => (
+              <button key={h} onClick={() => void upsert({ sleepHours: h })}
+                className="flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all"
+                style={{
+                  background: sleepHours === h ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: sleepHours === h ? '#818cf8' : 'rgba(255,255,255,0.3)',
+                  border: `1px solid ${sleepHours === h ? 'rgba(129,140,248,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                }}>
+                {h}h
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-[10px] text-white/20 text-center">Manual entry. Automated sync available in the native app.</p>
       </div>
     </GlassCard>
   )
@@ -330,6 +427,7 @@ export default function Personal() {
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
   const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
   const { data: waterData }   = db.useQuery({ waterLogs:          { $: { where: { userId } } } })
+  const { data: healthData }  = db.useQuery({ healthLogs:          { $: { where: { userId } } } })
   const { data: planData }    = db.useQuery({ workoutPlans:        { $: { where: { userId } } } })
   const { data: ticketData }  = db.useQuery({ supportTickets:      { $: { where: { userId } } } })
   const { data: ratingData }  = db.useQuery({ gymRatings:          { $: { where: { userId } } } })
@@ -359,6 +457,28 @@ export default function Personal() {
   const mealStreak         = calcStreak(mealDates, today)
   const workoutStreak      = calcStreak(workoutDates, today)
   const alreadyLoggedToday = workoutDates.includes(today)
+
+  // Hydration streak: days where glasses >= DAILY_GOAL
+  const waterEntries = (waterData?.waterLogs ?? []) as Array<{ date: string; glasses: number }>
+  const hydratedDates = [...new Set(waterEntries.filter(e => e.glasses >= DAILY_GOAL).map(e => e.date))]
+  const hydrationStreak = calcStreak(hydratedDates, today)
+
+  // Protein streak: days where daily protein >= 90% of target
+  const proteinByDate = new Map<string, number>()
+  mealEntries.forEach(e => proteinByDate.set(e.date, (proteinByDate.get(e.date) ?? 0) + (e.protein ?? 0)))
+  const proteinHitDates = [...new Set(
+    [...proteinByDate.entries()]
+      .filter(([, g]) => targets.protein > 0 && g >= targets.protein * 0.9)
+      .map(([d]) => d)
+  )]
+  const proteinStreak = calcStreak(proteinHitDates, today)
+
+  // Activity + sleep streaks from healthLogs
+  const healthEntries = (healthData?.healthLogs ?? []) as Array<{ date: string; steps: number; sleepHours: number }>
+  const activeStepDates = [...new Set(healthEntries.filter(e => e.steps >= STEP_GOAL).map(e => e.date))]
+  const goodSleepDates  = [...new Set(healthEntries.filter(e => e.sleepHours >= SLEEP_GOAL).map(e => e.date))]
+  const activityStreak  = calcStreak(activeStepDates, today)
+  const sleepStreak     = calcStreak(goodSleepDates, today)
 
   const logWorkout = async () => {
     if (alreadyLoggedToday) return
@@ -411,20 +531,6 @@ export default function Personal() {
     )
   }, [lbData, mealData, workoutData, userId, workoutStreak, mealStreak])
 
-  const now = new Date()
-  const thisMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const thisYearPrefix  = `${now.getFullYear()}-`
-
-  const last7 = Array.from({ length: 7 }, (_, i) => shiftBack(today, 6 - i))
-  const last7Set = new Set(last7)
-
-  const mealsThisWeek     = mealEntries.filter(e => last7Set.has(e.date)).length
-  const workoutsThisWeek  = workoutDates.filter(d => last7Set.has(d)).length
-  const mealsThisMonth    = mealEntries.filter(e => e.date.startsWith(thisMonthPrefix)).length
-  const workoutsThisMonth = workoutDates.filter(d => d.startsWith(thisMonthPrefix)).length
-  const mealsThisYear     = mealEntries.filter(e => e.date.startsWith(thisYearPrefix)).length
-  const workoutsThisYear  = workoutDates.filter(d => d.startsWith(thisYearPrefix)).length
-
   return (
     <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8">
@@ -432,33 +538,27 @@ export default function Personal() {
         <p className="text-white/40 text-sm">Stay consistent. Every day counts.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <StreakCard
-          label="Meal Streak"
-          icon={<ForkIcon />}
-          streak={mealStreak}
-          loggedDates={mealDates}
-          today={today}
-          gradient="linear-gradient(135deg, #A855F7, #ec4899)"
-        />
-        <StreakCard
-          label="Workout Streak"
-          icon={<BoltIcon />}
-          streak={workoutStreak}
-          loggedDates={workoutDates}
-          today={today}
-          gradient="linear-gradient(135deg, #22D3EE, #34d399)"
-          action={
-            <button
-              onClick={() => void logWorkout()}
-              disabled={alreadyLoggedToday}
-              className="btn-primary w-full !py-2 !text-xs disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {alreadyLoggedToday ? 'Logged today' : "Log today's workout"}
-            </button>
-          }
-        />
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <StreakCard label="Meals"     icon={<ForkIcon />}  streak={mealStreak}      loggedDates={mealDates}      today={today} gradient="linear-gradient(135deg,#A855F7,#ec4899)" />
+        <StreakCard label="Workouts"  icon={<BoltIcon />}  streak={workoutStreak}   loggedDates={workoutDates}   today={today} gradient="linear-gradient(135deg,#22D3EE,#34d399)" />
+        <StreakCard label="Hydration" icon={<DropIcon />}  streak={hydrationStreak} loggedDates={hydratedDates}  today={today} gradient="linear-gradient(135deg,#22D3EE,#06b6d4)" />
+        <StreakCard label="Protein"   icon={<FlameIcon />} streak={proteinStreak}   loggedDates={proteinHitDates} today={today} gradient="linear-gradient(135deg,#f97316,#facc15)" />
       </div>
+
+      {(activityStreak > 0 || sleepStreak > 0) && (
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {activityStreak > 0 && <StreakCard label="Activity" icon={<RunIcon />}  streak={activityStreak} loggedDates={activeStepDates} today={today} gradient="linear-gradient(135deg,#34d399,#22D3EE)" />}
+          {sleepStreak > 0    && <StreakCard label="Sleep"    icon={<MoonIcon />} streak={sleepStreak}    loggedDates={goodSleepDates}  today={today} gradient="linear-gradient(135deg,#818cf8,#c084fc)" />}
+        </div>
+      )}
+
+      <button
+        onClick={() => void logWorkout()}
+        disabled={alreadyLoggedToday}
+        className="btn-primary w-full mb-4 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {alreadyLoggedToday ? 'Workout logged today' : "Log today's workout"}
+      </button>
 
       {/* Share streak story */}
       <div className="mb-4">
@@ -471,8 +571,12 @@ export default function Personal() {
         />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-3">
         <WaterSection userId={userId} today={today} />
+      </div>
+
+      <div className="mb-3">
+        <HealthLogSection userId={userId} today={today} />
       </div>
 
       <div className="mb-4">
@@ -485,13 +589,7 @@ export default function Personal() {
         />
       </div>
 
-      <div className="space-y-3">
-        <StatsCard label="This week"  meals={mealsThisWeek}   workouts={workoutsThisWeek} />
-        <StatsCard label="This month" meals={mealsThisMonth}  workouts={workoutsThisMonth} />
-        <StatsCard label="This year"  meals={mealsThisYear}   workouts={workoutsThisYear} />
-      </div>
-
-      <div className="mt-6 space-y-2.5">
+      <div className="mt-4 space-y-2.5">
         <Link
           to="/history"
           className="flex items-center justify-between px-4 py-4 rounded-2xl transition-all duration-200 active:scale-[0.98]"

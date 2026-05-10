@@ -56,6 +56,13 @@ const _schema = i.schema({
       mealStreak: i.number(),
       updatedAt: i.number(),
     }),
+    healthLogs: i.entity({
+      userId:     i.string().indexed(),
+      date:       i.string().indexed(),
+      steps:      i.number(),
+      sleepHours: i.number(),
+      createdAt:  i.number(),
+    }),
     workoutPlans: i.entity({
       userId: i.string(),
       userName: i.string(),

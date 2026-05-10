@@ -74,8 +74,9 @@ export default function BottomNav() {
               to={to}
               className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
               style={{
-                background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
+                background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
                 color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
+                transform: active ? 'scale(1.05)' : 'scale(1)',
               }}
             >
               <Icon active={active} />
@@ -85,6 +86,14 @@ export default function BottomNav() {
               >
                 {label}
               </span>
+              <span
+                className="w-1 h-1 rounded-full transition-all duration-200"
+                style={{
+                  background: '#c084fc',
+                  opacity: active ? 1 : 0,
+                  boxShadow: active ? '0 0 6px #c084fc' : 'none',
+                }}
+              />
             </Link>
           )
         })}

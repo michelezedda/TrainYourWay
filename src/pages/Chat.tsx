@@ -140,8 +140,8 @@ export default function Chat() {
 
   return (
     <main
-      className="max-w-2xl mx-auto px-4 flex flex-col animate-fade-in"
-      style={{ height: 'calc(100dvh - 72px)' }}
+      className="max-w-lg mx-auto px-4 flex flex-col animate-fade-in"
+      style={{ height: 'calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px))' }}
     >
       {/* Header */}
       <div className="pt-5 pb-3 flex-shrink-0 flex items-center gap-3.5">
@@ -236,15 +236,19 @@ export default function Chat() {
       )}
 
       {/* Input bar */}
-      <div className="flex-shrink-0 py-3">
+      <div className="flex-shrink-0 pt-2 pb-3">
         <div
-          className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+          className="flex items-center gap-3 px-4 rounded-2xl"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            minHeight: 52,
+          }}
         >
           <input
             ref={inputRef}
-            className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white/30"
-            placeholder="Ask Kai anything about your fitness or nutrition..."
+            className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white/30 py-3.5"
+            placeholder="Ask Kai anything..."
             value={input}
             disabled={loading}
             onChange={e => setInput(e.target.value)}
@@ -255,7 +259,7 @@ export default function Chat() {
           <button
             onClick={() => void handleSend()}
             disabled={!input.trim() || loading}
-            className="w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-30"
+            className="w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-30"
             style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)' }}
             aria-label="Send message"
           >
