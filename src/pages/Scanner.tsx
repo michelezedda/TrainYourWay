@@ -163,11 +163,12 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
     const profile = getNutritionProfile()
     const issues = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text).join(', ')
     const prompt =
-      `The user scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
-      `Health grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
+      `You are a strict nutrition coach. ` +
+      `Product scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
+      `Grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
       (profile ? `User goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}. ` : '') +
-      `Suggest ONE specific better alternative product with a 1-sentence reason. ` +
-      `Format: Product name - reason. Under 20 words total.`
+      `Name ONE better alternative with a short reason. ` +
+      `Reply format: "Product name - reason." Under 15 words. No emojis, no filler, no marketing language.`
 
     sendChatMessage([{ role: 'user', content: prompt }], '')
       .then(reply => setAlt(reply))
@@ -197,6 +198,103 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
         <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
       </div>
     </div>
+  )
+}
+
+// ── Can I eat this? ───────────────────────────────────────────────────────────
+
+const VERDICT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+  'Yes':         { bg: 'rgba(34,197,94,0.1)',  border: 'rgba(34,197,94,0.3)',  text: '#86efac', dot: '#22c55e' },
+  'Sometimes':   { bg: 'rgba(234,179,8,0.1)',  border: 'rgba(234,179,8,0.3)',  text: '#fde68a', dot: '#eab308' },
+  'Avoid often': { bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)',  text: '#fca5a5', dot: '#ef4444' },
+}
+
+function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [verdict, setVerdict] = useState('')
+  const [reason, setReason]   = useState('')
+
+  const ask = async () => {
+    if (status === 'loading') return
+    setStatus('loading')
+    try {
+      const profile = getNutritionProfile()
+      const negatives = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text)
+      const prompt =
+        `You are a strict, direct nutrition coach. Reply in this EXACT format, nothing else:\n` +
+        `[Verdict]: [reason]\n` +
+        `[Verdict] must be one of exactly: Yes / Sometimes / Avoid often\n` +
+        `[reason] is under 8 words. No emojis, no filler, no punctuation at end.\n` +
+        `Be supportive for healthy products, strict for ultra-processed or poor ones.\n\n` +
+        `Product: ${product.product_name || 'Unknown'}\n` +
+        `Grade: ${scored.grade} (${scored.gradeLabel})\n` +
+        `Issues: ${negatives.join(', ') || 'none'}\n` +
+        (profile ? `Goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}.` : '')
+
+      const reply = await sendChatMessage([{ role: 'user', content: prompt }], '')
+      const colonIdx = reply.indexOf(':')
+      if (colonIdx === -1) throw new Error('bad format')
+      const v = reply.slice(0, colonIdx).trim()
+      const r = reply.slice(colonIdx + 1).trim()
+      setVerdict(v)
+      setReason(r)
+      setStatus('done')
+    } catch {
+      setStatus('idle')
+    }
+  }
+
+  if (status === 'done') {
+    const s = VERDICT_STYLES[verdict] ?? VERDICT_STYLES['Sometimes']
+    return (
+      <div
+        className="rounded-2xl p-4 border animate-fade-in"
+        style={{ background: s.bg, borderColor: s.border }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: s.dot }} />
+          <div className="flex-1">
+            <p className="font-black text-base leading-tight" style={{ color: s.text }}>{verdict}</p>
+            <p className="text-white/70 text-sm mt-0.5">{reason}</p>
+          </div>
+          <button
+            onClick={() => { setStatus('idle'); setVerdict(''); setReason('') }}
+            className="text-white/25 text-[10px] hover:text-white/50 transition-colors mt-0.5 flex-shrink-0"
+          >
+            Ask again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => void ask()}
+      disabled={status === 'loading'}
+      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        color: 'rgba(255,255,255,0.6)',
+        opacity: status === 'loading' ? 0.7 : 1,
+      }}
+    >
+      {status === 'loading' ? (
+        <>
+          <LoadingSpinner size="sm" />
+          <span>Asking coach...</span>
+        </>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Can I eat this?</span>
+        </>
+      )}
+    </button>
   )
 }
 
@@ -606,6 +704,11 @@ export default function Scanner() {
             <VerdictChips verdicts={scored.verdicts} />
           </div>
         )}
+
+        {/* Can I eat this? */}
+        <div className="mb-4">
+          <CanIEatThis product={product} scored={scored} />
+        </div>
 
         {/* Macros */}
         {n['energy-kcal_100g'] != null && (
