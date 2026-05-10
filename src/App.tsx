@@ -12,6 +12,7 @@ import Diet from '@/pages/Diet'
 import Chat from '@/pages/Chat'
 import ImportPlan from '@/pages/ImportPlan'
 import Support from '@/pages/Support'
+import Personal from '@/pages/Personal'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="/chat" element={<Chat />} />
               <Route path="/import" element={<ImportPlan />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/me" element={<Personal />} />
             </Routes>
           </div>
           <Footer />

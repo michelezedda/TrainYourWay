@@ -35,6 +35,20 @@ export default function Header() {
                 <NavLink to="/diet" label="Diet" />
                 <NavLink to="/chat" label="Kai" />
                 <Link
+                  to="/me"
+                  className={`px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    location.pathname === '/me'
+                      ? 'text-white bg-white/10'
+                      : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                  }`}
+                  title="My Profile"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </Link>
+                <Link
                   to="/support"
                   className={`px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     location.pathname === '/support'
@@ -89,6 +103,7 @@ export default function Header() {
               <MobileNavLink to="/history" label="History" />
               <MobileNavLink to="/diet" label="Diet" />
               <MobileNavLink to="/chat" label="Kai" />
+              <MobileNavLink to="/me" label="Me" />
               <MobileNavLink to="/support" label="Support" />
               <div className="pt-2 mt-1.5 border-t border-white/8">
                 <Link

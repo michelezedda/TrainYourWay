@@ -22,6 +22,11 @@ const _schema = i.schema({
       fat: i.number(),
       createdAt: i.number().indexed(),
     }),
+    workoutCompletions: i.entity({
+      userId: i.string().indexed(),
+      date: i.string().indexed(),
+      createdAt: i.number(),
+    }),
     workoutPlans: i.entity({
       userId: i.string(),
       userName: i.string(),
