@@ -1,19 +1,11 @@
-import { Component, type ReactNode } from 'react'
+import { Component, type ReactNode, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import BottomNav from '@/components/BottomNav'
+import AuthGuard from '@/components/AuthGuard'
 import Home from '@/pages/Home'
-import Questionnaire from '@/pages/Questionnaire'
-import ReevaluateQuestionnaire from '@/pages/ReevaluateQuestionnaire'
-import Results from '@/pages/Results'
-import History from '@/pages/History'
-import Generating from '@/pages/Generating'
-import Diet from '@/pages/Diet'
-import Chat from '@/pages/Chat'
-import ImportPlan from '@/pages/ImportPlan'
-import Support from '@/pages/Support'
-import Personal from '@/pages/Personal'
-import Scanner from '@/pages/Scanner'
-import Community from '@/pages/Community'
+import Auth from '@/pages/Auth'
+import { db } from '@/lib/db'
+import { setAuthUserId } from '@/lib/userId'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -44,26 +36,23 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
+function AuthSync() {
+  const { user } = db.useAuth()
+  useEffect(() => { setAuthUserId(user?.id ?? null) }, [user?.id])
+  return null
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <AuthSync />
         <div className="min-h-screen flex flex-col">
           <div className="flex-1 pb-nav">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/questionnaire" element={<Questionnaire />} />
-              <Route path="/reevaluate" element={<ReevaluateQuestionnaire />} />
-              <Route path="/generating" element={<Generating />} />
-              <Route path="/results" element={<Results />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/diet" element={<Diet />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/import" element={<ImportPlan />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/me" element={<Personal />} />
-              <Route path="/scanner" element={<Scanner />} />
-              <Route path="/community" element={<Community />} />
+              <Route path="/"     element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/*"    element={<AuthGuard />} />
             </Routes>
           </div>
           <BottomNav />

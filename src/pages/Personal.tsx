@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -323,10 +323,20 @@ function ShareStreakButton({ mealStreak, workoutStreak, mealDates, workoutDates,
 export default function Personal() {
   const today = toDateStr(new Date())
   const userId = getUserId()
+  const navigate = useNavigate()
 
+  const { user }             = db.useAuth()
   const { data: mealData }    = db.useQuery({ mealEntries:        { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
   const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
+  const { data: waterData }   = db.useQuery({ waterLogs:          { $: { where: { userId } } } })
+  const { data: planData }    = db.useQuery({ workoutPlans:        { $: { where: { userId } } } })
+  const { data: ticketData }  = db.useQuery({ supportTickets:      { $: { where: { userId } } } })
+  const { data: ratingData }  = db.useQuery({ gymRatings:          { $: { where: { userId } } } })
+  const { data: findsData }   = db.useQuery({ communityFinds:      { $: { where: { sharedBy: userId } } } })
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   const mealEntries  = (mealData?.mealEntries ?? []) as Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>
   const completions  = (workoutData?.workoutCompletions ?? []) as Array<{ date: string }>
@@ -355,6 +365,34 @@ export default function Personal() {
     await db.transact(
       db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() })
     )
+  }
+
+  const handleLogout = async () => {
+    await db.auth.signOut()
+    navigate('/auth', { replace: true })
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleteBusy(true)
+    try {
+      const txns = [
+        ...(mealData?.mealEntries        ?? []).map((r: { id: string }) => db.tx.mealEntries[r.id].delete()),
+        ...(workoutData?.workoutCompletions ?? []).map((r: { id: string }) => db.tx.workoutCompletions[r.id].delete()),
+        ...(lbData?.leaderboardEntries   ?? []).map((r: { id: string }) => db.tx.leaderboardEntries[r.id].delete()),
+        ...(waterData?.waterLogs         ?? []).map((r: { id: string }) => db.tx.waterLogs[r.id].delete()),
+        ...(planData?.workoutPlans       ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete()),
+        ...(ticketData?.supportTickets   ?? []).map((r: { id: string }) => db.tx.supportTickets[r.id].delete()),
+        ...(ratingData?.gymRatings       ?? []).map((r: { id: string }) => db.tx.gymRatings[r.id].delete()),
+        ...(findsData?.communityFinds    ?? []).map((r: { id: string }) => db.tx.communityFinds[r.id].delete()),
+      ]
+      if (txns.length > 0) await db.transact(txns)
+      const KEYS = ['tyw_user_id','uplift_nutrition_profile','tyw_scan_history','tyw_notif_seen','tyw_lb_ts','tyw_notif_ts']
+      KEYS.forEach(k => localStorage.removeItem(k))
+      await db.auth.signOut()
+      navigate('/auth', { replace: true })
+    } finally {
+      setDeleteBusy(false)
+    }
   }
 
   // Auto-update leaderboard entry (throttled to once per hour)
@@ -502,6 +540,111 @@ export default function Personal() {
           </svg>
         </Link>
       </div>
+
+      {/* Account settings */}
+      <div className="mt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Account</p>
+
+        {user?.email && (
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl mb-2.5"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', color: 'white' }}>
+              {user.email[0].toUpperCase()}
+            </div>
+            <span className="text-sm text-white/60 truncate">{user.email}</span>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Link
+            to="/reevaluate"
+            className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-sm text-white/70">Edit Goals</span>
+            <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+
+          <Link
+            to="/questionnaire"
+            className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-sm text-white/70">Edit Diet Preferences</span>
+            <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+
+          <button
+            onClick={() => void handleLogout()}
+            className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-sm text-white/70">Log Out</span>
+            <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
+            style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}
+          >
+            <span className="text-sm text-red-400/80">Delete Account</span>
+            <svg className="w-4 h-4 text-red-400/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-8 sm:pb-0"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+          onClick={() => !deleteBusy && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="glass-card w-full max-w-sm p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="text-base font-bold text-white mb-1">Delete account?</h3>
+              <p className="text-sm text-white/45 leading-relaxed">
+                This permanently deletes all your data including meals, workouts, streaks, and scan history. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteBusy}
+                className="flex-1 py-2.5 rounded-2xl text-sm font-medium text-white/60 transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleDeleteAccount()}
+                disabled={deleteBusy}
+                className="flex-1 py-2.5 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: 'rgba(239,68,68,0.8)' }}
+              >
+                {deleteBusy ? (
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : 'Delete everything'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

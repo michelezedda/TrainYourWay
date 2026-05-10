@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 
-const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate']
+const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth']
 
 function HomeIcon({ active }: { active: boolean }) {
   return (
