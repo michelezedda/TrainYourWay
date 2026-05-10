@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { db } from '@/lib/db'
 
 const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth']
 
@@ -56,8 +57,10 @@ const NAV = [
 ]
 
 export default function BottomNav() {
+  const { user } = db.useAuth()
   const location = useLocation()
 
+  if (!user) return null
   if (HIDE_ON.some(p => location.pathname.startsWith(p))) return null
 
   return (

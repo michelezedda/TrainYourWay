@@ -26,7 +26,7 @@ export default function AuthGuard() {
   const location = useLocation()
 
   if (isLoading) return <Spinner />
-  if (!user) return <Navigate to="/auth" state={{ from: location }} replace />
+  if (!user) return <Navigate to="/" state={{ from: location }} replace />
 
   return (
     <Routes>

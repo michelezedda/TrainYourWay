@@ -1,5 +1,8 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import GlassCard from '@/components/GlassCard'
+import { db } from '@/lib/db'
+import { getNutritionProfile } from '@/lib/nutrition'
 
 const features = [
   {
@@ -75,7 +78,201 @@ const stats = [
   { value: 'Free', label: 'no subscription needed' },
 ]
 
+function Spinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-purple-500/30 border-t-purple-400 animate-spin" />
+    </div>
+  )
+}
+
+function WelcomeView() {
+  const [step, setStep] = useState<'email' | 'code'>('email')
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [countdown, setCountdown] = useState(0)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (countdown <= 0) return
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown])
+
+  const handleSendCode = async () => {
+    setError('')
+    if (!email.trim()) { setError('Enter your email address.'); return }
+    setLoading(true)
+    try {
+      await db.auth.sendMagicCode({ email: email.trim() })
+      setStep('code')
+      setCountdown(30)
+    } catch {
+      setError('Could not send code. Check the email address and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerify = async () => {
+    setError('')
+    if (code.trim().length < 6) { setError('Enter the 6-digit code from your email.'); return }
+    setLoading(true)
+    try {
+      await db.auth.signInWithMagicCode({ email: email.trim(), code: code.trim() })
+      const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? null
+      const hasProfile = !!getNutritionProfile()
+      if (!hasProfile) navigate('/questionnaire', { replace: true })
+      else if (from && from !== '/') navigate(from, { replace: true })
+    } catch {
+      setError('Incorrect code or it has expired. Request a new one.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center px-5 py-12 relative overflow-hidden">
+      <div
+        className="absolute top-0 left-1/4 w-80 h-80 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%)', filter: 'blur(40px)' }}
+      />
+      <div
+        className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.12) 0%, transparent 70%)', filter: 'blur(50px)' }}
+      />
+
+      <div className="w-full max-w-sm animate-fade-in">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <h1 className="text-5xl font-black tracking-tight mb-2 gradient-text">UPLIFT</h1>
+          <p className="text-white/40 text-sm">Your AI fitness and nutrition coach</p>
+        </div>
+
+        {/* Value props */}
+        <div className="space-y-3 mb-8">
+          {[
+            'Personalised workout plans',
+            'Nutrition tracking and macro targets',
+            'Kai, your on-demand AI coach',
+          ].map(line => (
+            <div key={line} className="flex items-center gap-3 px-1">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)' }}
+              >
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-sm text-white/65">{line}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Auth card */}
+        <div className="glass-card p-6 space-y-4">
+          {step === 'email' ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Email address</label>
+                <input
+                  className="input-glass"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  autoComplete="email"
+                  autoFocus
+                  disabled={loading}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') void handleSendCode() }}
+                />
+              </div>
+              {error && <p className="text-xs text-red-400">{error}</p>}
+              <button
+                onClick={() => void handleSendCode()}
+                disabled={loading || !email.trim()}
+                className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+              >
+                {loading ? (
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : (
+                  <>
+                    Continue
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
+                    </svg>
+                  </>
+                )}
+              </button>
+              <p className="text-center text-[11px] text-white/25">
+                New users are created automatically. No password needed.
+              </p>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-white/60">Verification code</label>
+                  <button
+                    onClick={() => { setStep('email'); setCode(''); setError('') }}
+                    className="text-xs text-purple-400/70 hover:text-purple-300 transition-colors"
+                  >
+                    Change email
+                  </button>
+                </div>
+                <p className="text-xs text-white/35 mb-3">
+                  Sent to <span className="text-white/60">{email}</span>
+                </p>
+                <input
+                  className="input-glass text-center text-xl font-bold tracking-[0.4em]"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="------"
+                  autoFocus
+                  value={code}
+                  disabled={loading}
+                  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={e => { if (e.key === 'Enter') void handleVerify() }}
+                />
+              </div>
+              {error && <p className="text-xs text-red-400">{error}</p>}
+              <button
+                onClick={() => void handleVerify()}
+                disabled={loading || code.length < 6}
+                className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+              >
+                {loading ? (
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : 'Verify and get started'}
+              </button>
+              <button
+                onClick={() => void handleSendCode()}
+                disabled={countdown > 0 || loading}
+                className="w-full text-xs text-center py-1 transition-colors disabled:opacity-40"
+                style={{ color: countdown > 0 ? 'rgba(255,255,255,0.3)' : 'rgba(167,139,250,0.8)' }}
+              >
+                {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </main>
+  )
+}
+
 export default function Home() {
+  const { isLoading, user } = db.useAuth()
+
+  if (isLoading) return <Spinner />
+  if (!user) return <WelcomeView />
+
   return (
     <main className="relative overflow-hidden">
       {/* Background orbs */}

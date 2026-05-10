@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { id } from '@instantdb/react'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
 import { type WorkoutFormData } from '@/lib/gemini'
 import { saveNutritionProfile } from '@/lib/nutrition'
+import { db } from '@/lib/db'
+import { getUserId } from '@/lib/userId'
+import { requestNotificationPermission } from '@/lib/notifications'
 
 type Unit = 'metric' | 'imperial'
 
@@ -99,7 +103,16 @@ function generatePlanName(goals: string[], fitnessLevel: string, equipment: stri
   return 'General Fitness Program'
 }
 
-const STEP_LABELS = ['Profile', 'Goals', 'Equipment', 'Schedule', 'Diet', 'Space']
+const STEP_LABELS = ['Profile', 'Goals', 'Equipment', 'Schedule', 'Diet', 'Space', 'Notifications']
+
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
+  { value: 'pt', label: 'Portuguese' },
+  { value: 'it', label: 'Italian' },
+]
 
 interface BmiRec {
   bmi: number
@@ -207,7 +220,7 @@ const DURATION_OPTIONS = ['20', '30', '45', '60', '90', '120']
 const PRESET_EQUIPMENT_LABELS = new Set(EQUIPMENT_OPTIONS.map((o) => o.label))
 
 export default function Questionnaire() {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormData>(INITIAL)
   const [error, setError] = useState('')
   const [goalConflictMsg, setGoalConflictMsg] = useState('')
@@ -215,7 +228,14 @@ export default function Questionnaire() {
   const [customSport, setCustomSport]     = useState('')
   const [customInput, setCustomInput] = useState('')
   const [showMoreDiets, setShowMoreDiets] = useState(false)
+  // Step 0 fields
+  const [name, setName] = useState('')
+  const [language, setLanguage] = useState(() => navigator.language?.slice(0, 2) || 'en')
+  const [country, setCountry] = useState('')
   const navigate = useNavigate()
+
+  const userId = getUserId()
+  const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
 
   const update = (patch: Partial<FormData>) => setForm((p) => ({ ...p, ...patch }))
 
@@ -353,7 +373,21 @@ export default function Questionnaire() {
   const heightCm = toMetricHeight(form.height, form.heightIn, form.unit)
   const bmiRec   = getBmiRecommendations(weightKg, heightCm)
 
+  const handleNext = () => {
+    setError('')
+    if (step === 0) {
+      const existing = (profileData?.userProfiles ?? []) as Array<{ id: string }>
+      if (existing.length === 0) {
+        void db.transact(db.tx.userProfiles[id()].update({
+          userId, name: name.trim(), country: country.trim(), language, createdAt: Date.now(),
+        }))
+      }
+    }
+    setStep(s => s + 1)
+  }
+
   const canAdvance = (): boolean => {
+    if (step === 0) return name.trim().length >= 2
     if (step === 1) return !!(
       form.age.trim() && form.sex && form.fitnessLevel &&
       !ageInvalid && form.weight.trim() && !weightInvalid &&
@@ -404,9 +438,11 @@ export default function Questionnaire() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8">
-        <StepIndicator currentStep={step} totalSteps={6} labels={STEP_LABELS} />
-      </div>
+      {step > 0 && (
+        <div className="mb-8">
+          <StepIndicator currentStep={step} totalSteps={7} labels={STEP_LABELS} />
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
@@ -415,6 +451,57 @@ export default function Questionnaire() {
       )}
 
       <GlassCard className="animate-slide-up">
+        {/* Step 0 — Welcome */}
+        {step === 0 && (
+          <div className="space-y-6">
+            <StepHeader title="Welcome! Let's get started" subtitle="Tell us a bit about yourself so we can personalise everything." />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Your name <span className="text-red-400">*</span></label>
+                <input
+                  className="input-glass"
+                  type="text"
+                  placeholder="e.g. Alex"
+                  autoFocus
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && canAdvance()) handleNext() }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">Language</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {LANGUAGE_OPTIONS.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => setLanguage(value)}
+                      className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 ${
+                        language === value
+                          ? 'text-white border-purple-500/60 bg-purple-500/15'
+                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">
+                  Country <span className="text-white/25 text-xs font-normal">optional</span>
+                </label>
+                <input
+                  className="input-glass"
+                  type="text"
+                  placeholder="e.g. United States"
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 1 — Profile */}
         {step === 1 && (
           <div className="space-y-6">
@@ -1042,11 +1129,43 @@ export default function Questionnaire() {
           </div>
         )}
 
+        {/* Step 7 — Notifications */}
+        {step === 7 && (
+          <div className="space-y-6">
+            <div className="text-center py-4">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
+                style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)' }}
+              >
+                🔔
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Stay on track</h2>
+              <p className="text-white/50 text-sm leading-relaxed max-w-xs mx-auto">
+                Get reminders when it's time to train, log meals, or hit your streak.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={async () => { await requestNotificationPermission(); handleSubmit() }}
+                className="btn-primary w-full !justify-center"
+              >
+                Enable notifications
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="btn-ghost w-full !justify-center"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
           <button
-            onClick={() => setStep((s) => s - 1)}
-            disabled={step === 1}
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={step === 0}
             className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1055,9 +1174,9 @@ export default function Questionnaire() {
             Back
           </button>
 
-          {step < 6 ? (
+          {step < 7 && (
             <button
-              onClick={() => { setError(''); setStep((s) => s + 1) }}
+              onClick={handleNext}
               disabled={!canAdvance()}
               className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
@@ -1065,10 +1184,6 @@ export default function Questionnaire() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
               </svg>
-            </button>
-          ) : (
-            <button onClick={handleSubmit} className="btn-primary">
-              Generate My Plan ✨
             </button>
           )}
         </div>
