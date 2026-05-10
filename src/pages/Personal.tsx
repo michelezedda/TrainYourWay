@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { calcStreak } from '@/lib/streaks'
+import { getNickname } from '@/lib/nickname'
+import { generateStreakStory, shareOrDownload } from '@/lib/storyCanvas'
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -131,7 +135,6 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
           <span className="text-white/30 text-xs">{glasses} / {DAILY_GOAL} glasses</span>
         </div>
 
-        {/* Progress bar */}
         <div className="h-1.5 rounded-full mb-5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
           <div
             className="h-full rounded-full transition-all duration-500"
@@ -143,7 +146,6 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
           />
         </div>
 
-        {/* Glass icons */}
         <div className="flex gap-1.5 mb-5">
           {Array.from({ length: DAILY_GOAL }, (_, i) => {
             const filled = i < glasses
@@ -154,13 +156,7 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
                 className="flex-1 flex flex-col items-center gap-0.5 group"
                 aria-label={`${i + 1} glass${i > 0 ? 'es' : ''}`}
               >
-                <svg
-                  className="w-full max-w-[28px] transition-all duration-200"
-                  viewBox="0 0 24 28"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  {/* Glass outline */}
+                <svg className="w-full max-w-[28px] transition-all duration-200" viewBox="0 0 24 28" fill="none">
                   <path
                     d="M4 2h16l-2 22H6L4 2z"
                     stroke={filled ? '#22D3EE' : 'rgba(255,255,255,0.15)'}
@@ -169,12 +165,8 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
                     fill={filled ? 'rgba(34,211,238,0.18)' : 'rgba(255,255,255,0.03)'}
                     style={{ transition: 'all 0.2s' }}
                   />
-                  {/* Water fill */}
                   {filled && (
-                    <path
-                      d="M5.5 10h13l-1.2 14H6.7L5.5 10z"
-                      fill="rgba(34,211,238,0.25)"
-                    />
+                    <path d="M5.5 10h13l-1.2 14H6.7L5.5 10z" fill="rgba(34,211,238,0.25)" />
                   )}
                 </svg>
               </button>
@@ -182,7 +174,6 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
           })}
         </div>
 
-        {/* +/- controls */}
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => void setGlasses(glasses - 1)}
@@ -205,11 +196,7 @@ function WaterSection({ userId, today }: { userId: string; today: string }) {
           <button
             onClick={() => void setGlasses(glasses + 1)}
             className="flex-1 py-2 rounded-xl text-sm font-bold border transition-all"
-            style={{
-              color: '#22D3EE',
-              borderColor: 'rgba(34,211,238,0.3)',
-              background: 'rgba(34,211,238,0.08)',
-            }}
+            style={{ color: '#22D3EE', borderColor: 'rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)' }}
           >
             +
           </button>
@@ -270,12 +257,72 @@ function StatsCard({ label, meals, workouts }: { label: string; meals: number; w
   )
 }
 
+interface ShareStreakButtonProps {
+  mealStreak: number
+  workoutStreak: number
+  mealDates: string[]
+  workoutDates: string[]
+  today: string
+}
+
+function ShareStreakButton({ mealStreak, workoutStreak, mealDates, workoutDates, today }: ShareStreakButtonProps) {
+  const [status, setStatus] = useState<'idle' | 'generating' | 'shared'>('idle')
+
+  const handleShare = async () => {
+    if (status !== 'idle') return
+    setStatus('generating')
+    try {
+      const file = await generateStreakStory(mealStreak, workoutStreak, mealDates, workoutDates, today)
+      await shareOrDownload(file, `My UPLIFT Streaks - ${Math.max(mealStreak, workoutStreak)} days`)
+      setStatus('shared')
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setStatus('idle')
+      } else {
+        setStatus('idle')
+      }
+    }
+  }
+
+  return (
+    <button
+      onClick={() => void handleShare()}
+      disabled={status === 'generating'}
+      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      style={{
+        background: status === 'shared' ? 'rgba(34,197,94,0.1)' : 'rgba(168,85,247,0.1)',
+        borderColor: status === 'shared' ? 'rgba(34,197,94,0.3)' : 'rgba(168,85,247,0.3)',
+        color: status === 'shared' ? '#86efac' : '#d8b4fe',
+        opacity: status === 'generating' ? 0.7 : 1,
+      }}
+    >
+      {status === 'generating' ? (
+        <>
+          <LoadingSpinner size="sm" />
+          <span>Generating story...</span>
+        </>
+      ) : status === 'shared' ? (
+        <span>Streak story saved!</span>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span>Share My Streaks</span>
+        </>
+      )}
+    </button>
+  )
+}
+
 export default function Personal() {
   const today = toDateStr(new Date())
   const userId = getUserId()
 
   const { data: mealData }    = db.useQuery({ mealEntries:        { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
+  const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
 
   const mealEntries  = (mealData?.mealEntries ?? []) as Array<{ date: string }>
   const completions  = (workoutData?.workoutCompletions ?? []) as Array<{ date: string }>
@@ -293,6 +340,22 @@ export default function Personal() {
       db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() })
     )
   }
+
+  // Auto-update leaderboard entry (throttled to once per hour)
+  useEffect(() => {
+    if (!lbData || !mealData || !workoutData) return
+    const LB_KEY = 'tyw_lb_ts'
+    const now = Date.now()
+    if (now - parseInt(localStorage.getItem(LB_KEY) ?? '0') < 3_600_000) return
+    localStorage.setItem(LB_KEY, String(now))
+    const nickname = getNickname(userId)
+    const existing = ((lbData.leaderboardEntries ?? []) as Array<{ id: string }>)[0]
+    const payload = { userId, nickname, workoutStreak, mealStreak, updatedAt: now }
+    void (existing
+      ? db.transact(db.tx.leaderboardEntries[existing.id].update(payload))
+      : db.transact(db.tx.leaderboardEntries[id()].update(payload))
+    )
+  }, [lbData, mealData, workoutData, userId, workoutStreak, mealStreak])
 
   const now = new Date()
   const thisMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -340,6 +403,17 @@ export default function Personal() {
               {alreadyLoggedToday ? 'Logged today' : "Log today's workout"}
             </button>
           }
+        />
+      </div>
+
+      {/* Share streak story */}
+      <div className="mb-4">
+        <ShareStreakButton
+          mealStreak={mealStreak}
+          workoutStreak={workoutStreak}
+          mealDates={mealDates}
+          workoutDates={workoutDates}
+          today={today}
         />
       </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { NotFoundException } from '@zxing/library'
 import type { IScannerControls } from '@zxing/browser'
@@ -8,23 +9,70 @@ import { fetchProduct, addToScanHistory, getScanHistory, type OFFProduct, type S
 import { scoreProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
 import { getNutritionProfile } from '@/lib/nutrition'
 import { sendChatMessage } from '@/lib/gemini'
+import { db } from '@/lib/db'
+import { getUserId } from '@/lib/userId'
+import { generateProductStory, shareOrDownload } from '@/lib/storyCanvas'
 
 type PageState = 'idle' | 'loading' | 'result' | 'not-found' | 'error'
 
-// ── Grade badge ────────────────────────────────────────────────────────────────
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
-function GradeBadge({ grade, color, bg, label }: { grade: string; color: string; bg: string; label: string }) {
+// ── Nutri-Score badge (European style) ────────────────────────────────────────
+
+const NS_COLORS: Record<string, string> = {
+  A: '#1e8a3c',
+  B: '#83b830',
+  C: '#f5c92e',
+  D: '#e87d1e',
+  E: '#e53a29',
+}
+const GRADE_SEQUENCE = ['A', 'B', 'C', 'D', 'E']
+
+function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 animate-fade-in"
-        style={{ background: bg, border: `2px solid ${color}` }}
+    <div
+      className="rounded-2xl px-3 pt-2.5 pb-3 animate-fade-in"
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.1)' }}
+    >
+      <p
+        className="text-center font-black tracking-[0.2em] mb-2.5 text-[10px] uppercase"
+        style={{ color: 'rgba(255,255,255,0.35)' }}
       >
-        <span className="text-3xl font-black" style={{ color }}>{grade}</span>
+        Nutri-Score
+      </p>
+      <div className="flex items-end gap-1.5">
+        {GRADE_SEQUENCE.map(g => {
+          const isActive = g === grade
+          const color = NS_COLORS[g] ?? '#888'
+          return (
+            <div
+              key={g}
+              className="flex items-center justify-center flex-1 transition-all duration-300"
+              style={{
+                background: isActive ? color : color + '50',
+                height: isActive ? 56 : 38,
+                borderRadius: isActive ? 12 : 8,
+              }}
+            >
+              <span
+                className="font-black leading-none transition-all duration-300"
+                style={{
+                  color: isActive ? '#fff' : 'rgba(255,255,255,0.35)',
+                  fontSize: isActive ? 28 : 18,
+                }}
+              >
+                {g}
+              </span>
+            </div>
+          )
+        })}
       </div>
-      <div>
-        <p className="text-white font-bold text-lg leading-tight">{label}</p>
-        <p className="text-white/40 text-xs">health score</p>
+      <div className="flex items-center justify-between mt-2.5">
+        <p className="text-white font-bold text-sm">{gradeLabel}</p>
+        <p className="text-white/35 text-xs">health score</p>
       </div>
     </div>
   )
@@ -114,7 +162,8 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
   useEffect(() => {
     const profile = getNutritionProfile()
     const issues = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text).join(', ')
-    const prompt = `The user scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
+    const prompt =
+      `The user scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
       `Health grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
       (profile ? `User goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}. ` : '') +
       `Suggest ONE specific better alternative product with a 1-sentence reason. ` +
@@ -134,9 +183,7 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
       </div>
     )
   }
-
   if (!alt) return null
-
   return (
     <div
       className="flex items-start gap-3 p-3.5 rounded-2xl border animate-fade-in"
@@ -150,6 +197,165 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
         <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
       </div>
     </div>
+  )
+}
+
+// ── Gym rating widget ─────────────────────────────────────────────────────────
+
+function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string }) {
+  const { data } = db.useQuery({ gymRatings: { $: { where: { barcode } } } })
+  const ratings = (data?.gymRatings ?? []) as Array<{ id: string; userId: string; rating: number }>
+  const myRating = ratings.find(r => r.userId === userId)
+  const avg = ratings.length > 0 ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : null
+
+  const handleRate = async (stars: number) => {
+    if (myRating) {
+      await db.transact(db.tx.gymRatings[myRating.id].update({ rating: stars }))
+    } else {
+      await db.transact(db.tx.gymRatings[id()].update({ barcode, userId, rating: stars, createdAt: Date.now() }))
+    }
+  }
+
+  return (
+    <GlassCard>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-white/50 text-xs font-medium uppercase tracking-wider">Gym Score</p>
+        {avg !== null && (
+          <span className="text-white/40 text-xs">
+            {avg.toFixed(1)} avg · {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map(star => {
+          const filled = myRating ? star <= myRating.rating : false
+          return (
+            <button
+              key={star}
+              onClick={() => void handleRate(star)}
+              className="flex-1 py-1.5 transition-transform hover:scale-110 active:scale-95"
+              aria-label={`Rate ${star} stars`}
+            >
+              <svg className="w-7 h-7 mx-auto" viewBox="0 0 24 24">
+                <path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                  fill={filled ? '#facc15' : 'none'}
+                  stroke={filled ? '#facc15' : 'rgba(255,255,255,0.2)'}
+                  strokeWidth={1.5}
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )
+        })}
+      </div>
+      {!myRating && (
+        <p className="text-white/25 text-[10px] text-center mt-2">Rate this product for the community</p>
+      )}
+    </GlassCard>
+  )
+}
+
+// ── Share story button ────────────────────────────────────────────────────────
+
+function ShareButton({ product, scored, userId }: { product: OFFProduct; scored: ScoredProduct; userId: string }) {
+  const [status, setStatus] = useState<'idle' | 'generating' | 'shared'>('idle')
+
+  const handleShare = async () => {
+    if (status !== 'idle') return
+    setStatus('generating')
+    try {
+      const file = await generateProductStory(product, scored)
+      await shareOrDownload(file, `${product.product_name || 'Product'} - Grade ${scored.grade}`)
+      setStatus('shared')
+      await db.transact(
+        db.tx.workoutCompletions[id()].update({ userId, date: todayStr(), createdAt: Date.now() })
+      )
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setStatus('idle')
+      } else {
+        setStatus('idle')
+      }
+    }
+  }
+
+  return (
+    <button
+      onClick={() => void handleShare()}
+      disabled={status === 'generating'}
+      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      style={{
+        background: status === 'shared' ? 'rgba(34,197,94,0.1)' : 'rgba(168,85,247,0.1)',
+        borderColor: status === 'shared' ? 'rgba(34,197,94,0.3)' : 'rgba(168,85,247,0.3)',
+        color: status === 'shared' ? '#86efac' : '#d8b4fe',
+        opacity: status === 'generating' ? 0.7 : 1,
+      }}
+    >
+      {status === 'generating' ? (
+        <>
+          <LoadingSpinner size="sm" />
+          <span>Generating story...</span>
+        </>
+      ) : status === 'shared' ? (
+        <span>Shared! Workout logged.</span>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span>Share Story</span>
+        </>
+      )}
+    </button>
+  )
+}
+
+// ── Add to finds button ───────────────────────────────────────────────────────
+
+function AddToFindsButton({
+  product, scored, barcode, userId,
+}: { product: OFFProduct; scored: ScoredProduct; barcode: string; userId: string }) {
+  const { data } = db.useQuery({ communityFinds: { $: { where: { barcode, sharedBy: userId } } } })
+  const alreadyShared = ((data?.communityFinds ?? []) as unknown[]).length > 0
+
+  const handleAdd = async () => {
+    await db.transact(
+      db.tx.communityFinds[id()].update({
+        barcode,
+        productName: product.product_name || '',
+        brand: product.brands?.split(',')[0]?.trim() || '',
+        grade: scored.grade,
+        gradeColor: scored.gradeColor,
+        imageUrl: product.image_url || '',
+        sharedBy: userId,
+        sharedAt: Date.now(),
+      })
+    )
+  }
+
+  if (alreadyShared) {
+    return (
+      <p className="text-center text-xs text-white/30 py-1">Added to Healthy Finds</p>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => void handleAdd()}
+      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      style={{
+        background: 'rgba(34,197,94,0.08)',
+        borderColor: 'rgba(34,197,94,0.2)',
+        color: '#86efac',
+      }}
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+      Add to Healthy Finds
+    </button>
   )
 }
 
@@ -188,7 +394,6 @@ function AimOverlay() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="relative w-56 h-28">
-        {/* Corner brackets */}
         {[
           'top-0 left-0 border-t-2 border-l-2 rounded-tl-lg',
           'top-0 right-0 border-t-2 border-r-2 rounded-tr-lg',
@@ -197,7 +402,6 @@ function AimOverlay() {
         ].map((cls, i) => (
           <div key={i} className={`absolute w-6 h-6 ${cls}`} style={{ borderColor: 'rgba(168,85,247,0.8)' }} />
         ))}
-        {/* Scan line */}
         <div
           className="absolute left-2 right-2 h-0.5 top-1/2 -translate-y-1/2 rounded-full"
           style={{ background: 'linear-gradient(90deg, transparent, #A855F7, transparent)' }}
@@ -210,17 +414,19 @@ function AimOverlay() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Scanner() {
-  const videoRef      = useRef<HTMLVideoElement>(null)
-  const controlsRef   = useRef<IScannerControls | null>(null)
-  const scanning      = useRef(false)
+  const videoRef    = useRef<HTMLVideoElement>(null)
+  const controlsRef = useRef<IScannerControls | null>(null)
+  const scanning    = useRef(false)
 
   const [state,   setState]   = useState<PageState>('idle')
+  const [barcode, setBarcode] = useState('')
   const [product, setProduct] = useState<OFFProduct | null>(null)
   const [scored,  setScored]  = useState<ScoredProduct | null>(null)
   const [history, setHistory] = useState<ScanHistoryEntry[]>(() => getScanHistory())
   const [errMsg,  setErrMsg]  = useState('')
 
   const profile = getNutritionProfile()
+  const userId  = getUserId()
 
   const stopCamera = useCallback(() => {
     controlsRef.current?.stop()
@@ -271,11 +477,12 @@ export default function Scanner() {
     return () => stopCamera()
   }, [stopCamera])
 
-  const handleBarcode = async (barcode: string) => {
+  const handleBarcode = async (code: string) => {
+    setBarcode(code)
     stopCamera()
     setState('loading')
     try {
-      const data = await fetchProduct(barcode)
+      const data = await fetchProduct(code)
       if (!data) { setState('not-found'); return }
 
       const score = scoreProduct(data, profile)
@@ -284,7 +491,7 @@ export default function Scanner() {
       setState('result')
 
       const entry: ScanHistoryEntry = {
-        barcode,
+        barcode: code,
         name:       data.product_name || '',
         brand:      data.brands || '',
         grade:      score.grade,
@@ -302,11 +509,12 @@ export default function Scanner() {
   const reset = () => {
     setProduct(null)
     setScored(null)
+    setBarcode('')
     setErrMsg('')
     setState('idle')
   }
 
-  // ── Render states ─────────────────────────────────────────────────────────
+  // ── Render states ──────────────────────────────────────────────────────────
 
   if (state === 'loading') {
     return (
@@ -383,12 +591,7 @@ export default function Scanner() {
         {/* Grade + NOVA */}
         <GlassCard className="mb-4" padding={false}>
           <div className="p-4">
-            <GradeBadge
-              grade={scored.grade}
-              color={scored.gradeColor}
-              bg={scored.gradeBg}
-              label={scored.gradeLabel}
-            />
+            <NutriScoreBadge grade={scored.grade} gradeLabel={scored.gradeLabel} />
             {product.nova_group && (
               <div className="mt-3 pt-3 border-t border-white/8">
                 <NovaDots group={product.nova_group} />
@@ -418,6 +621,23 @@ export default function Scanner() {
           </div>
         )}
 
+        {/* Gym rating */}
+        <div className="mb-3">
+          <GymRatingWidget barcode={barcode} userId={userId} />
+        </div>
+
+        {/* Share story */}
+        <div className="mb-3">
+          <ShareButton product={product} scored={scored} userId={userId} />
+        </div>
+
+        {/* Add to healthy finds (A/B only) */}
+        {(scored.grade === 'A' || scored.grade === 'B') && (
+          <div className="mb-4">
+            <AddToFindsButton product={product} scored={scored} barcode={barcode} userId={userId} />
+          </div>
+        )}
+
         {/* Ingredients */}
         {product.ingredients_text && (
           <GlassCard className="mb-4">
@@ -443,7 +663,7 @@ export default function Scanner() {
     )
   }
 
-  // ── Idle / scanning state ─────────────────────────────────────────────────
+  // ── Idle / scanning state ──────────────────────────────────────────────────
 
   return (
     <main className="max-w-lg mx-auto px-4 py-6 animate-fade-in">
@@ -461,13 +681,7 @@ export default function Scanner() {
           border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-        />
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
         <AimOverlay />
         <div
           className="absolute bottom-0 left-0 right-0 px-4 py-3 text-center text-xs text-white/50"
@@ -494,7 +708,7 @@ export default function Scanner() {
       )}
 
       {/* Recent scans */}
-      <HistoryChips history={history} onSelect={(barcode) => void handleBarcode(barcode)} />
+      <HistoryChips history={history} onSelect={(code) => void handleBarcode(code)} />
     </main>
   )
 }
