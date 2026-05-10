@@ -77,6 +77,13 @@ const _schema = i.schema({
       dayOverrides: i.string().optional(),
       otherSports: i.string().optional(),
     }),
+    userProfiles: i.entity({
+      userId:    i.string().indexed(),
+      name:      i.string(),
+      country:   i.string().optional(),
+      language:  i.string().optional(),
+      createdAt: i.number(),
+    }),
   },
 })
 

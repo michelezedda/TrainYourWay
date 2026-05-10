@@ -171,12 +171,13 @@ function ExerciseTableCard({
         </div>
         <button
           onClick={() => onGuideClick(exerciseKey)}
-          className="flex-shrink-0 flex items-center gap-1 text-xs text-purple-400/70 hover:text-purple-300 transition-colors ml-3"
+          className="flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all duration-200 active:scale-95"
+          style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.22)' }}
         >
-          Guide
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
+          How to use
         </button>
       </div>
 

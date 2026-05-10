@@ -20,17 +20,18 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
-      style={{ background: 'rgba(5, 5, 16, 0.88)', backdropFilter: 'blur(16px)' }}
+      className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in"
+      style={{ background: 'rgba(5, 5, 16, 0.80)', backdropFilter: 'blur(16px)' }}
       onClick={onClose}
     >
       <div
-        className="glass-card w-full max-w-xl max-h-[90vh] overflow-y-auto animate-slide-up"
+        className="glass-card w-full max-w-lg mx-auto rounded-t-3xl rounded-b-none max-h-[90dvh] overflow-y-auto animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-white/8 sticky top-0 glass-card rounded-b-none">
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 mb-1" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 sticky top-0 glass-card rounded-t-3xl rounded-b-none">
           <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-0.5">How to do</p>
+            <p className="text-xs text-white/40 uppercase tracking-wider mb-0.5">How to use</p>
             <h3 className="text-lg font-bold text-white">{name}</h3>
           </div>
           <button onClick={onClose} className="btn-ghost !px-3 !py-2 !text-sm" aria-label="Close">✕</button>
@@ -90,9 +91,9 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div className="p-4 rounded-2xl" style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.15)' }}>
-                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">✓ Tips</p>
+                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">Tips</p>
                   <ul className="space-y-1.5">
                     {instructions.tips.map((t, i) => (
                       <li key={i} className="text-white/65 text-sm flex gap-2">
@@ -102,7 +103,7 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
                   </ul>
                 </div>
                 <div className="p-4 rounded-2xl" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">✕ Avoid</p>
+                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Common mistakes</p>
                   <ul className="space-y-1.5">
                     {instructions.avoid.map((a, i) => (
                       <li key={i} className="text-white/65 text-sm flex gap-2">
