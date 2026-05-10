@@ -1,7 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Header from '@/components/Header'
-import Footer from '@/components/Footer'
+import BottomNav from '@/components/BottomNav'
 import Home from '@/pages/Home'
 import Questionnaire from '@/pages/Questionnaire'
 import ReevaluateQuestionnaire from '@/pages/ReevaluateQuestionnaire'
@@ -51,7 +51,7 @@ export default function App() {
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
           <Header />
-          <div className="flex-1">
+          <div className="flex-1 pb-nav">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/questionnaire" element={<Questionnaire />} />
@@ -68,7 +68,7 @@ export default function App() {
               <Route path="/community" element={<Community />} />
             </Routes>
           </div>
-          <Footer />
+          <BottomNav />
         </div>
       </BrowserRouter>
     </ErrorBoundary>
