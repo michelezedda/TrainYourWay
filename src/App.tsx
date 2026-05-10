@@ -13,6 +13,7 @@ import Chat from '@/pages/Chat'
 import ImportPlan from '@/pages/ImportPlan'
 import Support from '@/pages/Support'
 import Personal from '@/pages/Personal'
+import Scanner from '@/pages/Scanner'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -62,6 +63,7 @@ export default function App() {
               <Route path="/import" element={<ImportPlan />} />
               <Route path="/support" element={<Support />} />
               <Route path="/me" element={<Personal />} />
+              <Route path="/scanner" element={<Scanner />} />
             </Routes>
           </div>
           <Footer />

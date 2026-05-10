@@ -13,6 +13,7 @@
     "@emailjs/browser": "^4.4.1",
     "@google/generative-ai": "^0.24.1",
     "@instantdb/react": "^1.0.24",
+    "@zxing/browser": "^0.2.0",
     "groq-sdk": "^1.1.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
