@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import WeeklyInsights from '@/components/WeeklyInsights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { calcStreak } from '@/lib/streaks'
 import { getNickname } from '@/lib/nickname'
 import { generateStreakStory, shareOrDownload } from '@/lib/storyCanvas'
+import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
+import { getScanHistory } from '@/lib/openFoodFacts'
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -324,11 +328,23 @@ export default function Personal() {
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
   const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
 
-  const mealEntries  = (mealData?.mealEntries ?? []) as Array<{ date: string }>
+  const mealEntries  = (mealData?.mealEntries ?? []) as Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>
   const completions  = (workoutData?.workoutCompletions ?? []) as Array<{ date: string }>
 
   const mealDates    = [...new Set(mealEntries.map(e => e.date))]
   const workoutDates = [...new Set(completions.map(e => e.date))]
+
+  const nutritionProfile = useMemo(() => getNutritionProfile(), [])
+  const targets = useMemo(
+    () => nutritionProfile ? calculateTargets(nutritionProfile) : { kcal: 2000, protein: 150, carbs: 200, fat: 65 },
+    [nutritionProfile],
+  )
+  const scanHistory = useMemo(() => getScanHistory(), [])
+
+  const todayProtein = useMemo(
+    () => mealEntries.filter(e => e.date === today).reduce((s, e) => s + (e.protein ?? 0), 0),
+    [mealEntries, today],
+  )
 
   const mealStreak         = calcStreak(mealDates, today)
   const workoutStreak      = calcStreak(workoutDates, today)
@@ -421,10 +437,70 @@ export default function Personal() {
         <WaterSection userId={userId} today={today} />
       </div>
 
+      <div className="mb-4">
+        <WeeklyInsights
+          mealEntries={mealEntries}
+          targets={targets}
+          scanHistory={scanHistory}
+          todayProtein={Math.round(todayProtein)}
+          today={today}
+        />
+      </div>
+
       <div className="space-y-3">
         <StatsCard label="This week"  meals={mealsThisWeek}   workouts={workoutsThisWeek} />
         <StatsCard label="This month" meals={mealsThisMonth}  workouts={workoutsThisMonth} />
         <StatsCard label="This year"  meals={mealsThisYear}   workouts={workoutsThisYear} />
+      </div>
+
+      <div className="mt-6 space-y-2.5">
+        <Link
+          to="/history"
+          className="flex items-center justify-between px-4 py-4 rounded-2xl transition-all duration-200 active:scale-[0.98]"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
+              style={{ background: 'rgba(168,85,247,0.15)' }}
+            >
+              <svg className="w-4 h-4" style={{ color: '#c084fc' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white/80">History</p>
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Past plans and workouts</p>
+            </div>
+          </div>
+          <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+
+        <Link
+          to="/community"
+          className="flex items-center justify-between px-4 py-4 rounded-2xl transition-all duration-200 active:scale-[0.98]"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
+              style={{ background: 'rgba(34,211,238,0.12)' }}
+            >
+              <svg className="w-4 h-4" style={{ color: '#22d3ee' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white/80">Community</p>
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Healthy finds and leaderboard</p>
+            </div>
+          </div>
+          <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
     </main>
   )

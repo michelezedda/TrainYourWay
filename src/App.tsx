@@ -1,6 +1,5 @@
 import { Component, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Header from '@/components/Header'
 import BottomNav from '@/components/BottomNav'
 import Home from '@/pages/Home'
 import Questionnaire from '@/pages/Questionnaire'
@@ -50,7 +49,6 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
-          <Header />
           <div className="flex-1 pb-nav">
             <Routes>
               <Route path="/" element={<Home />} />

@@ -52,7 +52,7 @@ const NAV = [
   { to: '/diet',    label: 'Diet',  Icon: ForkIcon   },
   { to: '/scanner', label: 'Scan',  Icon: ScanIcon   },
   { to: '/chat',    label: 'Kai',   Icon: ChatIcon   },
-  { to: '/me',      label: 'Me',    Icon: PersonIcon },
+  { to: '/me',      label: 'Personal', Icon: PersonIcon },
 ]
 
 export default function BottomNav() {
@@ -72,7 +72,7 @@ export default function BottomNav() {
             <Link
               key={to}
               to={to}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-2xl transition-all duration-200 active:scale-95"
+              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
               style={{
                 background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
                 color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
