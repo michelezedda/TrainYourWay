@@ -615,6 +615,70 @@ Rules:
   return completion.choices[0]?.message?.content ?? ''
 }
 
+export interface MachineGuide {
+  machineName: string
+  confidence: 'high' | 'medium' | 'low'
+  targetMuscles: { primary: string[]; secondary: string[] }
+  setup: string[]
+  steps: string[]
+  mistakes: string[]
+  tips: string[]
+}
+
+export async function analyzeMachineImage(imageDataUrl: string): Promise<MachineGuide> {
+  const prompt = `You are an expert personal trainer and gym equipment specialist. Analyze this image of gym equipment.
+
+Respond ONLY with valid JSON — no markdown, no explanation, no code block — using exactly this structure:
+{
+  "machineName": "Full name of the machine or equipment",
+  "confidence": "high" | "medium" | "low",
+  "targetMuscles": {
+    "primary": ["Muscle 1", "Muscle 2"],
+    "secondary": ["Muscle 3", "Muscle 4"]
+  },
+  "setup": [
+    "Adjustment step 1",
+    "Adjustment step 2"
+  ],
+  "steps": [
+    "Starting position",
+    "Movement step 2",
+    "Return step 3"
+  ],
+  "mistakes": [
+    "Common mistake 1",
+    "Common mistake 2"
+  ],
+  "tips": [
+    "Safety or technique tip 1",
+    "Safety or technique tip 2"
+  ]
+}
+
+Rules:
+- If you cannot identify gym equipment in the image, set machineName to "Unknown equipment" and confidence to "low", and fill other fields with generic safety advice.
+- setup: focus on adjusting the machine for a safe fit (seat height, back pad, pin position, etc.). Omit if it is a free weight with no adjustments.
+- steps: 3 to 6 clear numbered steps describing the full exercise movement.
+- mistakes: 2 to 4 common errors that lead to injury or poor results.
+- tips: 2 to 3 short, specific coaching cues.
+- Use plain English. No em dashes, no long dashes, no markdown formatting inside strings.`
+
+  const content: MessageContent[] = [
+    { type: 'text', text: prompt },
+    { type: 'image_url', image_url: { url: imageDataUrl } },
+  ]
+
+  const completion = await getGroq().chat.completions.create({
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    messages: [{ role: 'user', content }],
+    max_tokens: 1024,
+  })
+
+  const raw = completion.choices[0]?.message?.content ?? '{}'
+  const jsonMatch = raw.match(/\{[\s\S]*\}/)
+  return JSON.parse(jsonMatch ? jsonMatch[0] : raw) as MachineGuide
+}
+
 export async function analyzeImportedPlan(plan: string, profileContext: string): Promise<string> {
   const prompt = `You are an expert personal trainer reviewing a workout plan that a user has imported.
 

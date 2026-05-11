@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import GlassCard from '@/components/GlassCard'
 import { db } from '@/lib/db'
 
@@ -77,7 +77,10 @@ const stats = [
 ]
 
 export default function Home() {
-  const { user } = db.useAuth()
+  const { isLoading, user } = db.useAuth()
+
+  if (isLoading) return null
+  if (user) return <Navigate to="/dashboard" replace />
 
   return (
     <main className="relative overflow-hidden">

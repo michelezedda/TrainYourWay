@@ -78,11 +78,12 @@ const _schema = i.schema({
       otherSports: i.string().optional(),
     }),
     userProfiles: i.entity({
-      userId:    i.string().indexed(),
-      name:      i.string(),
-      country:   i.string().optional(),
-      language:  i.string().optional(),
-      createdAt: i.number(),
+      userId:            i.string().indexed(),
+      name:              i.string(),
+      country:           i.string().optional(),
+      language:          i.string().optional(),
+      nutritionSnapshot: i.string().optional(),
+      createdAt:         i.number(),
     }),
   },
 })

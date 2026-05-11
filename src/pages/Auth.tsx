@@ -1,16 +1,41 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
 
 export default function Auth() {
-  const [step, setStep] = useState<'email' | 'code'>('email')
+  const [step, setStep] = useState<'email' | 'code' | 'name'>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
+  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [countdown, setCountdown] = useState(0)
+  const [verified, setVerified] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+
+  const { user } = db.useAuth()
+  const { data: profileData } = db.useQuery({
+    userProfiles: { $: { where: { userId: user?.id ?? '' } } },
+  })
+
+  const goAfterAuth = () => {
+    const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? null
+    navigate(from && from !== '/' && from !== '/auth' ? from : '/dashboard', { replace: true })
+  }
+
+  useEffect(() => {
+    if (!verified || !user || profileData === undefined) return
+    setLoading(false)
+    const hasProfile = (profileData.userProfiles?.length ?? 0) > 0
+    if (hasProfile) {
+      goAfterAuth()
+    } else {
+      setStep('name')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verified, user, profileData])
 
   useEffect(() => {
     if (countdown <= 0) return
@@ -39,15 +64,27 @@ export default function Auth() {
     setLoading(true)
     try {
       await db.auth.signInWithMagicCode({ email: email.trim(), code: code.trim() })
-      const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? null
-      if (from && from !== '/' && from !== '/auth') {
-        navigate(from, { replace: true })
-      } else {
-        navigate('/dashboard', { replace: true })
-      }
+      setVerified(true)
+      // Navigation or name step handled in useEffect once profileData loads
     } catch {
       setError('Incorrect code or it has expired. Request a new one.')
-    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmitName = async () => {
+    if (!user?.id || !name.trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      await db.transact(db.tx.userProfiles[id()].update({
+        userId: user.id,
+        name: name.trim(),
+        createdAt: Date.now(),
+      }))
+      goAfterAuth()
+    } catch {
+      setError('Could not save your name. Please try again.')
       setLoading(false)
     }
   }
@@ -98,7 +135,33 @@ export default function Auth() {
 
         {/* Auth card */}
         <div className="glass-card p-5 space-y-3.5">
-          {step === 'email' ? (
+          {step === 'name' ? (
+            <>
+              <p className="text-sm font-semibold text-white/80">One last thing</p>
+              <p className="text-xs text-white/40 -mt-1">What should we call you?</p>
+              <input
+                className="input-glass"
+                type="text"
+                placeholder="Your name"
+                autoFocus
+                autoComplete="name"
+                value={name}
+                disabled={loading}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && name.trim().length >= 2) void handleSubmitName() }}
+              />
+              {error && <p className="text-xs text-red-400">{error}</p>}
+              <button
+                onClick={() => void handleSubmitName()}
+                disabled={loading || name.trim().length < 2}
+                className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+              >
+                {loading
+                  ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : 'Get started'}
+              </button>
+            </>
+          ) : step === 'email' ? (
             <>
               <p className="text-sm font-semibold text-white/80">Get started for free</p>
               <input

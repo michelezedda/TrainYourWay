@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
-import { getNutritionProfile, calculateTargets, type DailyTargets } from '@/lib/nutrition'
+import { getNutritionProfile, saveNutritionProfile, calculateTargets, type DailyTargets, type NutritionProfile } from '@/lib/nutrition'
 import { estimateFoodMacros, type FoodMacros } from '@/lib/gemini'
 import GlassCard from '@/components/GlassCard'
 
@@ -147,8 +147,23 @@ export default function Diet() {
   const fileInputRefs = useRef<Partial<Record<Meal, HTMLInputElement | null>>>({})
 
   const userId = getUserId()
-  const profile = getNutritionProfile()
+  const [profile, setProfile] = useState<NutritionProfile | null>(() => getNutritionProfile())
   const targets = profile ? calculateTargets(profile) : null
+
+  const { data: profileQueryData } = db.useQuery({
+    userProfiles: { $: { where: { userId } } },
+  })
+
+  useEffect(() => {
+    if (profile || profileQueryData === undefined) return
+    const snap = (profileQueryData.userProfiles?.[0] as { nutritionSnapshot?: string } | undefined)?.nutritionSnapshot
+    if (!snap) return
+    try {
+      const parsed = JSON.parse(snap) as NutritionProfile
+      saveNutritionProfile(parsed)
+      setProfile(parsed)
+    } catch { /* ignore malformed snapshot */ }
+  }, [profile, profileQueryData])
 
   const { data } = db.useQuery({
     mealEntries: { $: { where: { userId, date: selectedDate } } },
@@ -267,8 +282,8 @@ export default function Diet() {
         </button>
       </div>
 
-      {/* No profile prompt */}
-      {!profile && (
+      {/* No profile prompt - only show after DB has confirmed no snapshot exists */}
+      {!profile && profileQueryData !== undefined && (
         <GlassCard className="mb-6 text-center">
           <div className="text-3xl mb-3">🎯</div>
           <h3 className="text-white font-bold mb-1.5">No targets set</h3>

@@ -1,7 +1,11 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
+import ExerciseModal from '@/components/ExerciseModal'
+import { WorkoutDayView } from '@/components/PlanView'
+import { buildPlanComponents } from '@/lib/planComponents'
+import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { calcStreak } from '@/lib/streaks'
@@ -17,7 +21,7 @@ function getGreeting(name: string | undefined): string {
   const h = new Date().getHours()
   const period = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'
   const first = name?.trim().split(' ')[0]
-  return first ? `Good ${period}, ${first}` : `Good ${period}`
+  return first ? `Good ${period}, ${first}!` : `Good ${period}!`
 }
 
 interface MiniStreakCardProps {
@@ -49,9 +53,64 @@ function MiniStreakCard({ label, emoji, streak, gradient }: MiniStreakCardProps)
   )
 }
 
+function GlassIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="17" height="24" viewBox="0 0 17 24" fill="none">
+      <path
+        d="M2 2 L15 2 L12.5 21 L4.5 21 Z"
+        fill={filled ? 'rgba(34,211,238,0.28)' : 'rgba(255,255,255,0.04)'}
+        stroke={filled ? 'rgba(34,211,238,0.65)' : 'rgba(255,255,255,0.13)'}
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="2" y1="2" x2="15" y2="2"
+        stroke={filled ? 'rgba(34,211,238,0.9)' : 'rgba(255,255,255,0.2)'}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function PlanPreview({
+  planId, planText, onExerciseClick,
+}: {
+  planId: string
+  planText: string
+  onExerciseClick: (name: string) => void
+}) {
+  const [weights, setWeightsState] = useState<Record<string, string>>(() => getWeights(planId))
+
+  const handleWeightChange = useMemo(
+    () => (exercise: string, value: string) => {
+      setWeightsState(prev => ({ ...prev, [exercise]: value }))
+      setWeight(planId, exercise, value)
+    },
+    [planId],
+  )
+
+  const components = useMemo(
+    () => buildPlanComponents(onExerciseClick, planId, weights, handleWeightChange),
+    // weights intentionally omitted — ExerciseTableCard uses local state after mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [planId, onExerciseClick, handleWeightChange],
+  )
+
+  return (
+    <WorkoutDayView
+      plan={planText}
+      planComponents={components}
+    />
+  )
+}
+
 export default function Dashboard() {
   const today  = toDateStr(new Date())
   const userId = getUserId()
+
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
+  const [planExpanded, setPlanExpanded] = useState(true)
 
   const { data } = db.useQuery({
     workoutPlans:       { $: { where: { userId } } },
@@ -61,7 +120,7 @@ export default function Dashboard() {
     userProfiles:       { $: { where: { userId } } },
   })
 
-  const allPlans    = (data?.workoutPlans       ?? []) as Array<{ id: string; fitnessLevel: string; goals: string; createdAt: number }>
+  const allPlans    = (data?.workoutPlans       ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; createdAt: number }>
   const mealEntries = (data?.mealEntries        ?? []) as Array<{ date: string; protein?: number }>
   const completions = (data?.workoutCompletions ?? []) as Array<{ date: string }>
   const waterLogs   = (data?.waterLogs          ?? []) as Array<{ id: string; date: string; glasses: number }>
@@ -126,6 +185,10 @@ export default function Dashboard() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      {selectedExercise && (
+        <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
+      )}
+
       {/* Greeting */}
       <div className="mb-6">
         <h1 className="text-2xl font-black gradient-text">{getGreeting(userProfile?.name)}</h1>
@@ -165,7 +228,7 @@ export default function Dashboard() {
                   className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
                   style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}
                 >
-                  View Plan
+                  Full History
                 </Link>
                 <Link
                   to="/reevaluate"
@@ -183,7 +246,39 @@ export default function Dashboard() {
                 </Link>
               </div>
             </div>
+
+            {/* Plan expand/collapse toggle */}
+            <button
+              onClick={() => setPlanExpanded(e => !e)}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 border-t transition-colors"
+              style={{ borderColor: 'rgba(255,255,255,0.07)', color: planExpanded ? 'rgba(255,255,255,0.35)' : 'rgba(168,85,247,0.7)' }}
+            >
+              <svg
+                className={`w-3 h-3 transition-transform ${planExpanded ? 'rotate-180' : ''}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-[11px] font-medium">
+                {planExpanded ? 'Collapse plan' : 'Show plan'}
+              </span>
+            </button>
           </GlassCard>
+
+          {/* Inline plan content */}
+          {planExpanded && latestPlan.plan && (
+            <GlassCard>
+              <p className="text-white/30 text-xs mb-4 flex items-center gap-1.5">
+                <span className="text-purple-400">▶</span>
+                Tap any exercise for a guide. Log your weights below.
+              </p>
+              <PlanPreview
+                planId={latestPlan.id}
+                planText={latestPlan.plan}
+                onExerciseClick={setSelectedExercise}
+              />
+            </GlassCard>
+          )}
 
           {/* 4-streak grid */}
           <GlassCard padding={false}>
@@ -217,40 +312,34 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Water tracker */}
-              <div className="px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">💧</span>
-                  <span className="text-sm font-medium text-white/70">Water</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => void setGlasses(glasses - 1)}
-                    disabled={glasses === 0}
-                    className="w-7 h-7 rounded-lg text-base font-bold text-white/45 border border-white/10
-                               hover:text-white/70 hover:border-white/20 disabled:opacity-25
-                               disabled:cursor-not-allowed transition-all flex items-center justify-center leading-none"
-                  >
-                    −
-                  </button>
+              {/* Water tracker - glass icons */}
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">💧</span>
+                    <span className="text-sm font-medium text-white/70">Water</span>
+                  </div>
                   <span
-                    className="text-lg font-black tabular-nums w-7 text-center leading-none"
-                    style={
-                      glasses > 0
-                        ? { background: 'linear-gradient(135deg,#22D3EE,#34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
-                        : { color: 'rgba(255,255,255,0.2)' }
+                    className="text-xs tabular-nums font-semibold"
+                    style={glasses >= DAILY_GOAL
+                      ? { background: 'linear-gradient(135deg,#22D3EE,#34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+                      : { color: 'rgba(255,255,255,0.3)' }
                     }
                   >
-                    {glasses}
+                    {glasses}/{DAILY_GOAL} glasses
                   </span>
-                  <button
-                    onClick={() => void setGlasses(glasses + 1)}
-                    className="w-7 h-7 rounded-lg text-base font-bold border transition-all flex items-center justify-center leading-none"
-                    style={{ color: '#22D3EE', borderColor: 'rgba(34,211,238,0.3)', background: 'rgba(34,211,238,0.08)' }}
-                  >
-                    +
-                  </button>
-                  <span className="text-[11px] text-white/25 w-9">/ {DAILY_GOAL} gl</span>
+                </div>
+                <div className="flex items-end gap-1.5">
+                  {Array.from({ length: DAILY_GOAL }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => void setGlasses(glasses === i + 1 ? i : i + 1)}
+                      className="transition-all duration-150 active:scale-90 hover:scale-105"
+                      aria-label={`Set ${i + 1} glass${i > 0 ? 'es' : ''}`}
+                    >
+                      <GlassIcon filled={i < glasses} />
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -260,10 +349,10 @@ export default function Dashboard() {
           <GlassCard padding={false}>
             <div className="divide-y divide-white/[0.07]">
               {[
-                { to: '/diet',      emoji: '🍽️', label: 'Diet Log',   sub: 'Track meals and macros' },
-                { to: '/history',   emoji: '📋', label: 'My Plans',   sub: 'View and manage plans' },
-                { to: '/community', emoji: '🏆', label: 'Community',  sub: 'Leaderboard and finds' },
-                { to: '/chat',      emoji: '🤖', label: 'Ask Kai',    sub: 'Your AI fitness coach' },
+                { to: '/diet',      emoji: '🍽️', label: 'Diet Log',       sub: 'Track meals and macros' },
+                { to: '/machine',   emoji: '🏋️', label: 'Machine Guide', sub: 'Photo any gym machine' },
+                { to: '/community', emoji: '🏆', label: 'Community',     sub: 'Leaderboard and finds' },
+                { to: '/chat',      emoji: '🤖', label: 'Ask Kai',        sub: 'Your AI fitness coach' },
               ].map(({ to, emoji, label, sub }) => (
                 <Link
                   key={to}
@@ -343,8 +432,8 @@ export default function Dashboard() {
             <div className="divide-y divide-white/[0.07]">
               {[
                 { to: '/diet',    emoji: '🥗', label: 'Nutrition tracking', sub: 'Log meals, scan barcodes, hit macros' },
+                { to: '/machine', emoji: '🏋️', label: 'Machine Guide',     sub: 'Photo any gym machine for instructions' },
                 { to: '/scanner', emoji: '📷', label: 'Food scanner',       sub: 'Scan any product for nutrition info' },
-                { to: '/community', emoji: '🏆', label: 'Community',        sub: 'Leaderboard and healthy finds' },
               ].map(({ to, emoji, label, sub }) => (
                 <Link
                   key={to}

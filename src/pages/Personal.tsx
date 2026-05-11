@@ -22,15 +22,18 @@ export default function Personal() {
   const { data: findsData }   = db.useQuery({ communityFinds:     { $: { where: { sharedBy: userId } } } })
   const { data: profileData } = db.useQuery({ userProfiles:       { $: { where: { userId } } } })
 
-  const userProfile = (profileData?.userProfiles ?? [])[0] as { id: string; name?: string; country?: string; language?: string } | undefined
+  const userProfile = (profileData?.userProfiles ?? [])[0] as { id: string; name?: string } | undefined
+
+  const allPlans   = (planData?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
+  const latestPlan = [...allPlans].sort((a, b) => b.createdAt - a.createdAt)[0]
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteBusy, setDeleteBusy]               = useState(false)
-  const [editingField, setEditingField]            = useState<null | 'name' | 'country' | 'language'>(null)
+  const [editingField, setEditingField]            = useState<null | 'name'>(null)
   const [editValue, setEditValue]                  = useState('')
   const [notifPermission, setNotifPermission]      = useState(() => getNotificationPermission())
 
-  const saveProfileField = async (field: 'name' | 'country' | 'language', value: string) => {
+  const saveProfileField = async (field: 'name', value: string) => {
     if (!userProfile) return
     await db.transact(db.tx.userProfiles[userProfile.id].update({ [field]: value.trim() }))
     setEditingField(null)
@@ -142,86 +145,6 @@ export default function Personal() {
               <span className="text-xs text-white/40 w-20 flex-shrink-0">Email</span>
               <span className="text-sm text-white/50 flex-1 truncate">{user?.email}</span>
             </div>
-
-            {/* Country */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-white/40 w-20 flex-shrink-0">Country</span>
-              {editingField === 'country' ? (
-                <div className="flex-1 flex gap-2">
-                  <input
-                    className="input-glass !py-1.5 !text-sm flex-1"
-                    autoFocus
-                    placeholder="e.g. United States"
-                    value={editValue}
-                    onChange={e => setEditValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') void saveProfileField('country', editValue) }}
-                  />
-                  <button
-                    onClick={() => void saveProfileField('country', editValue)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
-                    style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}
-                  >
-                    Save
-                  </button>
-                  <button onClick={() => setEditingField(null)} className="text-xs text-white/35 px-2">Cancel</button>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="text-sm text-white/70">{userProfile?.country || 'Not set'}</span>
-                  {userProfile && (
-                    <button
-                      onClick={() => { setEditingField('country'); setEditValue(userProfile.country ?? '') }}
-                      className="text-white/30 hover:text-white/60 transition-colors ml-2"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Language */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-white/40 w-20 flex-shrink-0">Language</span>
-              {editingField === 'language' ? (
-                <div className="flex-1 flex gap-2 flex-wrap">
-                  {[
-                    { value: 'en', label: 'English' }, { value: 'es', label: 'Spanish' },
-                    { value: 'fr', label: 'French' },  { value: 'de', label: 'German' },
-                    { value: 'pt', label: 'Portuguese' }, { value: 'it', label: 'Italian' },
-                  ].map(({ value, label }) => (
-                    <button
-                      key={value}
-                      onClick={() => void saveProfileField('language', value)}
-                      className={`text-xs px-2.5 py-1 rounded-xl border transition-all ${
-                        (userProfile?.language ?? 'en') === value
-                          ? 'border-purple-500/60 bg-purple-500/15 text-purple-300'
-                          : 'border-white/10 bg-white/5 text-white/50 hover:text-white/80'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                  <button onClick={() => setEditingField(null)} className="text-xs text-white/35 px-2">Cancel</button>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="text-sm text-white/70 capitalize">{userProfile?.language ?? 'en'}</span>
-                  {userProfile && (
-                    <button
-                      onClick={() => setEditingField('language')}
-                      className="text-white/30 hover:text-white/60 transition-colors ml-2"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
@@ -229,16 +152,28 @@ export default function Personal() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Training & Nutrition</p>
           <div className="space-y-2">
-            <Link
-              to="/reevaluate"
-              className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
+            <button
+              onClick={() => {
+                if (!latestPlan) { navigate('/questionnaire'); return }
+                navigate('/reevaluate', {
+                  state: {
+                    planId:       latestPlan.id,
+                    originalPlan: latestPlan.plan,
+                    userName:     latestPlan.userName,
+                    fitnessLevel: latestPlan.fitnessLevel ?? '',
+                    goals:        latestPlan.goals ?? '[]',
+                    equipment:    latestPlan.equipment ?? '[]',
+                  },
+                })
+              }}
+              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <span className="text-sm text-white/70">Edit Training Goals</span>
               <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </Link>
+            </button>
             <Link
               to="/questionnaire"
               className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"

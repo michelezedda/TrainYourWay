@@ -13,6 +13,7 @@ import Support from '@/pages/Support'
 import Personal from '@/pages/Personal'
 import Scanner from '@/pages/Scanner'
 import Community from '@/pages/Community'
+import MachineGuide from '@/pages/MachineGuide'
 
 function Spinner() {
   return (
@@ -44,6 +45,7 @@ export default function AuthGuard() {
       <Route path="/me"            element={<Personal />} />
       <Route path="/scanner"       element={<Scanner />} />
       <Route path="/community"     element={<Community />} />
+      <Route path="/machine"       element={<MachineGuide />} />
     </Routes>
   )
 }

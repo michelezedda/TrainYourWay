@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { id } from '@instantdb/react'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
 import { type WorkoutFormData } from '@/lib/gemini'
@@ -212,7 +211,7 @@ const DURATION_OPTIONS = ['20', '30', '45', '60', '90', '120']
 const PRESET_EQUIPMENT_LABELS = new Set(EQUIPMENT_OPTIONS.map((o) => o.label))
 
 export default function Questionnaire() {
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(1)
   const [form, setForm] = useState<FormData>(INITIAL)
   const [error, setError] = useState('')
   const [goalConflictMsg, setGoalConflictMsg] = useState('')
@@ -220,8 +219,6 @@ export default function Questionnaire() {
   const [customSport, setCustomSport]     = useState('')
   const [customInput, setCustomInput] = useState('')
   const [showMoreDiets, setShowMoreDiets] = useState(false)
-  // Step 0 fields
-  const [name, setName] = useState('')
   const navigate = useNavigate()
 
   const userId = getUserId()
@@ -365,19 +362,10 @@ export default function Questionnaire() {
 
   const handleNext = () => {
     setError('')
-    if (step === 0) {
-      const existing = (profileData?.userProfiles ?? []) as Array<{ id: string }>
-      if (existing.length === 0) {
-        void db.transact(db.tx.userProfiles[id()].update({
-          userId, name: name.trim(), createdAt: Date.now(),
-        }))
-      }
-    }
     setStep(s => s + 1)
   }
 
   const canAdvance = (): boolean => {
-    if (step === 0) return name.trim().length >= 2
     if (step === 1) return !!(
       form.age.trim() && form.sex && form.fitnessLevel &&
       !ageInvalid && form.weight.trim() && !weightInvalid &&
@@ -392,7 +380,7 @@ export default function Questionnaire() {
 
   const handleSubmit = () => {
     const planName = generatePlanName(form.goals, form.fitnessLevel, form.equipment, form.daysPerWeek)
-    saveNutritionProfile({
+    const nutritionData = {
       sex: form.sex as 'male' | 'female',
       age: parseInt(form.age, 10),
       weight: weightKg,
@@ -402,7 +390,15 @@ export default function Questionnaire() {
       dietType: form.dietType,
       allergies: form.foodAllergies,
       mealsPerDay: parseInt(form.mealsPerDay, 10) || 3,
-    })
+    }
+    saveNutritionProfile(nutritionData)
+    const existingProfiles = (profileData?.userProfiles ?? []) as Array<{ id: string }>
+    const profileId = existingProfiles[0]?.id
+    if (profileId) {
+      void db.transact(db.tx.userProfiles[profileId].update({
+        nutritionSnapshot: JSON.stringify(nutritionData),
+      }))
+    }
     const payload: WorkoutFormData = {
       planName,
       age: form.age,
@@ -441,25 +437,6 @@ export default function Questionnaire() {
       )}
 
       <GlassCard className="animate-slide-up">
-        {/* Step 0 — Welcome */}
-        {step === 0 && (
-          <div className="space-y-6">
-            <StepHeader title="Welcome! Let's get started" subtitle="What should we call you?" />
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Your name <span className="text-red-400">*</span></label>
-              <input
-                className="input-glass"
-                type="text"
-                placeholder="e.g. Alex"
-                autoFocus
-                value={name}
-                onChange={e => setName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && canAdvance()) handleNext() }}
-              />
-            </div>
-          </div>
-        )}
-
         {/* Step 1 — Profile */}
         {step === 1 && (
           <div className="space-y-6">
@@ -1122,8 +1099,8 @@ export default function Questionnaire() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
           <button
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            disabled={step === 0}
+            onClick={() => setStep((s) => Math.max(1, s - 1))}
+            disabled={step === 1}
             className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
