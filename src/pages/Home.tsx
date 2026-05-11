@@ -114,7 +114,7 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link to={user ? '/questionnaire' : '/auth'} className="btn-primary text-base">
-            {user ? 'Build My Plan' : 'Get Started Free'}
+            {user ? 'Build My Plan' : 'Get Started for Free'}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
             </svg>
@@ -303,7 +303,7 @@ export default function Home() {
             Your personalised training and nutrition plan is waiting. Takes five minutes to set up and zero equipment to get started.
           </p>
           <Link to={user ? '/questionnaire' : '/auth'} className="btn-primary text-base relative inline-flex">
-            {user ? 'Build My Plan Now' : 'Get Started Free'}
+            {user ? 'Build My Plan Now' : 'Get Started for Free'}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
             </svg>

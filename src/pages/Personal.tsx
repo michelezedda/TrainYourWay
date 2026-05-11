@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
