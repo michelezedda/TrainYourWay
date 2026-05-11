@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import BottomNav from '@/components/BottomNav'
 import AuthGuard from '@/components/AuthGuard'
 import Home from '@/pages/Home'
+import Auth from '@/pages/Auth'
 import { db } from '@/lib/db'
 import { setAuthUserId } from '@/lib/userId'
 
@@ -49,8 +50,9 @@ export default function App() {
         <div className="min-h-screen flex flex-col">
           <div className="flex-1 pb-nav">
             <Routes>
-              <Route path="/"  element={<Home />} />
-              <Route path="/*" element={<AuthGuard />} />
+              <Route path="/"     element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/*"   element={<AuthGuard />} />
             </Routes>
           </div>
           <BottomNav />

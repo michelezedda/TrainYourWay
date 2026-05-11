@@ -49,11 +49,11 @@ function PersonIcon({ active }: { active: boolean }) {
 }
 
 const NAV = [
-  { to: '/',        label: 'Home',  Icon: HomeIcon   },
-  { to: '/diet',    label: 'Diet',  Icon: ForkIcon   },
-  { to: '/scanner', label: 'Scan',  Icon: ScanIcon   },
-  { to: '/chat',    label: 'Kai',   Icon: ChatIcon   },
-  { to: '/me',      label: 'Personal', Icon: PersonIcon },
+  { to: '/dashboard', label: 'Home',     Icon: HomeIcon   },
+  { to: '/diet',      label: 'Diet',     Icon: ForkIcon   },
+  { to: '/scanner',   label: 'Scan',     Icon: ScanIcon   },
+  { to: '/chat',      label: 'Kai',      Icon: ChatIcon   },
+  { to: '/me',        label: 'Settings', Icon: PersonIcon },
 ]
 
 export default function BottomNav() {
@@ -70,7 +70,7 @@ export default function BottomNav() {
     >
       <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2">
         {NAV.map(({ to, label, Icon }) => {
-          const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+          const active = location.pathname === to || location.pathname.startsWith(to + '/')
           return (
             <Link
               key={to}

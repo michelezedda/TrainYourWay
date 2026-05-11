@@ -105,14 +105,6 @@ function generatePlanName(goals: string[], fitnessLevel: string, equipment: stri
 
 const STEP_LABELS = ['Profile', 'Goals', 'Equipment', 'Schedule', 'Diet', 'Space', 'Notifications']
 
-const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'de', label: 'German' },
-  { value: 'pt', label: 'Portuguese' },
-  { value: 'it', label: 'Italian' },
-]
 
 interface BmiRec {
   bmi: number
@@ -230,8 +222,6 @@ export default function Questionnaire() {
   const [showMoreDiets, setShowMoreDiets] = useState(false)
   // Step 0 fields
   const [name, setName] = useState('')
-  const [language, setLanguage] = useState(() => navigator.language?.slice(0, 2) || 'en')
-  const [country, setCountry] = useState('')
   const navigate = useNavigate()
 
   const userId = getUserId()
@@ -379,7 +369,7 @@ export default function Questionnaire() {
       const existing = (profileData?.userProfiles ?? []) as Array<{ id: string }>
       if (existing.length === 0) {
         void db.transact(db.tx.userProfiles[id()].update({
-          userId, name: name.trim(), country: country.trim(), language, createdAt: Date.now(),
+          userId, name: name.trim(), createdAt: Date.now(),
         }))
       }
     }
@@ -454,50 +444,18 @@ export default function Questionnaire() {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div className="space-y-6">
-            <StepHeader title="Welcome! Let's get started" subtitle="Tell us a bit about yourself so we can personalise everything." />
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Your name <span className="text-red-400">*</span></label>
-                <input
-                  className="input-glass"
-                  type="text"
-                  placeholder="e.g. Alex"
-                  autoFocus
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && canAdvance()) handleNext() }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Language</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {LANGUAGE_OPTIONS.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      onClick={() => setLanguage(value)}
-                      className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 ${
-                        language === value
-                          ? 'text-white border-purple-500/60 bg-purple-500/15'
-                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">
-                  Country <span className="text-white/25 text-xs font-normal">optional</span>
-                </label>
-                <input
-                  className="input-glass"
-                  type="text"
-                  placeholder="e.g. United States"
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                />
-              </div>
+            <StepHeader title="Welcome! Let's get started" subtitle="What should we call you?" />
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">Your name <span className="text-red-400">*</span></label>
+              <input
+                className="input-glass"
+                type="text"
+                placeholder="e.g. Alex"
+                autoFocus
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && canAdvance()) handleNext() }}
+              />
             </div>
           </div>
         )}
