@@ -497,7 +497,7 @@ export default function Questionnaire() {
                       <button
                         key={s}
                         onClick={() => update({ sex: s })}
-                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize ${
+                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex align-items justify-center ${
                           form.sex === s
                             ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                             : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
@@ -1145,7 +1145,9 @@ export default function Questionnaire() {
               className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
               Continue
-              <HiArrowNarrowRight className="w-4 h-4" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
+              </svg>
             </button>
           )}
         </div>
