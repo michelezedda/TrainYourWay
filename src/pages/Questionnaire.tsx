@@ -14,6 +14,7 @@ interface FormData {
   unit: Unit
   age: string
   sex: '' | 'male' | 'female'
+  bodyType: '' | 'ectomorph' | 'mesomorph' | 'endomorph'
   weight: string   // kg (metric) or lbs (imperial)
   height: string   // cm (metric) or feet (imperial)
   heightIn: string // inches — imperial only
@@ -37,6 +38,7 @@ const INITIAL: FormData = {
   unit: 'metric',
   age: '',
   sex: '',
+  bodyType: '',
   weight: '',
   height: '',
   heightIn: '',
@@ -223,6 +225,8 @@ export default function Questionnaire() {
 
   const userId = getUserId()
   const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
+  const { data: plansData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
+  const existingPlanIds = (plansData?.workoutPlans ?? []).map((p: { id: string }) => p.id)
 
   const update = (patch: Partial<FormData>) => setForm((p) => ({ ...p, ...patch }))
 
@@ -367,7 +371,7 @@ export default function Questionnaire() {
 
   const canAdvance = (): boolean => {
     if (step === 1) return !!(
-      form.age.trim() && form.sex && form.fitnessLevel &&
+      form.age.trim() && form.sex && form.fitnessLevel && form.bodyType &&
       !ageInvalid && form.weight.trim() && !weightInvalid &&
       form.height.trim() && !heightInvalid
     )
@@ -402,6 +406,8 @@ export default function Questionnaire() {
     const payload: WorkoutFormData = {
       planName,
       age: form.age,
+      sex: form.sex as 'male' | 'female',
+      bodyType: form.bodyType as WorkoutFormData['bodyType'],
       weight: weightKg.toFixed(1),
       height: heightCm.toFixed(0),
       fitnessLevel: form.fitnessLevel as WorkoutFormData['fitnessLevel'],
@@ -419,7 +425,7 @@ export default function Questionnaire() {
       customRestrictions: form.customRestrictions,
       mealsPerDay: form.mealsPerDay,
     }
-    navigate('/generating', { state: { payload } })
+    navigate('/generating', { state: { payload, plansToDelete: existingPlanIds } })
   }
 
   return (
@@ -584,6 +590,31 @@ export default function Questionnaire() {
                       }`}
                     >
                       {level === 'beginner' ? '🌱' : level === 'intermediate' ? '🔥' : '⚡'} {level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-1.5">Body Type</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    { value: 'ectomorph',  label: 'Ectomorph',  icon: '🦴', desc: 'Lean, fast metabolism' },
+                    { value: 'mesomorph',  label: 'Mesomorph',  icon: '💪', desc: 'Athletic, builds easily' },
+                    { value: 'endomorph',  label: 'Endomorph',  icon: '🧱', desc: 'Heavier, gains weight easily' },
+                  ] as const).map(({ value, label, icon, desc }) => (
+                    <button
+                      key={value}
+                      onClick={() => update({ bodyType: value })}
+                      className={`py-3 px-2 rounded-2xl text-sm border transition-all duration-200 flex flex-col items-center gap-1 ${
+                        form.bodyType === value
+                          ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                      }`}
+                    >
+                      <span className="text-lg leading-none">{icon}</span>
+                      <span className="font-medium text-xs">{label}</span>
+                      <span className="text-[10px] text-white/35 leading-tight text-center">{desc}</span>
                     </button>
                   ))}
                 </div>
@@ -1067,6 +1098,16 @@ export default function Questionnaire() {
         {/* Step 7 — Notifications */}
         {step === 7 && (
           <div className="space-y-6">
+            {existingPlanIds.length > 0 && (
+              <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25">
+                <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <p className="text-sm text-amber-300/90 leading-relaxed">
+                  You already have a plan. Generating a new one will replace your current plan and all its history.
+                </p>
+              </div>
+            )}
             <div className="text-center py-4">
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
@@ -1099,9 +1140,8 @@ export default function Questionnaire() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
           <button
-            onClick={() => setStep((s) => Math.max(1, s - 1))}
-            disabled={step === 1}
-            className="btn-ghost disabled:opacity-30 disabled:cursor-not-allowed"
+            onClick={() => step === 1 ? navigate('/') : setStep((s) => s - 1)}
+            className="btn-ghost"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5 5-5M18 12H6" />

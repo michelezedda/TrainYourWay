@@ -495,12 +495,6 @@ export default function Results() {
             onUnblockDay={handleUnblockDay}
             onGenerateDayWorkout={handleGenerateDayWorkout}
           />
-
-          <div className="flex justify-center mt-8">
-            <Link to="/questionnaire" className="btn-primary">
-              Generate Another Plan ✨
-            </Link>
-          </div>
         </div>
       )}
     </main>

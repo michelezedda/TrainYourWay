@@ -30,6 +30,7 @@ export default function Generating() {
   const location = useLocation()
   const payload = location.state?.payload as WorkoutFormData | undefined
   const reevaluation = location.state?.reevaluation as ReevaluationData | undefined
+  const plansToDelete = (location.state?.plansToDelete as string[] | undefined) ?? []
   const isReevaluation = !!reevaluation
 
   const [tipIndex, setTipIndex] = useState(0)
@@ -71,14 +72,18 @@ export default function Generating() {
               fitnessLevel: reevaluation.fitnessLevel,
               goals: typeof reevaluation.goals === 'string' ? reevaluation.goals : JSON.stringify(reevaluation.goals),
               equipment: typeof reevaluation.equipment === 'string' ? reevaluation.equipment : JSON.stringify(reevaluation.equipment),
-              constraints: '',
+              constraints: reevaluation.daysPerWeek ? `${reevaluation.daysPerWeek}d/wk` : '',
               plan,
               createdAt: Date.now(),
               parentPlanId: reevaluation.originalPlanId,
+              unavailableDays: JSON.stringify(reevaluation.unavailableDays ?? []),
             }),
           )
           navigate('/results', { state: { plan, planId, reevalData: reevaluation, reevalAnalysis }, replace: true })
         } else if (payload) {
+          if (plansToDelete.length > 0) {
+            await db.transact(plansToDelete.map(id => db.tx.workoutPlans[id].delete()))
+          }
           const [analysis, plan] = await Promise.all([
             generateAnalysis(payload),
             generateWorkoutPlan(payload),

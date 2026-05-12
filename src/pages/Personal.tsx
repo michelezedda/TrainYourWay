@@ -179,7 +179,7 @@ export default function Personal() {
               className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-              <span className="text-sm text-white/70">Edit Diet Preferences</span>
+              <span className="text-sm text-white/70">Start Over </span>
               <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -252,7 +252,7 @@ export default function Personal() {
           onClick={() => !deleteBusy && setShowDeleteConfirm(false)}
         >
           <div
-            className="glass-card w-full max-w-sm p-6 space-y-4"
+            className="glass-card w-full max-w-sm p-6 space-y-4 mb-20"
             onClick={e => e.stopPropagation()}
           >
             <div>

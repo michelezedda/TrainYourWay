@@ -14,6 +14,8 @@ function getGroq(): Groq {
 export interface WorkoutFormData {
   planName: string  // auto-generated descriptive name
   age: string
+  sex?: 'male' | 'female'
+  bodyType?: 'ectomorph' | 'mesomorph' | 'endomorph'
   weight: string   // kg
   height: string   // cm
   fitnessLevel: 'beginner' | 'intermediate' | 'advanced'
@@ -35,6 +37,16 @@ export interface WorkoutFormData {
 function formatSports(sports: string[] | undefined): string {
   if (!sports || sports.length === 0) return ''
   return sports.filter(s => s.trim()).join(', ')
+}
+
+function bodyTypeNote(bodyType: string | undefined): string {
+  if (!bodyType) return ''
+  const notes: Record<string, string> = {
+    ectomorph: 'Ectomorph: naturally lean, fast metabolism, struggles to gain muscle. Prioritize progressive overload, sufficient volume, and calorie surplus if muscle gain is a goal.',
+    mesomorph: 'Mesomorph: naturally athletic, responds well to training, gains muscle and loses fat efficiently. Can handle higher volume and intensity.',
+    endomorph: 'Endomorph: heavier natural build, slower metabolism, gains fat easily. Emphasize compound movements, metabolic conditioning, and calorie control.',
+  }
+  return notes[bodyType] ?? ''
 }
 
 function bmiLabel(weight: string, height: string): string {
@@ -59,10 +71,10 @@ function buildPrompt(data: WorkoutFormData): string {
   return `You are an expert personal trainer and fitness coach. Create a detailed, personalized weekly workout plan based on the profile below.
 
 USER PROFILE:
-- Age: ${data.age}
+- Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
 - Weight: ${data.weight} kg | Height: ${data.height} cm | BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
-- Goals: ${data.goals.join(', ')}
+${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Available Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? `, additional notes: ${data.equipmentNotes}` : ''}
 - Injuries / Limitations: ${data.injuries || 'None'}
 - Training: ${data.daysPerWeek} days/week, ${data.sessionDuration} minutes/session
@@ -153,10 +165,10 @@ function buildAnalysisPrompt(data: WorkoutFormData): string {
   return `You are an expert personal trainer and nutritionist doing an initial assessment before creating a workout plan.
 
 USER PROFILE:
-- Age: ${data.age}
+- Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
 - Weight: ${data.weight} kg, Height: ${data.height} cm, BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
-- Goals: ${data.goals.join(', ')}
+${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? ` (${data.equipmentNotes})` : ''}
 - Injuries or limitations: ${data.injuries || 'None'}
 - Schedule: ${data.daysPerWeek} days/week, ${data.sessionDuration}-minute sessions
@@ -248,6 +260,8 @@ export interface ReevaluationData {
   exercisesToRemove: string
   newInjuries: string
   newGoals: string[]
+  daysPerWeek?: string
+  unavailableDays?: string[]
 }
 
 export async function reevaluateWorkoutPlan(data: ReevaluationData): Promise<string> {
@@ -266,7 +280,7 @@ export async function reevaluateWorkoutPlan(data: ReevaluationData): Promise<str
       ? 'User has been consistent, apply full progression'
       : 'User has been inconsistent, consolidate and reinforce before progressing'
 
-  const prompt = `You are an expert personal trainer conducting a progress review.
+  const prompt = `You are an expert personal trainer conducting a formal progress review and writing a FULLY EVOLVED workout plan.
 
 PROGRESS REPORT:
 - Time on current plan: ${data.timeOnPlan}
@@ -282,23 +296,39 @@ UPDATED BODY STATS:
 
 ORIGINAL FITNESS PROFILE:
 - Level: ${data.fitnessLevel} | Goals: ${goals} | Equipment: ${equipment}
+${data.daysPerWeek ? `- New schedule: ${data.daysPerWeek} days/week` : ''}
+${data.unavailableDays?.length ? `- Cannot train on: ${data.unavailableDays.join(', ')}` : ''}
 
 THE PLAN THEY HAVE BEEN FOLLOWING:
 ${data.originalPlan}
 
 ---
 
-Trainer notes:
-- ${progressionNote}
-- ${consistencyNote}
-- Replace every exercise listed in "Exercises to remove/replace" with a suitable alternative targeting the same muscle group
-- Respect any new injuries. Avoid or modify affected movements.
-${data.newGoals.length > 0 ? `- Shift emphasis toward: ${data.newGoals.join(', ')}` : ''}
+TRAINER DIRECTIVES (apply all of them):
+1. ${progressionNote}
+2. ${consistencyNote}
+3. Replace EVERY exercise listed in "Exercises to remove/replace" with a different alternative targeting the same muscle group.
+4. Respect all new injuries. Remove or modify every affected movement.
+${data.newGoals.length > 0 ? `5. Shift emphasis toward: ${data.newGoals.join(', ')}` : ''}
+6. Swap at minimum 3 exercises across the plan with fresh alternatives to prevent adaptation.
+7. Change EVERY set/rep/weight figure compared to the original — no figure may be identical to the original.
+8. Update rest periods where appropriate.
+9. Rewrite the Overview section to describe this evolved phase and how it differs from the previous one.
+10. Update the Progression Plan for the next 4-8 weeks beyond this phase.
+${data.daysPerWeek ? `11. Build the plan around exactly ${data.daysPerWeek} training days per week${data.unavailableDays?.length ? `. Mark ${data.unavailableDays.join(', ')} as Rest in the Weekly Schedule` : ''}.` : ''}
 
-Create the evolved plan using the EXACT same Markdown structure as the original.
+THIS MUST BE A COMPLETE, FULLY WRITTEN PLAN — not a summary or a list of changes. Every training day must be written in full.
+
 Title: # ${data.userName}: Next Phase
 
-After the Nutrition Tips section, add a "Your Stats" section:
+CRITICAL FORMAT — follow these exactly or the plan will not render:
+- Day sections MUST use: ### Day N: [Focus Area]
+- Swapped exercises MUST include *(new)* inside the bold name line only: **N. Exercise Name *(new)***
+- Exercise meta line MUST start with "Sets:": Sets: X × Y reps | Rest: Ns | Weight: [range or Bodyweight]
+- The "Sets:" line must never have any text or marker before it
+- NEVER use markdown tables
+
+After the Nutrition Tips section, include:
 
 ## Your Stats
 **Body Metrics:** Weight ${data.currentWeight} kg | Height ${data.currentHeight} cm | BMI ${bmiLabel(data.currentWeight, data.currentHeight)}
@@ -306,11 +336,9 @@ After the Nutrition Tips section, add a "Your Stats" section:
 > **Note:** BMI is a general reference point. It does not account for muscle mass, body composition, age, or athletic background. Use it as context, not a verdict. Always listen to your body and consult a healthcare professional before starting any new exercise programme.
 
 Rules:
-- NEVER use markdown tables
 - Include Weight: field on every exercise (kg range, Bodyweight, or band level)
-- Mark swapped exercises with *(new)* after the name
-- Mark increased weights/reps/sets with *(up)* after the value
-- Every change must be explicit. No vague "adjust as needed".`
+- Every change must be explicit — no vague "adjust as needed"
+- Write the full plan, do not truncate or skip any day`
 
   const completion = await getGroq().chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -318,7 +346,11 @@ Rules:
     max_tokens: 8192,
   })
 
-  return completion.choices[0]?.message?.content ?? ''
+  const result = completion.choices[0]?.message?.content ?? ''
+  if (!result || result.trim().length < 200) {
+    throw new Error('The evolved plan could not be generated. Please try again.')
+  }
+  return result
 }
 
 export async function generateReevaluationAnalysis(data: ReevaluationData): Promise<string> {

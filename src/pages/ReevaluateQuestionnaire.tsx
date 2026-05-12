@@ -6,6 +6,9 @@ import { type ReevaluationData } from '@/lib/gemini'
 
 const STEP_LABELS = ['Progress', 'Body', 'Adjustments']
 
+const DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_FULL    = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 function parseStatsFromPlan(plan: string): { weight: string; height: string } {
   const match = plan.match(/\*\*Body Metrics:\*\*\s*Weight\s+([\d.]+)\s*kg\s*\|\s*Height\s+([\d.]+)\s*cm/)
   return match ? { weight: match[1], height: match[2] } : { weight: '', height: '' }
@@ -48,6 +51,8 @@ interface RevalForm {
   currentHeightIn: string
   physicalFeel: string
   difficulty: string
+  daysPerWeek: string
+  unavailableDays: string[]
   exercisesToRemove: string
   newInjuries: string
   newGoals: string[]
@@ -62,6 +67,8 @@ const INITIAL: RevalForm = {
   currentHeightIn: '',
   physicalFeel: '',
   difficulty: '',
+  daysPerWeek: '3',
+  unavailableDays: [],
   exercisesToRemove: '',
   newInjuries: '',
   newGoals: [],
@@ -82,6 +89,7 @@ export default function ReevaluateQuestionnaire() {
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<RevalForm>(INITIAL)
+  const [dayBlockError, setDayBlockError] = useState('')
 
   if (!original) {
     navigate('/history', { replace: true })
@@ -122,6 +130,23 @@ export default function ReevaluateQuestionnaire() {
       ...p,
       newGoals: p.newGoals.includes(goal) ? p.newGoals.filter((g) => g !== goal) : [...p.newGoals, goal],
     }))
+  }
+
+  const toggleDay = (day: string) => {
+    if (form.unavailableDays.includes(day)) {
+      setDayBlockError('')
+      setForm((p) => ({ ...p, unavailableDays: p.unavailableDays.filter((d) => d !== day) }))
+      return
+    }
+    const maxBlocked = 7 - parseInt(form.daysPerWeek, 10)
+    if (form.unavailableDays.length >= maxBlocked) {
+      setDayBlockError(
+        `You want to train ${form.daysPerWeek} day${parseInt(form.daysPerWeek) !== 1 ? 's' : ''} a week, so you can only block up to ${maxBlocked} day${maxBlocked !== 1 ? 's' : ''}.`
+      )
+      return
+    }
+    setDayBlockError('')
+    setForm((p) => ({ ...p, unavailableDays: [...p.unavailableDays, day] }))
   }
 
   // --- validation ---
@@ -174,6 +199,8 @@ export default function ReevaluateQuestionnaire() {
       currentHeight: heightCm.toFixed(0),
       physicalFeel: form.physicalFeel,
       difficulty: form.difficulty,
+      daysPerWeek: form.daysPerWeek,
+      unavailableDays: form.unavailableDays,
       exercisesToRemove: form.exercisesToRemove,
       newInjuries: form.newInjuries,
       newGoals: form.newGoals,
@@ -362,7 +389,80 @@ export default function ReevaluateQuestionnaire() {
         {/* Step 3 — Adjustments */}
         {step === 3 && (
           <div className="space-y-6">
-            <StepHeader title="Adjustments" subtitle="Anything you want changed? All fields are optional." />
+            <StepHeader title="Adjustments" subtitle="Update your schedule and anything else you want changed." />
+
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-3">
+                Training days per week:{' '}
+                <span className="text-white font-semibold">{form.daysPerWeek} days</span>
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="7"
+                value={form.daysPerWeek}
+                onChange={(e) => {
+                  const val = e.target.value
+                  const maxBlocked = 7 - parseInt(val, 10)
+                  setDayBlockError('')
+                  setForm((p) => ({
+                    ...p,
+                    daysPerWeek: val,
+                    unavailableDays: p.unavailableDays.slice(0, maxBlocked),
+                  }))
+                }}
+                className="w-full accent-purple-500 h-2 rounded-full"
+              />
+              <div className="flex justify-between text-xs text-white/30 mt-1">
+                {[1,2,3,4,5,6,7].map((n) => <span key={n}>{n}</span>)}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">
+                Days you cannot train{' '}
+                <span className="text-white/25 text-xs font-normal">optional</span>
+              </label>
+              <div className="grid grid-cols-7 gap-1.5">
+                {DAY_OPTIONS.map((day, i) => {
+                  const unavailable = form.unavailableDays.includes(DAY_FULL[i])
+                  const maxBlocked  = 7 - parseInt(form.daysPerWeek, 10)
+                  const atLimit     = !unavailable && form.unavailableDays.length >= maxBlocked
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => toggleDay(DAY_FULL[i])}
+                      disabled={atLimit}
+                      className={`flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 ${
+                        unavailable
+                          ? 'border-red-500/50 bg-red-500/15 text-red-300'
+                          : atLimit
+                          ? 'border-white/5 bg-white/2 text-white/20 cursor-not-allowed'
+                          : 'border-white/10 bg-white/4 text-white/50 hover:bg-white/8 hover:text-white/80'
+                      }`}
+                    >
+                      <span className="text-[11px] font-bold uppercase tracking-wide">{day}</span>
+                      {unavailable && <span className="text-[9px] mt-0.5">✕</span>}
+                    </button>
+                  )
+                })}
+              </div>
+              {dayBlockError ? (
+                <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1.5">
+                  <span>⚠</span>{dayBlockError}
+                </p>
+              ) : form.unavailableDays.length > 0 && (
+                <p className="text-xs text-white/30 mt-2">
+                  Blocked: {form.unavailableDays.join(', ')}
+                </p>
+              )}
+            </div>
+
+            <div className="border-t border-white/8 pt-6">
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-5">
+                Optional tweaks
+              </p>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">

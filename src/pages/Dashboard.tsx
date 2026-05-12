@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
 import ExerciseModal from '@/components/ExerciseModal'
@@ -105,9 +105,12 @@ function PlanPreview({
   )
 }
 
+const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
+
 export default function Dashboard() {
   const today  = toDateStr(new Date())
   const userId = getUserId()
+  const navigate = useNavigate()
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const [planExpanded, setPlanExpanded] = useState(true)
@@ -222,29 +225,46 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
-              <div className="flex gap-2">
-                <Link
-                  to="/history"
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
-                  style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}
-                >
-                  Full History
-                </Link>
-                <Link
-                  to="/reevaluate"
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.09)' }}
-                >
-                  Evolve
-                </Link>
-                <Link
-                  to="/questionnaire"
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
-                  style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.38)', border: '1px solid rgba(255,255,255,0.07)' }}
-                >
-                  New Plan
-                </Link>
-              </div>
+              {(() => {
+                const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
+                const daysUntilEvolve = latestPlan && !canEvolve
+                  ? Math.ceil((FOUR_WEEKS_MS - (Date.now() - latestPlan.createdAt)) / (24 * 60 * 60 * 1000))
+                  : 0
+                return (
+                  <div className="flex gap-2">
+                    <Link
+                      to="/history"
+                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
+                      style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}
+                    >
+                     History
+                    </Link>
+                    <button
+                      onClick={() => {
+                        if (!canEvolve || !latestPlan){return}
+                        navigate('/reevaluate', {
+                          state: {
+                            planId: latestPlan.id,
+                            originalPlan: latestPlan.plan,
+                            userName: latestPlan.userName,
+                            fitnessLevel: latestPlan.fitnessLevel ?? '',
+                            goals: latestPlan.goals ?? '[]',
+                            equipment: latestPlan.equipment ?? '[]',
+                          },
+                        })
+                      }}
+                      title={canEvolve ? 'Evolve your plan' : `Evolve unlocks in ${daysUntilEvolve} day${daysUntilEvolve !== 1 ? 's' : ''}`}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
+                      style={canEvolve
+                        ? { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.09)' }
+                        : { background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'not-allowed' }
+                      }
+                    >
+                      {canEvolve ? 'Evolve' : `Evolve (${daysUntilEvolve}d)`}
+                    </button>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Plan expand/collapse toggle */}
