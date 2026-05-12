@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { HiArrowNarrowLeft, HiArrowNarrowRight, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
+import { HiArrowNarrowLeft, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
+import { IoIosMale, IoIosFemale } from "react-icons/io";
 import { useNavigate } from 'react-router-dom'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
@@ -497,13 +498,13 @@ export default function Questionnaire() {
                       <button
                         key={s}
                         onClick={() => update({ sex: s })}
-                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex align-items justify-center ${
+                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex justify-center items-center gap-2 ${
                           form.sex === s
                             ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                             : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                         }`}
                       >
-                        {s === 'male' ? '♂ Male' : '♀ Female'}
+                        {s === 'male' ? <><IoIosMale /> Male</>  : <><IoIosFemale/>Female</> }
                       </button>
                     ))}
                   </div>
