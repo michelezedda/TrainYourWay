@@ -124,7 +124,7 @@ export default function Dashboard() {
     userProfiles:       { $: { where: { userId } } },
   })
 
-  const allPlans    = (data?.workoutPlans       ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; createdAt: number }>
+  const allPlans    = (data?.workoutPlans       ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
   const mealEntries = (data?.mealEntries        ?? []) as Array<{ date: string; protein?: number }>
   const completions = (data?.workoutCompletions ?? []) as Array<{ date: string }>
   const waterLogs   = (data?.waterLogs          ?? []) as Array<{ id: string; date: string; glasses: number }>
