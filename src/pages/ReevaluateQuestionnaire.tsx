@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import GlassCard from '@/components/GlassCard'
 import StepIndicator from '@/components/StepIndicator'
 import { type ReevaluationData } from '@/lib/gemini'
+import { HiArrowNarrowLeft, HiArrowNarrowRight } from 'react-icons/hi'
 
 const STEP_LABELS = ['Progress', 'Body', 'Adjustments']
 
@@ -515,9 +516,7 @@ export default function ReevaluateQuestionnaire() {
             onClick={() => step === 1 ? navigate('/history') : setStep((s) => s - 1)}
             className="btn-ghost"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5 5-5M18 12H6" />
-            </svg>
+            <HiArrowNarrowLeft className="w-4 h-4" />
             Back
           </button>
 
@@ -528,9 +527,7 @@ export default function ReevaluateQuestionnaire() {
               className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
               Continue
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-              </svg>
+              <HiArrowNarrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button onClick={handleSubmit} className="btn-primary">

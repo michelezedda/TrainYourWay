@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { HiCheckCircle, HiQuestionMarkCircle, HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar } from 'react-icons/hi'
 import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { NotFoundException } from '@zxing/library'
@@ -190,9 +191,7 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
       className="flex items-start gap-3 p-3.5 rounded-2xl border animate-fade-in"
       style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}
     >
-      <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+      <HiCheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
       <div>
         <p className="text-green-300 text-xs font-semibold mb-0.5">Better alternative</p>
         <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
@@ -287,10 +286,7 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
         </>
       ) : (
         <>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <HiQuestionMarkCircle className="w-4 h-4" />
           <span>Can I eat this?</span>
         </>
       )}
@@ -334,15 +330,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
               className="flex-1 py-1.5 transition-transform hover:scale-110 active:scale-95"
               aria-label={`Rate ${star} stars`}
             >
-              <svg className="w-7 h-7 mx-auto" viewBox="0 0 24 24">
-                <path
-                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  fill={filled ? '#facc15' : 'none'}
-                  stroke={filled ? '#facc15' : 'rgba(255,255,255,0.2)'}
-                  strokeWidth={1.5}
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <HiStar className="w-7 h-7 mx-auto" style={{ color: filled ? '#facc15' : 'rgba(255,255,255,0.2)' }} />
             </button>
           )
         })}
@@ -399,10 +387,7 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
         <span>Shared! Workout logged.</span>
       ) : (
         <>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
+          <HiShare className="w-4 h-4" />
           <span>Share Story</span>
         </>
       )}
@@ -449,9 +434,7 @@ function AddToFindsButton({
         color: '#86efac',
       }}
     >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-      </svg>
+      <HiPlus className="w-4 h-4" />
       Add to Healthy Finds
     </button>
   )
@@ -755,11 +738,7 @@ export default function Scanner() {
           onClick={reset}
           className="btn-primary w-full flex items-center justify-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <HiCamera className="w-4 h-4" />
           Scan another
         </button>
       </main>
@@ -800,10 +779,7 @@ export default function Scanner() {
           className="flex items-start gap-2.5 px-4 py-3 rounded-2xl mb-5 border"
           style={{ background: 'rgba(168,85,247,0.08)', borderColor: 'rgba(168,85,247,0.2)' }}
         >
-          <svg className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <HiInformationCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
           <p className="text-purple-300/80 text-xs leading-relaxed">
             Complete your nutrition profile to get personalized scores based on your goals and allergies.
           </p>

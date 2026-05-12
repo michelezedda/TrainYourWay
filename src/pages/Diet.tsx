@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { HiChevronLeft, HiChevronRight, HiPencil, HiCamera, HiInformationCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
@@ -252,9 +253,7 @@ export default function Diet() {
           className="btn-ghost !px-3 !py-2.5 flex-shrink-0"
           aria-label="Previous day"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <HiChevronLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 text-center">
           <p className={`font-bold text-base ${isToday ? 'gradient-text' : 'text-white/80'}`}>
@@ -276,9 +275,7 @@ export default function Diet() {
           className="btn-ghost !px-3 !py-2.5 flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next day"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <HiChevronRight className="w-4 h-4" />
         </button>
       </div>
 
@@ -388,17 +385,12 @@ export default function Diet() {
                       >
                         {mode === 'manual' ? (
                           <>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <HiPencil className="w-3 h-3" />
                             Manual
                           </>
                         ) : (
                           <>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                            <HiCamera className="w-3 h-3" />
                             Photo
                           </>
                         )}
@@ -450,10 +442,7 @@ export default function Diet() {
                             onClick={() => fileInputRefs.current[meal]?.click()}
                             className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl border-2 border-dashed border-white/12 cursor-pointer transition-colors hover:border-purple-500/40 hover:bg-white/2"
                           >
-                            <svg className="w-7 h-7 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                            <HiCamera className="w-7 h-7 text-white/25" />
                             <span className="text-white/40 text-sm">Tap to upload a photo of your meal</span>
                           </label>
                         ) : (
@@ -474,9 +463,7 @@ export default function Diet() {
 
                         {/* Precision note */}
                         <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                          <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <HiInformationCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" />
                           <p className="text-orange-300/80 text-xs leading-relaxed">
                             Photo estimates are approximate. Portion sizes and hidden ingredients are hard to detect from an image. For precise tracking, use manual entry.
                           </p>

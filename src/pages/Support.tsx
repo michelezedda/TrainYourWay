@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { HiChevronDown, HiChevronLeft, HiChevronRight, HiRefresh, HiCheck, HiPhotograph, HiInformationCircle, HiPaperAirplane } from 'react-icons/hi'
 import { id } from '@instantdb/react'
 import emailjs from '@emailjs/browser'
 import ReactMarkdown from 'react-markdown'
@@ -130,9 +131,7 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
           onClick={() => setExpanded(o => !o)}
           className="text-xs text-white/35 hover:text-white/60 transition-colors flex items-center gap-1"
         >
-          <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <HiChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           {expanded ? 'Hide' : 'View'} Kai summary
         </button>
 
@@ -146,16 +145,12 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
         >
           {isSolved ? (
             <>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+              <HiRefresh className="w-3.5 h-3.5" />
               Reopen
             </>
           ) : (
             <>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <HiCheck className="w-3.5 h-3.5" />
               Mark solved
             </>
           )}
@@ -447,9 +442,7 @@ export default function Support() {
 
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => setStep('details')} className="text-white/40 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <HiChevronLeft className="w-5 h-5" />
           </button>
           <div>
             <h2 className="text-lg font-semibold text-white">Review your ticket</h2>
@@ -462,10 +455,7 @@ export default function Support() {
           <span className="text-sm font-medium text-white/70">{category}</span>
           {imageDataUrl && (
             <span className="flex items-center gap-1 text-xs text-purple-300 border border-purple-500/25 bg-purple-500/10 px-2.5 py-1 rounded-full">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <HiPhotograph className="w-3 h-3" />
               Screenshot attached
             </span>
           )}
@@ -503,12 +493,7 @@ export default function Support() {
         {!emailJsConfigured && (
           <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-2xl border"
             style={{ background: 'rgba(251,191,36,0.06)', borderColor: 'rgba(251,191,36,0.2)' }}>
-            <span className="text-amber-400 flex-shrink-0 mt-0.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </span>
+            <HiInformationCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-amber-300/80 text-xs leading-relaxed">
               EmailJS is not configured. Clicking "Send" will open your email client with the ticket pre-filled.
             </p>
@@ -516,9 +501,7 @@ export default function Support() {
         )}
 
         <button onClick={() => void handleSend()} className="btn-primary w-full flex items-center justify-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
+          <HiPaperAirplane className="w-4 h-4" />
           {emailJsConfigured ? 'Send ticket' : 'Open email client'}
         </button>
       </main>
@@ -534,9 +517,7 @@ export default function Support() {
 
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => setStep('category')} className="text-white/40 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <HiChevronLeft className="w-5 h-5" />
           </button>
           <div>
             <h2 className="text-lg font-semibold text-white">Describe the issue</h2>
@@ -584,10 +565,7 @@ export default function Support() {
             <button onClick={() => fileInputRef.current?.click()}
               className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl border-2 border-dashed
                          border-white/12 hover:border-purple-500/35 hover:bg-purple-500/5 transition-all cursor-pointer">
-              <svg className="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <HiPhotograph className="w-5 h-5 text-white/30" />
               <span className="text-white/35 text-sm">Upload a screenshot</span>
             </button>
           )}
@@ -624,10 +602,7 @@ export default function Support() {
               <p className="text-white font-medium text-sm">{label}</p>
               <p className="text-white/40 text-xs mt-0.5">{desc}</p>
             </div>
-            <svg className="w-4 h-4 text-white/20 flex-shrink-0 group-hover:text-white/50 transition-colors"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <HiChevronRight className="w-4 h-4 text-white/20 flex-shrink-0 group-hover:text-white/50 transition-colors" />
           </button>
         ))}
       </div>

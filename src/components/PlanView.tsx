@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { HiChevronDown, HiLockOpen } from 'react-icons/hi'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
@@ -116,12 +117,9 @@ export function CollapsibleSection({ title, icon, content }: { title: string; ic
           <span className="text-base">{icon}</span>
           <span className="text-white font-semibold text-sm">{title}</span>
         </div>
-        <svg
+        <HiChevronDown
           className={`w-4 h-4 text-white/30 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        />
       </button>
       {open && (
         <div className="px-5 pb-5 pt-2 border-t border-white/6">
@@ -363,10 +361,7 @@ export function WorkoutDayView({
                                border border-white/15 bg-white/5 text-white/60
                                hover:bg-white/10 hover:text-white/80 transition-all duration-200"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                    </svg>
+                    <HiLockOpen className="w-3.5 h-3.5" />
                     Changed your mind? Unblock this day
                   </button>
                 )}

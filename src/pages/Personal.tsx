@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HiPencil, HiChevronRight, HiLogout, HiTrash } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -131,9 +132,7 @@ export default function Personal() {
                       onClick={() => { setEditingField('name'); setEditValue(userProfile.name ?? '') }}
                       className="text-white/30 hover:text-white/60 transition-colors ml-2"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
+                      <HiPencil className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -170,9 +169,7 @@ export default function Personal() {
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <span className="text-sm text-white/70">Edit Training Goals</span>
-              <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <HiChevronRight className="w-4 h-4 text-white/25" />
             </button>
             <Link
               to="/questionnaire"
@@ -180,9 +177,7 @@ export default function Personal() {
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <span className="text-sm text-white/70">Start Over </span>
-              <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <HiChevronRight className="w-4 h-4 text-white/25" />
             </Link>
           </div>
         </div>
@@ -225,9 +220,7 @@ export default function Personal() {
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <span className="text-sm text-white/70">Log Out</span>
-              <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <HiLogout className="w-4 h-4 text-white/25" />
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -235,9 +228,7 @@ export default function Personal() {
               style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}
             >
               <span className="text-sm text-red-400/80">Delete Account</span>
-              <svg className="w-4 h-4 text-red-400/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <HiTrash className="w-4 h-4 text-red-400/40" />
             </button>
           </div>
         </div>

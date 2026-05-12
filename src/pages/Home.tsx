@@ -1,4 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
+import { HiArrowNarrowRight, HiQuestionMarkCircle } from 'react-icons/hi'
 import GlassCard from '@/components/GlassCard'
 import { db } from '@/lib/db'
 
@@ -118,9 +119,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link to={user ? '/questionnaire' : '/auth'} className="btn-primary text-base">
             {user ? 'Build My Plan' : 'Get Started for Free'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-            </svg>
+            <HiArrowNarrowRight className="w-5 h-5" />
           </Link>
           <Link to={user ? '/chat' : '/auth'} className="btn-ghost text-base">
             {user ? 'Talk to Kai' : 'Sign In'}
@@ -139,9 +138,7 @@ export default function Home() {
               📋
             </span>
             Already have a plan? Import and analyse it
-            <svg className="w-3.5 h-3.5 opacity-50 group-hover:opacity-80 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-            </svg>
+            <HiArrowNarrowRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-80 transition-opacity" />
           </Link>
         </div>
       </section>
@@ -307,9 +304,7 @@ export default function Home() {
           </p>
           <Link to={user ? '/questionnaire' : '/auth'} className="btn-primary text-base relative inline-flex">
             {user ? 'Build My Plan Now' : 'Get Started for Free'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-            </svg>
+            <HiArrowNarrowRight className="w-5 h-5" />
           </Link>
           <div className="relative mt-6">
             <Link
@@ -319,10 +314,7 @@ export default function Home() {
               onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.32)')}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <HiQuestionMarkCircle className="w-4 h-4" />
               Need help or have feedback?
             </Link>
           </div>

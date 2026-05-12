@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { HiCamera } from 'react-icons/hi'
 import { analyzeMachineImage, type MachineGuide } from '@/lib/gemini'
 
 type State = 'idle' | 'loading' | 'result' | 'error'
@@ -157,11 +158,7 @@ export default function MachineGuide() {
             className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 text-sm font-semibold transition-all active:scale-[0.98]"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.65)' }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <HiCamera className="w-5 h-5" />
             Take a photo
           </button>
 

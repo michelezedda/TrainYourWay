@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
+import { HiChevronLeft, HiArrowNarrowRight, HiDownload, HiChartBar } from 'react-icons/hi'
 import { useNavigate, Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ReactMarkdown from 'react-markdown'
@@ -34,9 +35,7 @@ function buildProfileContext(): string {
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button onClick={onClick} className="text-white/40 hover:text-white transition-colors">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-      </svg>
+      <HiChevronLeft className="w-5 h-5" />
     </button>
   )
 }
@@ -119,9 +118,7 @@ function AnalysisReader({
                 className="btn-primary !px-5 !py-2.5 !text-sm flex items-center gap-2"
               >
                 Improve it
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-                </svg>
+                <HiArrowNarrowRight className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -343,20 +340,14 @@ export default function ImportPlan() {
               onClick={() => void handleKeepPlan()}
               className="btn-ghost !px-6 !py-3 flex-1 text-sm"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-              </svg>
+              <HiDownload className="w-4 h-4 mr-2" />
               Save as-is
             </button>
             <button
               onClick={() => void handleAnalyze()}
               className="btn-primary !px-6 !py-3 flex-1 text-sm flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+              <HiChartBar className="w-4 h-4" />
               Analyze this plan
             </button>
           </div>
@@ -413,9 +404,7 @@ export default function ImportPlan() {
                 className="btn-primary !px-6 !py-2.5 !text-sm flex-1 flex items-center justify-center gap-2"
               >
                 Extract plan
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-                </svg>
+                <HiArrowNarrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>

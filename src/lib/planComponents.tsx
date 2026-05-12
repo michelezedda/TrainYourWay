@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HiInformationCircle } from 'react-icons/hi'
 import type { Components } from 'react-markdown'
 import type React from 'react'
 
@@ -174,9 +175,7 @@ function ExerciseTableCard({
           className="flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all duration-200 active:scale-95"
           style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.22)' }}
         >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <HiInformationCircle className="w-3 h-3" />
           Info
         </button>
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HiArrowNarrowLeft, HiArrowNarrowRight, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
@@ -634,10 +635,7 @@ export default function Questionnaire() {
             {/* BMI-based recommendation banner */}
             {bmiRec && (
               <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-purple-500/8 border border-purple-500/20">
-                <svg className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
+                <HiLightningBolt className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <p className="text-sm text-white/80 leading-relaxed">
                     Your BMI is{' '}
@@ -978,12 +976,7 @@ export default function Questionnaire() {
                 onClick={() => setShowMoreDiets(v => !v)}
                 className="mt-3 flex items-center gap-1.5 text-xs text-purple-400/70 hover:text-purple-300 transition-colors"
               >
-                <svg
-                  className={`w-3 h-3 transition-transform ${showMoreDiets ? 'rotate-180' : ''}`}
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <HiChevronDown className={`w-3 h-3 transition-transform ${showMoreDiets ? 'rotate-180' : ''}`} />
                 {showMoreDiets ? 'Show less' : 'More diet types (Halal, Kosher, Hindu, Jain...)'}
               </button>
             </div>
@@ -1100,9 +1093,7 @@ export default function Questionnaire() {
           <div className="space-y-6">
             {existingPlanIds.length > 0 && (
               <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25">
-                <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                </svg>
+                <HiExclamation className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-300/90 leading-relaxed">
                   You already have a plan. Generating a new one will replace your current plan and all its history.
                 </p>
@@ -1143,9 +1134,7 @@ export default function Questionnaire() {
             onClick={() => step === 1 ? navigate('/') : setStep((s) => s - 1)}
             className="btn-ghost"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5 5-5M18 12H6" />
-            </svg>
+            <HiArrowNarrowLeft className="w-4 h-4" />
             Back
           </button>
 
@@ -1156,9 +1145,7 @@ export default function Questionnaire() {
               className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
               Continue
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-              </svg>
+              <HiArrowNarrowRight className="w-4 h-4" />
             </button>
           )}
         </div>

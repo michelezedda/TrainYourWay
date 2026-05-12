@@ -1,23 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
+import { GrHomeOption } from "react-icons/gr";
+import { PiForkKnifeDuotone } from "react-icons/pi";
+import { PiUserGearLight } from "react-icons/pi";
+import { IoChatbubblesOutline } from "react-icons/io5";
 import { db } from '@/lib/db'
 
 const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth']
 
 function HomeIcon({ active }: { active: boolean }) {
-  return (
-    <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
-  )
+  return <GrHomeOption className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.2 : 1.8 }} />
 }
 
 function ForkIcon({ active }: { active: boolean }) {
   return (
-    <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M3 3v6a3 3 0 006 0V3M6 9v12M15 3a6 6 0 016 6v12" />
-    </svg>
+   <PiForkKnifeDuotone className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.2 : 1.8 }}/>
   )
 }
 
@@ -31,21 +27,11 @@ function ScanIcon({ active }: { active: boolean }) {
 }
 
 function ChatIcon({ active }: { active: boolean }) {
-  return (
-    <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-    </svg>
-  )
+  return <IoChatbubblesOutline className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.2 : 1.8 }} />
 }
 
 function PersonIcon({ active }: { active: boolean }) {
-  return (
-    <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  )
+  return <PiUserGearLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.2 : 1.8 }} />
 }
 
 const NAV = [

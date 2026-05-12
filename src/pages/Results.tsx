@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
 import ExerciseModal from '@/components/ExerciseModal'
+import { HiChevronDown, HiChartBar, HiArrowNarrowRight, HiChevronRight, HiClipboardList } from 'react-icons/hi'
 import {
   parseAnalysisSections,
   SECTION_ICONS,
@@ -78,10 +79,7 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
           <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
           <span className="text-white font-semibold text-sm">Progress Report</span>
         </div>
-        <svg className={`w-4 h-4 text-white/30 transition-transform ${open ? '' : '-rotate-90'}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <HiChevronDown className={`w-4 h-4 text-white/30 transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
 
       {open && (
@@ -183,10 +181,7 @@ function ReevalAnalysisCard({ analysis, onViewPlan }: { analysis: string; onView
       <div className="px-6 py-4 border-b border-white/8 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}>
-          <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+          <HiChartBar style={{ width: '18px', height: '18px' }} />
         </div>
         <div>
           <h2 className="text-white font-semibold text-sm">Progress Analysis</h2>
@@ -199,9 +194,7 @@ function ReevalAnalysisCard({ analysis, onViewPlan }: { analysis: string; onView
       <div className="px-6 pb-6 pt-3 border-t border-white/8 mt-2">
         <button onClick={onViewPlan} className="btn-primary w-full justify-center">
           View My Evolved Plan
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <HiArrowNarrowRight className="w-4 h-4" />
         </button>
       </div>
     </GlassCard>
@@ -290,16 +283,12 @@ function AnalysisSlides({
           {isLast ? (
             <button onClick={onDone} className="btn-primary !px-5 !py-2 !text-sm">
               View My Plan
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-              </svg>
+              <HiArrowNarrowRight className="w-3.5 h-3.5" />
             </button>
           ) : (
             <button onClick={() => setIdx(i => i + 1)} className="btn-primary !px-5 !py-2 !text-sm">
               Next
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <HiChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -339,10 +328,7 @@ function NutritionTargets() {
           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
           style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(34,211,238,0.12))', border: '1px solid rgba(168,85,247,0.25)' }}
         >
-          <svg className="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
+          <HiClipboardList className="w-4 h-4 text-purple-300" />
         </div>
         <div>
           <p className="text-white font-semibold text-sm">Daily Nutrition Targets</p>

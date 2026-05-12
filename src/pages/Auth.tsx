@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { HiArrowNarrowRight } from 'react-icons/hi'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
@@ -186,9 +187,7 @@ export default function Auth() {
                 ) : (
                   <>
                     Continue
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
-                    </svg>
+                    <HiArrowNarrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
