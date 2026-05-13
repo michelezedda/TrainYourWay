@@ -14,18 +14,18 @@ type Step = 'category' | 'details' | 'drafting' | 'review' | 'sending' | 'done' 
 type View = 'new' | 'tickets'
 
 const CATEGORIES = [
-  { label: 'AI / Kai issue',  icon: '🤖', desc: 'Kai gave wrong, weird, or off-topic advice' },
+  { label: 'AI / Kai issue', icon: '🤖', desc: 'Kai gave wrong, weird, or off-topic advice' },
   { label: 'Plan generation', icon: '📋', desc: 'Plan failed to generate or looks incorrect' },
-  { label: 'Diet tracker',    icon: '🍎', desc: 'Food logging, macros, or nutrition data issue' },
-  { label: 'App bug',         icon: '🐛', desc: 'Something is broken or not working as expected' },
+  { label: 'Diet tracker', icon: '🍎', desc: 'Food logging, macros, or nutrition data issue' },
+  { label: 'App bug', icon: '🐛', desc: 'Something is broken or not working as expected' },
   { label: 'Data or history', icon: '📊', desc: 'Plans, history, or data missing or wrong' },
-  { label: 'Other',           icon: '💬', desc: 'Anything else' },
+  { label: 'Other', icon: '💬', desc: 'Anything else' },
 ]
 
-const EMAILJS_SERVICE  = import.meta.env.VITE_EMAILJS_SERVICE_ID  as string | undefined
+const EMAILJS_SERVICE = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined
 const EMAILJS_TEMPLATE = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined
-const EMAILJS_KEY      = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  as string | undefined
-const SUPPORT_EMAIL    = import.meta.env.VITE_SUPPORT_EMAIL        as string | undefined
+const EMAILJS_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string | undefined
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL as string | undefined
 
 const emailJsConfigured = !!(EMAILJS_SERVICE && EMAILJS_TEMPLATE && EMAILJS_KEY)
 
@@ -35,7 +35,7 @@ async function compressImage(dataUrl: string, maxWidth = 700, quality = 0.72): P
     img.onload = () => {
       const scale = Math.min(1, maxWidth / img.width)
       const canvas = document.createElement('canvas')
-      canvas.width  = Math.round(img.width  * scale)
+      canvas.width = Math.round(img.width * scale)
       canvas.height = Math.round(img.height * scale)
       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
       resolve(canvas.toDataURL('image/jpeg', quality))
@@ -51,9 +51,9 @@ const mdComponents: Components = {
       {children}
     </h2>
   ),
-  p:      ({ children }) => <p className="text-white/65 text-sm leading-relaxed mb-2">{children}</p>,
-  ul:     ({ children }) => <ul className="space-y-1.5 mb-3">{children}</ul>,
-  li:     ({ children }) => (
+  p: ({ children }) => <p className="text-white/65 text-sm leading-relaxed mb-2">{children}</p>,
+  ul: ({ children }) => <ul className="space-y-1.5 mb-3">{children}</ul>,
+  li: ({ children }) => (
     <li className="flex gap-2 text-white/65 text-sm">
       <span className="text-purple-400/70 flex-shrink-0 mt-0.5 text-xs">-</span>
       <span>{children}</span>
@@ -110,11 +110,10 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
                 screenshot
               </span>
             )}
-            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-              isSolved
-                ? 'text-green-300 border-green-500/30 bg-green-500/10'
-                : 'text-amber-300 border-amber-500/30 bg-amber-500/10'
-            }`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full border ${isSolved
+              ? 'text-green-300 border-green-500/30 bg-green-500/10'
+              : 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+              }`}>
               {isSolved ? 'Solved' : 'Open'}
             </span>
           </div>
@@ -137,11 +136,10 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
 
         <button
           onClick={toggleStatus}
-          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all duration-200 ${
-            isSolved
-              ? 'text-white/40 border-white/10 bg-white/3 hover:bg-white/6 hover:text-white/60'
-              : 'text-green-300 border-green-500/25 bg-green-500/8 hover:bg-green-500/15'
-          }`}
+          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all duration-200 ${isSolved
+            ? 'text-white/40 border-white/10 bg-white/3 hover:bg-white/6 hover:text-white/60'
+            : 'text-green-300 border-green-500/25 bg-green-500/8 hover:bg-green-500/15'
+            }`}
         >
           {isSolved ? (
             <>
@@ -185,14 +183,14 @@ export default function Support() {
   })
   const tickets = (ticketsData?.supportTickets ?? []) as StoredTicket[]
 
-  const [view, setView]                   = useState<View>('new')
-  const [step, setStep]                   = useState<Step>('category')
-  const [category, setCategory]           = useState('')
-  const [description, setDescription]     = useState('')
-  const [imageDataUrl, setImageDataUrl]   = useState<string | null>(null)
-  const [imagePreview, setImagePreview]   = useState<string | null>(null)
-  const [draft, setDraft]                 = useState('')
-  const [errorMsg, setErrorMsg]           = useState('')
+  const [view, setView] = useState<View>('new')
+  const [step, setStep] = useState<Step>('category')
+  const [category, setCategory] = useState('')
+  const [description, setDescription] = useState('')
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isLoading = step === 'drafting' || step === 'sending'
@@ -256,8 +254,8 @@ export default function Support() {
         }, EMAILJS_KEY!)
       } else {
         const subject = encodeURIComponent(`[Uplift Support] ${category}`)
-        const body    = encodeURIComponent(buildEmailBody())
-        const dest    = SUPPORT_EMAIL ?? 'support@uplift.app'
+        const body = encodeURIComponent(buildEmailBody())
+        const dest = SUPPORT_EMAIL ?? 'support@uplift.app'
         window.open(`mailto:${dest}?subject=${subject}&body=${body}`, '_blank')
       }
 
@@ -282,8 +280,8 @@ export default function Support() {
 
   // ── Header tabs (shown when not in loading states) ────────────────────────
 
-  const openCount   = tickets.filter(t => t.status !== 'solved').length
-  const showTabs    = !isLoading
+  const openCount = tickets.filter(t => t.status !== 'solved').length
+  const showTabs = !isLoading
 
   const PageHeader = () => (
     <div className="flex items-center justify-between mb-8">
@@ -296,21 +294,19 @@ export default function Support() {
         <div className="flex items-center gap-1 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <button
             onClick={() => setView('new')}
-            className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              view === 'new'
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white/70'
-            }`}
+            className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${view === 'new'
+              ? 'bg-white/10 text-white'
+              : 'text-white/40 hover:text-white/70'
+              }`}
           >
             New ticket
           </button>
           <button
             onClick={() => setView('tickets')}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              view === 'tickets'
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white/70'
-            }`}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${view === 'tickets'
+              ? 'bg-white/10 text-white'
+              : 'text-white/40 hover:text-white/70'
+              }`}
           >
             My tickets
             {openCount > 0 && (
@@ -591,11 +587,10 @@ export default function Support() {
           <button
             key={label}
             onClick={() => { setCategory(label); setStep('details') }}
-            className={`group flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${
-              category === label
-                ? 'border-purple-500/50 bg-purple-500/12'
-                : 'border-white/10 bg-white/3 hover:bg-white/6 hover:border-white/20'
-            }`}
+            className={`group flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${category === label
+              ? 'border-purple-500/50 bg-purple-500/12'
+              : 'border-white/10 bg-white/3 hover:bg-white/6 hover:border-white/20'
+              }`}
           >
             <span className="text-2xl flex-shrink-0">{icon}</span>
             <div className="flex-1 min-w-0">
