@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNickname } from '@/lib/nickname'
@@ -18,7 +18,7 @@ function FindsTab() {
   if (!finds.length) {
     return (
       <div className="glass-card p-8 text-center">
-        <div className="text-4xl mb-4">🌿</div>
+        <div className="text-4xl mb-4">ðŸŒ¿</div>
         <h3 className="text-white font-bold mb-2">No healthy finds yet</h3>
         <p className="text-white/40 text-sm leading-relaxed">
           Scan A or B grade products in the Food Scanner and share them to start the feed.
@@ -39,13 +39,13 @@ function FindsTab() {
                 <img src={f.imageUrl} alt={f.productName} className="w-14 h-14 rounded-2xl object-cover flex-shrink-0" />
               ) : (
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}>🛒</div>
+                  style={{ background: 'rgba(255,255,255,0.05)' }}>ðŸ›’</div>
               )}
               <div className="flex-1 min-w-0">
                 {f.brand && <p className="text-white/40 text-[10px] uppercase tracking-wider truncate">{f.brand}</p>}
                 <p className="text-white font-semibold text-sm truncate">{f.productName || 'Unknown'}</p>
                 <p className="text-white/30 text-[10px] mt-0.5">
-                  by {isMe ? 'you' : getNickname(f.sharedBy)} · {new Date(f.sharedAt).toLocaleDateString()}
+                  by {isMe ? 'you' : getNickname(f.sharedBy)} Â· {new Date(f.sharedAt).toLocaleDateString()}
                 </p>
               </div>
               <div
@@ -73,7 +73,7 @@ function LeaderboardTab() {
   if (!entries.length) {
     return (
       <div className="glass-card p-8 text-center">
-        <div className="text-4xl mb-4">🏆</div>
+        <div className="text-4xl mb-4">ðŸ†</div>
         <h3 className="text-white font-bold mb-2">Leaderboard coming soon</h3>
         <p className="text-white/40 text-sm leading-relaxed">
           Visit Settings to register on the leaderboard and share your streaks.
@@ -82,7 +82,7 @@ function LeaderboardTab() {
     )
   }
 
-  const medals = ['🥇', '🥈', '🥉']
+  const medals = ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰']
 
   return (
     <div className="space-y-2.5">
@@ -124,7 +124,7 @@ export default function Community() {
   const [tab, setTab] = useState<Tab>('finds')
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Community</h1>
         <p className="text-white/40 text-sm mt-0.5">Healthy finds and top streaks.</p>
@@ -142,7 +142,7 @@ export default function Community() {
               : { color: 'rgba(255,255,255,0.38)' }
             }
           >
-            {t === 'finds' ? '🌿 Finds' : '🏆 Leaderboard'}
+            {t === 'finds' ? 'ðŸŒ¿ Finds' : 'ðŸ† Leaderboard'}
           </button>
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { HiPencil, HiChevronRight, HiLogout, HiTrash, HiCamera } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
@@ -40,7 +40,7 @@ export default function Personal() {
 
   const { user } = db.useAuth()
 
-  // Queries — kept for delete-account logic even when not displayed
+  // Queries â€” kept for delete-account logic even when not displayed
   const { data: mealData } = db.useQuery({ mealEntries: { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
   const { data: lbData } = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
@@ -125,7 +125,7 @@ export default function Personal() {
   }
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-6">
         <h1 className="text-2xl font-black gradient-text">Settings</h1>
         <p className="text-white/40 text-sm mt-0.5">Manage your profile and account.</p>

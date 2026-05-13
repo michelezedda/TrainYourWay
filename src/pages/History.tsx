@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { HiPencil, HiUpload, HiRefresh, HiChevronDown } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -86,7 +86,7 @@ function InteractivePlan({ planId, planText, blockedDays, dayOverrides, onExerci
   return (
     <div className="px-4 pb-5">
       <p className="text-white/35 text-xs pt-4 pb-3 flex items-center gap-1.5">
-        <span className="text-purple-400">▶</span>
+        <span className="text-purple-400">â–¶</span>
         Tap any exercise for a guide. Log weights below.
       </p>
       <WorkoutDayView plan={planText} planComponents={components} blockedDays={blockedDays}
@@ -180,7 +180,7 @@ export default function History() {
 
   if (isLoading) {
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 flex justify-center animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 py-20 flex justify-center animate-fade-in">
         <LoadingSpinner size="lg" message="Loading your plan..." />
       </main>
     )
@@ -188,9 +188,9 @@ export default function History() {
 
   if (error) {
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">⚠️</div>
+          <div className="text-4xl mb-4">âš ï¸</div>
           <p className="text-red-300">Failed to load plan. Please try again later.</p>
         </div>
       </main>
@@ -199,9 +199,9 @@ export default function History() {
 
   if (chain.length === 0) {
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="text-5xl mb-4">ðŸ“‹</div>
           <h2 className="text-xl font-bold text-white mb-2">No plan yet</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">Create your first personalised workout plan to get started.</p>
           <Link to="/questionnaire" className="btn-primary">Create My Plan</Link>
@@ -215,7 +215,7 @@ export default function History() {
   const lvl = levelColor[latestPlan.fitnessLevel] ?? null
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {selectedExercise && <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />}
 
       {/* Header */}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import { HiCheckCircle, HiQuestionMarkCircle, HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar } from 'react-icons/hi'
 import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
@@ -20,7 +20,7 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// ── Nutri-Score badge ─────────────────────────────────────────────────────────
+// â”€â”€ Nutri-Score badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const NS_COLORS: Record<string, string> = {
   A: '#1e8a3c',
@@ -65,7 +65,7 @@ function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: str
   )
 }
 
-// ── NOVA dots ─────────────────────────────────────────────────────────────────
+// â”€â”€ NOVA dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function NovaDots({ group }: { group: number }) {
   const labels = ['', 'Unprocessed', 'Processed', 'Processed', 'Ultra-processed']
@@ -83,7 +83,7 @@ function NovaDots({ group }: { group: number }) {
   )
 }
 
-// ── Verdict chips ─────────────────────────────────────────────────────────────
+// â”€â”€ Verdict chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   if (!verdicts.length) return null
@@ -107,7 +107,7 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   )
 }
 
-// ── Macro row ─────────────────────────────────────────────────────────────────
+// â”€â”€ Macro row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function MacroRow({ product }: { product: OFFProduct }) {
   const n = product.nutriments ?? {}
@@ -134,7 +134,7 @@ function MacroRow({ product }: { product: OFFProduct }) {
   )
 }
 
-// ── Alternative suggestion ────────────────────────────────────────────────────
+// â”€â”€ Alternative suggestion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AlternativeCard({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
   const [alt, setAlt] = useState<string | null>(null)
@@ -178,7 +178,7 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
   )
 }
 
-// ── Can I eat this? ───────────────────────────────────────────────────────────
+// â”€â”€ Can I eat this? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const VERDICT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
   'Yes':         { bg: 'rgba(34,197,94,0.1)',  border: 'rgba(34,197,94,0.3)',  text: '#86efac', dot: '#22c55e' },
@@ -261,7 +261,7 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
   )
 }
 
-// ── Gym rating widget ─────────────────────────────────────────────────────────
+// â”€â”€ Gym rating widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string }) {
   const { data } = db.useQuery({ gymRatings: { $: { where: { barcode } } } })
@@ -283,7 +283,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
         <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Gym Score</p>
         {avg !== null && (
           <span className="text-white/40 text-xs">
-            {avg.toFixed(1)} avg · {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
+            {avg.toFixed(1)} avg Â· {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
           </span>
         )}
       </div>
@@ -309,7 +309,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
   )
 }
 
-// ── Share story button ────────────────────────────────────────────────────────
+// â”€â”€ Share story button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ShareButton({ product, scored, userId }: { product: OFFProduct; scored: ScoredProduct; userId: string }) {
   const [status, setStatus] = useState<'idle' | 'generating' | 'shared'>('idle')
@@ -353,7 +353,7 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
   )
 }
 
-// ── Add to finds button ───────────────────────────────────────────────────────
+// â”€â”€ Add to finds button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AddToFindsButton({
   product, scored, barcode, userId,
@@ -392,7 +392,7 @@ function AddToFindsButton({
   )
 }
 
-// ── History chips ─────────────────────────────────────────────────────────────
+// â”€â”€ History chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function HistoryChips({ history, onSelect }: { history: ScanHistoryEntry[]; onSelect: (barcode: string) => void }) {
   if (!history.length) return null
@@ -419,7 +419,7 @@ function HistoryChips({ history, onSelect }: { history: ScanHistoryEntry[]; onSe
   )
 }
 
-// ── Aim overlay ───────────────────────────────────────────────────────────────
+// â”€â”€ Aim overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AimOverlay() {
   return (
@@ -440,7 +440,7 @@ function AimOverlay() {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function Scanner() {
   const videoRef    = useRef<HTMLVideoElement>(null)
@@ -543,7 +543,7 @@ export default function Scanner() {
     setState('idle')
   }
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (state === 'loading') {
     return (
@@ -557,13 +557,13 @@ export default function Scanner() {
     )
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (state === 'error') {
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">📷</div>
+          <div className="text-4xl mb-4">ðŸ“·</div>
           <h2 className="text-white font-bold text-lg mb-2">Camera unavailable</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">{errMsg}</p>
           <button
@@ -578,13 +578,13 @@ export default function Scanner() {
     )
   }
 
-  // ── Not found ──────────────────────────────────────────────────────────────
+  // â”€â”€ Not found â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (state === 'not-found') {
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">🔍</div>
+          <div className="text-4xl mb-4">ðŸ”</div>
           <h2 className="text-white font-bold text-lg mb-2">Product not found</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">
             This barcode isn't in the Open Food Facts database yet.
@@ -601,12 +601,12 @@ export default function Scanner() {
     )
   }
 
-  // ── Result ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Result â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (state === 'result' && product && scored) {
     const n = product.nutriments ?? {}
     return (
-      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         {/* Product header */}
         <div className="flex gap-4 mb-5">
           {product.image_url ? (
@@ -619,7 +619,7 @@ export default function Scanner() {
           ) : (
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <span className="text-3xl">🛒</span>
+              <span className="text-3xl">ðŸ›’</span>
             </div>
           )}
           <div className="min-w-0">
@@ -707,10 +707,10 @@ export default function Scanner() {
     )
   }
 
-  // ── Idle / scanning ────────────────────────────────────────────────────────
+  // â”€â”€ Idle / scanning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Food Scanner</h1>
         <p className="text-white/40 text-sm mt-0.5">Point at a barcode for a personalized health score.</p>

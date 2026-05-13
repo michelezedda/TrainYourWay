@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { HiChevronLeft, HiChevronRight, HiPencil, HiCamera, HiInformationCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
@@ -12,10 +12,10 @@ type Meal = (typeof MEALS)[number]
 type Mode = 'manual' | 'photo'
 
 const MEAL_EMOJI: Record<Meal, string> = {
-  Breakfast: '🌅',
-  Lunch: '☀️',
-  Dinner: '🌙',
-  Snacks: '🍎',
+  Breakfast: 'ðŸŒ…',
+  Lunch: 'â˜€ï¸',
+  Dinner: 'ðŸŒ™',
+  Snacks: 'ðŸŽ',
 }
 
 function toDateStr(d: Date): string {
@@ -231,7 +231,7 @@ export default function Diet() {
   const isToday = selectedDate === today
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Diet</h1>
@@ -272,7 +272,7 @@ export default function Diet() {
       {/* No profile prompt */}
       {!profile && profileQueryData !== undefined && (
         <div className="glass-card p-5 mb-4 text-center">
-          <div className="text-3xl mb-3">🎯</div>
+          <div className="text-3xl mb-3">ðŸŽ¯</div>
           <h3 className="text-white font-bold mb-1.5">No targets set</h3>
           <p className="text-white/45 text-sm leading-relaxed mb-4">
             Complete the fitness questionnaire to unlock personalized daily calorie and macro targets.
@@ -337,7 +337,7 @@ export default function Diet() {
                     : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
                   }
                 >
-                  {isActive ? '✕ Close' : '+ Add'}
+                  {isActive ? 'âœ• Close' : '+ Add'}
                 </span>
               </button>
 
@@ -359,7 +359,7 @@ export default function Diet() {
                     style={{ background: 'rgba(239,68,68,0.08)' }}
                     aria-label="Remove entry"
                   >
-                    <span className="text-red-400/60 text-base leading-none">×</span>
+                    <span className="text-red-400/60 text-base leading-none">Ã—</span>
                   </button>
                 </div>
               ))}

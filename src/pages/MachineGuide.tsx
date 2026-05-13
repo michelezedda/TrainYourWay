@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+﻿import { useRef, useState } from 'react'
 import { HiCamera } from 'react-icons/hi'
 import { analyzeMachineImage, type MachineGuide } from '@/lib/gemini'
 
@@ -88,7 +88,7 @@ export default function MachineGuide() {
   }
 
   return (
-    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Machine Guide</h1>
         <p className="text-white/40 text-sm mt-0.5">Photo any gym machine for instant instructions.</p>
@@ -111,7 +111,7 @@ export default function MachineGuide() {
           >
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
               style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)' }}>
-              🖼️
+              ðŸ–¼ï¸
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-white/70">Upload a photo</p>
@@ -198,10 +198,10 @@ export default function MachineGuide() {
             </div>
           </div>
 
-          {guide.setup.length > 0 && <Section emoji="⚙️" title="Setup" items={guide.setup} />}
-          <Section emoji="▶️" title="How to perform" items={guide.steps} />
-          <BulletSection emoji="⚠️" title="Common mistakes" items={guide.mistakes} />
-          <BulletSection emoji="💡" title="Tips" items={guide.tips} />
+          {guide.setup.length > 0 && <Section emoji="âš™ï¸" title="Setup" items={guide.setup} />}
+          <Section emoji="â–¶ï¸" title="How to perform" items={guide.steps} />
+          <BulletSection emoji="âš ï¸" title="Common mistakes" items={guide.mistakes} />
+          <BulletSection emoji="ðŸ’¡" title="Tips" items={guide.tips} />
 
           <button
             onClick={reset}
