@@ -1,11 +1,38 @@
-import { useState } from 'react'
-import { HiPencil, HiChevronRight, HiLogout, HiTrash } from 'react-icons/hi'
+import { useState, useRef } from 'react'
+import { HiPencil, HiChevronRight, HiLogout, HiTrash, HiCamera } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
+
+const AVATAR_KEY = 'tyw_avatar'
+
+function readAndResizeImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = e => {
+      const img = new Image()
+      img.onload = () => {
+        const SIZE = 300
+        const canvas = document.createElement('canvas')
+        canvas.width = SIZE
+        canvas.height = SIZE
+        const ctx = canvas.getContext('2d')!
+        const side = Math.min(img.width, img.height)
+        const sx = (img.width - side) / 2
+        const sy = (img.height - side) / 2
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE)
+        resolve(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.onerror = reject
+      img.src = e.target!.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
 export default function Personal() {
   const userId = getUserId()
@@ -34,6 +61,28 @@ export default function Personal() {
   const [editingField, setEditingField] = useState<null | 'name'>(null)
   const [editValue, setEditValue] = useState('')
   const [notifPermission, setNotifPermission] = useState(() => getNotificationPermission())
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY))
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    try {
+      const dataUrl = await readAndResizeImage(file)
+      localStorage.setItem(AVATAR_KEY, dataUrl)
+      setAvatarUrl(dataUrl)
+    } finally {
+      setAvatarUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemoveAvatar = () => {
+    localStorage.removeItem(AVATAR_KEY)
+    setAvatarUrl(null)
+  }
 
   const saveProfileField = async (field: 'name', value: string) => {
     if (!userProfile) return
@@ -90,17 +139,62 @@ export default function Personal() {
           <div className="glass-card p-4 space-y-3">
             {/* Avatar + email header */}
             <div className="flex items-center gap-3 pb-3 border-b border-white/8">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', color: 'white' }}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => void handleAvatarChange(e)}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="relative flex-shrink-0 group"
+                disabled={avatarUploading}
+                aria-label="Change profile picture"
               >
-                {(userProfile?.name?.[0] ?? user?.email?.[0] ?? '?').toUpperCase()}
-              </div>
-              <div className="min-w-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="w-14 h-14 rounded-full object-cover"
+                    style={{ border: '2px solid rgba(168,85,247,0.35)' }}
+                  />
+                ) : (
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold"
+                    style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', color: 'white' }}
+                  >
+                    {avatarUploading ? (
+                      <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    ) : (
+                      (userProfile?.name?.[0] ?? user?.email?.[0] ?? '?').toUpperCase()
+                    )}
+                  </div>
+                )}
+                {/* Camera overlay on hover/tap */}
+                <div
+                  className="absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-200 opacity-0 group-hover:opacity-100 group-active:opacity-100"
+                  style={{ background: 'rgba(0,0,0,0.5)' }}
+                >
+                  {avatarUploading
+                    ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    : <HiCamera className="w-5 h-5 text-white" />
+                  }
+                </div>
+              </button>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-white truncate">
                   {userProfile?.name ?? 'Set your name'}
                 </p>
                 <p className="text-xs text-white/40 truncate">{user?.email}</p>
+                {avatarUrl && (
+                  <button
+                    onClick={handleRemoveAvatar}
+                    className="text-[11px] text-white/25 hover:text-red-400/70 transition-colors mt-0.5"
+                  >
+                    Remove photo
+                  </button>
+                )}
               </div>
             </div>
 
