@@ -40,7 +40,7 @@ export default function Personal() {
 
   const { user } = db.useAuth()
 
-  // Queries â€” kept for delete-account logic even when not displayed
+  // Queries — kept for delete-account logic even when not displayed
   const { data: mealData } = db.useQuery({ mealEntries: { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
   const { data: lbData } = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })

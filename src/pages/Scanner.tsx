@@ -20,7 +20,7 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// â”€â”€ Nutri-Score badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Nutri-Score badge ─────────────────────────────────────────────────────────
 
 const NS_COLORS: Record<string, string> = {
   A: '#1e8a3c',
@@ -65,7 +65,7 @@ function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: str
   )
 }
 
-// â”€â”€ NOVA dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── NOVA dots ─────────────────────────────────────────────────────────────────
 
 function NovaDots({ group }: { group: number }) {
   const labels = ['', 'Unprocessed', 'Processed', 'Processed', 'Ultra-processed']
@@ -83,14 +83,14 @@ function NovaDots({ group }: { group: number }) {
   )
 }
 
-// â”€â”€ Verdict chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Verdict chips ─────────────────────────────────────────────────────────────
 
 function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   if (!verdicts.length) return null
   const styles = {
-    positive: { bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)',  color: '#86efac' },
-    negative: { bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  color: '#fca5a5' },
-    warning:  { bg: 'rgba(234,179,8,0.12)',  border: 'rgba(234,179,8,0.3)',  color: '#fde68a' },
+    positive: { bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', color: '#86efac' },
+    negative: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', color: '#fca5a5' },
+    warning: { bg: 'rgba(234,179,8,0.12)', border: 'rgba(234,179,8,0.3)', color: '#fde68a' },
   }
   return (
     <div className="flex flex-wrap gap-2">
@@ -107,17 +107,17 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   )
 }
 
-// â”€â”€ Macro row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Macro row ─────────────────────────────────────────────────────────────────
 
 function MacroRow({ product }: { product: OFFProduct }) {
   const n = product.nutriments ?? {}
   const items = [
     { label: 'Calories', value: n['energy-kcal_100g'] != null ? `${Math.round(n['energy-kcal_100g'])} kcal` : '--' },
-    { label: 'Protein',  value: n.proteins_100g != null ? `${n.proteins_100g.toFixed(1)}g` : '--' },
-    { label: 'Carbs',    value: n.carbohydrates_100g != null ? `${n.carbohydrates_100g.toFixed(1)}g` : '--' },
-    { label: 'Fat',      value: n.fat_100g != null ? `${n.fat_100g.toFixed(1)}g` : '--' },
-    { label: 'Sugars',   value: n.sugars_100g != null ? `${n.sugars_100g.toFixed(1)}g` : '--' },
-    { label: 'Fiber',    value: n.fiber_100g != null ? `${n.fiber_100g.toFixed(1)}g` : '--' },
+    { label: 'Protein', value: n.proteins_100g != null ? `${n.proteins_100g.toFixed(1)}g` : '--' },
+    { label: 'Carbs', value: n.carbohydrates_100g != null ? `${n.carbohydrates_100g.toFixed(1)}g` : '--' },
+    { label: 'Fat', value: n.fat_100g != null ? `${n.fat_100g.toFixed(1)}g` : '--' },
+    { label: 'Sugars', value: n.sugars_100g != null ? `${n.sugars_100g.toFixed(1)}g` : '--' },
+    { label: 'Fiber', value: n.fiber_100g != null ? `${n.fiber_100g.toFixed(1)}g` : '--' },
   ]
   return (
     <div>
@@ -134,7 +134,7 @@ function MacroRow({ product }: { product: OFFProduct }) {
   )
 }
 
-// â”€â”€ Alternative suggestion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Alternative suggestion ────────────────────────────────────────────────────
 
 function AlternativeCard({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
   const [alt, setAlt] = useState<string | null>(null)
@@ -178,18 +178,18 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
   )
 }
 
-// â”€â”€ Can I eat this? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Can I eat this? ───────────────────────────────────────────────────────────
 
 const VERDICT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  'Yes':         { bg: 'rgba(34,197,94,0.1)',  border: 'rgba(34,197,94,0.3)',  text: '#86efac', dot: '#22c55e' },
-  'Sometimes':   { bg: 'rgba(234,179,8,0.1)',  border: 'rgba(234,179,8,0.3)',  text: '#fde68a', dot: '#eab308' },
-  'Avoid often': { bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)',  text: '#fca5a5', dot: '#ef4444' },
+  'Yes': { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#86efac', dot: '#22c55e' },
+  'Sometimes': { bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.3)', text: '#fde68a', dot: '#eab308' },
+  'Avoid often': { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#fca5a5', dot: '#ef4444' },
 }
 
 function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
   const [verdict, setVerdict] = useState('')
-  const [reason, setReason]   = useState('')
+  const [reason, setReason] = useState('')
 
   const ask = async () => {
     if (status === 'loading') return
@@ -261,7 +261,7 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
   )
 }
 
-// â”€â”€ Gym rating widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Gym rating widget ─────────────────────────────────────────────────────────
 
 function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string }) {
   const { data } = db.useQuery({ gymRatings: { $: { where: { barcode } } } })
@@ -283,7 +283,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
         <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Gym Score</p>
         {avg !== null && (
           <span className="text-white/40 text-xs">
-            {avg.toFixed(1)} avg Â· {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
+            {avg.toFixed(1)} avg · {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
           </span>
         )}
       </div>
@@ -309,7 +309,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
   )
 }
 
-// â”€â”€ Share story button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Share story button ────────────────────────────────────────────────────────
 
 function ShareButton({ product, scored, userId }: { product: OFFProduct; scored: ScoredProduct; userId: string }) {
   const [status, setStatus] = useState<'idle' | 'generating' | 'shared'>('idle')
@@ -353,7 +353,7 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
   )
 }
 
-// â”€â”€ Add to finds button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Add to finds button ───────────────────────────────────────────────────────
 
 function AddToFindsButton({
   product, scored, barcode, userId,
@@ -392,7 +392,7 @@ function AddToFindsButton({
   )
 }
 
-// â”€â”€ History chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── History chips ─────────────────────────────────────────────────────────────
 
 function HistoryChips({ history, onSelect }: { history: ScanHistoryEntry[]; onSelect: (barcode: string) => void }) {
   if (!history.length) return null
@@ -419,7 +419,7 @@ function HistoryChips({ history, onSelect }: { history: ScanHistoryEntry[]; onSe
   )
 }
 
-// â”€â”€ Aim overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Aim overlay ───────────────────────────────────────────────────────────────
 
 function AimOverlay() {
   return (
@@ -440,22 +440,22 @@ function AimOverlay() {
   )
 }
 
-// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Scanner() {
-  const videoRef    = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
-  const scanning    = useRef(false)
+  const scanning = useRef(false)
 
-  const [state,   setState]   = useState<PageState>('idle')
+  const [state, setState] = useState<PageState>('idle')
   const [barcode, setBarcode] = useState('')
   const [product, setProduct] = useState<OFFProduct | null>(null)
-  const [scored,  setScored]  = useState<ScoredProduct | null>(null)
+  const [scored, setScored] = useState<ScoredProduct | null>(null)
   const [history, setHistory] = useState<ScanHistoryEntry[]>(() => getScanHistory())
-  const [errMsg,  setErrMsg]  = useState('')
+  const [errMsg, setErrMsg] = useState('')
 
   const profile = getNutritionProfile()
-  const userId  = getUserId()
+  const userId = getUserId()
 
   const stopCamera = useCallback(() => {
     controlsRef.current?.stop()
@@ -521,11 +521,11 @@ export default function Scanner() {
 
       const entry: ScanHistoryEntry = {
         barcode: code,
-        name:       data.product_name || '',
-        brand:      data.brands || '',
-        grade:      score.grade,
+        name: data.product_name || '',
+        brand: data.brands || '',
+        grade: score.grade,
         gradeColor: score.gradeColor,
-        scannedAt:  Date.now(),
+        scannedAt: Date.now(),
       }
       addToScanHistory(entry)
       setHistory(getScanHistory())
@@ -543,7 +543,7 @@ export default function Scanner() {
     setState('idle')
   }
 
-  // â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (state === 'loading') {
     return (
@@ -557,13 +557,13 @@ export default function Scanner() {
     )
   }
 
-  // â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Error ──────────────────────────────────────────────────────────────────
 
   if (state === 'error') {
     return (
       <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">ðŸ“·</div>
+          <div className="text-4xl mb-4">📷</div>
           <h2 className="text-white font-bold text-lg mb-2">Camera unavailable</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">{errMsg}</p>
           <button
@@ -578,13 +578,13 @@ export default function Scanner() {
     )
   }
 
-  // â”€â”€ Not found â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Not found ──────────────────────────────────────────────────────────────
 
   if (state === 'not-found') {
     return (
       <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">ðŸ”</div>
+          <div className="text-4xl mb-4">🔍</div>
           <h2 className="text-white font-bold text-lg mb-2">Product not found</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">
             This barcode isn't in the Open Food Facts database yet.
@@ -601,7 +601,7 @@ export default function Scanner() {
     )
   }
 
-  // â”€â”€ Result â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Result ─────────────────────────────────────────────────────────────────
 
   if (state === 'result' && product && scored) {
     const n = product.nutriments ?? {}
@@ -619,7 +619,7 @@ export default function Scanner() {
           ) : (
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <span className="text-3xl">ðŸ›’</span>
+              <span className="text-3xl">🛒</span>
             </div>
           )}
           <div className="min-w-0">
@@ -707,7 +707,7 @@ export default function Scanner() {
     )
   }
 
-  // â”€â”€ Idle / scanning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Idle / scanning ────────────────────────────────────────────────────────
 
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">

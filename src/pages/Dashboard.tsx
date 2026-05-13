@@ -209,11 +209,11 @@ function MacroBar({ label, current, max, gradient }: { label: string; current: n
 }
 
 const MOODS = [
-  { emoji: 'ðŸ˜”', label: 'Low', anim: 'mood-anim-low', dur: '0.7s' },
-  { emoji: 'ðŸ˜', label: 'Meh', anim: 'mood-anim-meh', dur: '0.5s' },
-  { emoji: 'ðŸ™‚', label: 'OK', anim: 'mood-anim-ok', dur: '0.5s' },
-  { emoji: 'ðŸ˜Š', label: 'Good', anim: 'mood-anim-good', dur: '0.6s' },
-  { emoji: 'ðŸ¤©', label: 'Great', anim: 'mood-anim-great', dur: '0.65s' },
+  { emoji: '😔', label: 'Low', anim: 'mood-anim-low', dur: '0.7s' },
+  { emoji: '😐', label: 'Meh', anim: 'mood-anim-meh', dur: '0.5s' },
+  { emoji: '🙂', label: 'OK', anim: 'mood-anim-ok', dur: '0.5s' },
+  { emoji: '😊', label: 'Good', anim: 'mood-anim-good', dur: '0.6s' },
+  { emoji: '🤩', label: 'Great', anim: 'mood-anim-great', dur: '0.65s' },
 ]
 
 function GlassIcon({ filled }: { filled: boolean }) {
@@ -516,7 +516,7 @@ export default function Dashboard() {
                   : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
               }
             >
-              {alreadyLoggedToday ? 'âœ“ Logged today' : todayIsRest ? 'Rest day' : 'Log workout'}
+              {alreadyLoggedToday ? '✓ Logged today' : todayIsRest ? 'Rest day' : 'Log workout'}
             </button>
           </div>
         </div>
@@ -526,7 +526,7 @@ export default function Dashboard() {
           className="rounded-3xl p-6 text-center"
           style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(34,211,238,0.05) 100%)', border: '1px solid rgba(168,85,247,0.2)' }}
         >
-          <div className="text-4xl mb-3">ðŸ‹ï¸</div>
+          <div className="text-4xl mb-3">🏋️</div>
           <h2 className="text-lg font-bold text-white/90 mb-1">Build your first plan</h2>
           <p className="text-sm text-white/45 leading-relaxed mb-5 max-w-xs mx-auto">
             Answer a few questions about your goals and equipment. Get a personalised workout and nutrition plan in seconds.
@@ -641,10 +641,10 @@ export default function Dashboard() {
 
       {/* Feature Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-10">
-        <FeatureCard to="/scanner" emoji="ðŸ“·" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
-        <FeatureCard to="/machine" emoji="ðŸ‹ï¸" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
-        <FeatureCard to="/community" emoji="ðŸ†" label="Community" sub="Leaderboard" accent="249,115,22" />
-        <FeatureCard to="/chat" emoji="ðŸ¤–" label="Ask Kai" sub="Your AI coach" accent="52,211,153" />
+        <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
+        <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
+        <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
+        <FeatureCard to="/chat" emoji="🤖" label="Ask Kai" sub="Your AI coach" accent="52,211,153" />
       </div>
     </main>
   )

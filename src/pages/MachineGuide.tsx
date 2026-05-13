@@ -111,7 +111,7 @@ export default function MachineGuide() {
           >
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
               style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)' }}>
-              ðŸ–¼ï¸
+              🖼️
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-white/70">Upload a photo</p>

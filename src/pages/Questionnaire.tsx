@@ -21,7 +21,7 @@ interface FormData {
   bodyType: '' | 'ectomorph' | 'mesomorph' | 'endomorph'
   weight: string   // kg (metric) or lbs (imperial)
   height: string   // cm (metric) or feet (imperial)
-  heightIn: string // inches â€” imperial only
+  heightIn: string // inches — imperial only
   fitnessLevel: '' | 'beginner' | 'intermediate' | 'advanced'
   goals: string[]
   gymAccess: '' | 'gym' | 'home'
@@ -151,68 +151,68 @@ function getBmiRecommendations(wKg: number, hCm: number): BmiRec | null {
 const MAX_GOALS = 3
 
 const GOAL_OPTIONS = [
-  { label: 'Weight Loss', icon: 'ðŸ”¥', conflictsWith: ['Muscle Gain'] },
-  { label: 'Muscle Gain', icon: 'ðŸ’ª', conflictsWith: ['Weight Loss'] },
-  { label: 'Body Recomposition', icon: 'âš–ï¸', conflictsWith: [] },
-  { label: 'Strength', icon: 'ðŸ‹ï¸', conflictsWith: [] },
-  { label: 'Endurance', icon: 'ðŸƒ', conflictsWith: [] },
-  { label: 'Athletic Performance', icon: 'ðŸ†', conflictsWith: [] },
-  { label: 'Flexibility', icon: 'ðŸ§˜', conflictsWith: [] },
-  { label: 'General Fitness', icon: 'âš¡', conflictsWith: [] },
-  { label: 'Stress Relief', icon: 'ðŸŒ¿', conflictsWith: [] },
+  { label: 'Weight Loss', icon: '🔥', conflictsWith: ['Muscle Gain'] },
+  { label: 'Muscle Gain', icon: '💪', conflictsWith: ['Weight Loss'] },
+  { label: 'Body Recomposition', icon: '⚖️', conflictsWith: [] },
+  { label: 'Strength', icon: '🏋️', conflictsWith: [] },
+  { label: 'Endurance', icon: '🏃', conflictsWith: [] },
+  { label: 'Athletic Performance', icon: '🏆', conflictsWith: [] },
+  { label: 'Flexibility', icon: '🧘', conflictsWith: [] },
+  { label: 'General Fitness', icon: '⚡', conflictsWith: [] },
+  { label: 'Stress Relief', icon: '🌿', conflictsWith: [] },
 ]
 
 const DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const DAY_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 const SPORT_OPTIONS = [
-  { label: 'Basketball', icon: 'ðŸ€' },
-  { label: 'Volleyball', icon: 'ðŸ' },
-  { label: 'Soccer', icon: 'âš½' },
-  { label: 'Tennis', icon: 'ðŸŽ¾' },
-  { label: 'Swimming', icon: 'ðŸŠ' },
-  { label: 'Cycling', icon: 'ðŸš´' },
-  { label: 'Running', icon: 'ðŸƒ' },
-  { label: 'Boxing', icon: 'ðŸ¥Š' },
-  { label: 'Martial Arts', icon: 'ðŸ¥‹' },
-  { label: 'Yoga', icon: 'ðŸ§˜' },
-  { label: 'Baseball', icon: 'âš¾' },
-  { label: 'Golf', icon: 'â›³' },
-  { label: 'Climbing', icon: 'ðŸ§—' },
-  { label: 'Skiing', icon: 'â›·ï¸' },
+  { label: 'Basketball', icon: '🏀' },
+  { label: 'Volleyball', icon: '🏐' },
+  { label: 'Soccer', icon: '⚽' },
+  { label: 'Tennis', icon: '🎾' },
+  { label: 'Swimming', icon: '🏊' },
+  { label: 'Cycling', icon: '🚴' },
+  { label: 'Running', icon: '🏃' },
+  { label: 'Boxing', icon: '🥊' },
+  { label: 'Martial Arts', icon: '🥋' },
+  { label: 'Yoga', icon: '🧘' },
+  { label: 'Baseball', icon: '⚾' },
+  { label: 'Golf', icon: '⛳' },
+  { label: 'Climbing', icon: '🧗' },
+  { label: 'Skiing', icon: '⛷️' },
 ]
 
 const HOME_EQUIPMENT_OPTIONS = [
-  { label: 'Bodyweight Only', icon: 'ðŸ™†' },
-  { label: 'Dumbbells', icon: 'ðŸ‹ï¸' },
-  { label: 'Resistance Bands', icon: 'ðŸŸ¡' },
-  { label: 'Kettlebell', icon: 'âš™ï¸' },
-  { label: 'Pull-up Bar', icon: 'ðŸ”±' },
-  { label: 'Dip Bars', icon: 'â¬‡ï¸' },
-  { label: 'Yoga Mat', icon: 'ðŸŸª' },
-  { label: 'Jump Rope', icon: 'ðŸª¢' },
-  { label: 'Bench', icon: 'ðŸª‘' },
-  { label: 'TRX / Suspension Trainer', icon: 'ðŸŽ¯' },
+  { label: 'Bodyweight Only', icon: '🙆' },
+  { label: 'Dumbbells', icon: '🏋️' },
+  { label: 'Resistance Bands', icon: '🟡' },
+  { label: 'Kettlebell', icon: '⚙️' },
+  { label: 'Pull-up Bar', icon: '🔱' },
+  { label: 'Dip Bars', icon: '⬇️' },
+  { label: 'Yoga Mat', icon: '🟪' },
+  { label: 'Jump Rope', icon: '🪢' },
+  { label: 'Bench', icon: '🪑' },
+  { label: 'TRX / Suspension Trainer', icon: '🎯' },
 ]
 
 const GYM_EQUIPMENT_OPTIONS = [
-  { label: 'Barbell', icon: 'ðŸ‹ï¸â€â™‚ï¸' },
-  { label: 'Dumbbells', icon: 'ðŸ‹ï¸' },
-  { label: 'Squat Rack', icon: 'ðŸ—ï¸' },
-  { label: 'Cable Machine', icon: 'ðŸ”—' },
-  { label: 'Smith Machine', icon: 'ðŸ”©' },
-  { label: 'Leg Press Machine', icon: 'ðŸ¦µ' },
-  { label: 'Chest Press Machine', icon: 'ðŸ’ª' },
-  { label: 'Lat Pulldown Machine', icon: 'â¬‡ï¸' },
-  { label: 'Seated Row Machine', icon: 'ðŸš£' },
-  { label: 'Shoulder Press Machine', icon: 'ðŸ”¼' },
-  { label: 'Leg Curl / Extension Machine', icon: 'ðŸ¦¿' },
-  { label: 'Treadmill', icon: 'ðŸƒ' },
-  { label: 'Stationary Bike', icon: 'ðŸš´' },
-  { label: 'Elliptical', icon: 'ã€°ï¸' },
-  { label: 'Rowing Machine', icon: 'ðŸ›¶' },
-  { label: 'Bench', icon: 'ðŸª‘' },
-  { label: 'Kettlebell', icon: 'âš™ï¸' },
+  { label: 'Barbell', icon: '🏋️‍♂️' },
+  { label: 'Dumbbells', icon: '🏋️' },
+  { label: 'Squat Rack', icon: '🏗️' },
+  { label: 'Cable Machine', icon: '🔗' },
+  { label: 'Smith Machine', icon: '🔩' },
+  { label: 'Leg Press Machine', icon: '🦵' },
+  { label: 'Chest Press Machine', icon: '💪' },
+  { label: 'Lat Pulldown Machine', icon: '⬇️' },
+  { label: 'Seated Row Machine', icon: '🚣' },
+  { label: 'Shoulder Press Machine', icon: '🔼' },
+  { label: 'Leg Curl / Extension Machine', icon: '🦿' },
+  { label: 'Treadmill', icon: '🏃' },
+  { label: 'Stationary Bike', icon: '🚴' },
+  { label: 'Elliptical', icon: '〰️' },
+  { label: 'Rowing Machine', icon: '🛶' },
+  { label: 'Bench', icon: '🪑' },
+  { label: 'Kettlebell', icon: '⚙️' },
 ]
 
 const EQUIPMENT_OPTIONS = [...HOME_EQUIPMENT_OPTIONS, ...GYM_EQUIPMENT_OPTIONS]
@@ -629,7 +629,7 @@ export default function Questionnaire() {
                         : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                         }`}
                     >
-                      {level === 'beginner' ? 'ðŸŒ±' : level === 'intermediate' ? 'ðŸ”¥' : 'âš¡'} {level}
+                      {level === 'beginner' ? '🌱' : level === 'intermediate' ? '🔥' : '⚡'} {level}
                     </button>
                   ))}
                 </div>
@@ -671,7 +671,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 2 â€” Goals */}
+        {/* Step 2 — Goals */}
         {step === 2 && (
           <div className="space-y-6">
             <StepHeader
@@ -708,7 +708,7 @@ export default function Questionnaire() {
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10
                                        text-[9px] px-2 py-0.5 rounded-full font-semibold
                                        bg-purple-500 text-white tracking-wide whitespace-nowrap">
-                        âœ¦ Suggested
+                        ✦ Suggested
                       </span>
                     )}
                     <button
@@ -741,7 +741,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 3 â€” Equipment */}
+        {/* Step 3 — Equipment */}
         {step === 3 && (
           <div className="space-y-6">
             <StepHeader title="Available Equipment" subtitle="Tell us where you train, then select your equipment." />
@@ -749,8 +749,8 @@ export default function Questionnaire() {
               <p className="text-sm font-medium text-white/60 mb-3">Where do you train?</p>
               <div className="flex gap-3">
                 {([
-                  { value: 'gym', label: 'Gym', icon: 'ðŸ¢' },
-                  { value: 'home', label: 'Home', icon: 'ðŸ ' },
+                  { value: 'gym', label: 'Gym', icon: '🏢' },
+                  { value: 'home', label: 'Home', icon: '🏠' },
                 ] as const).map(({ value, label, icon }) => (
                   <button
                     key={value}
@@ -816,7 +816,7 @@ export default function Questionnaire() {
                             className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors"
                             aria-label={`Remove ${item}`}
                           >
-                            Ã—
+                            ×
                           </button>
                         </span>
                       ))}
@@ -828,7 +828,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 4 â€” Schedule */}
+        {/* Step 4 — Schedule */}
         {step === 4 && (
           <div className="space-y-6">
             <StepHeader title="Your Schedule" subtitle="When can you train and what else do you do?" />
@@ -882,14 +882,14 @@ export default function Questionnaire() {
                         }`}
                     >
                       <span className="text-[11px] font-bold uppercase tracking-wide">{day}</span>
-                      {unavailable && <span className="text-[9px] mt-0.5">âœ•</span>}
+                      {unavailable && <span className="text-[9px] mt-0.5">✕</span>}
                     </button>
                   )
                 })}
               </div>
               {dayBlockError ? (
                 <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1.5">
-                  <span>âš </span>{dayBlockError}
+                  <span>⚠</span>{dayBlockError}
                 </p>
               ) : form.unavailableDays.length > 0 && (
                 <p className="text-xs text-white/30 mt-2">
@@ -974,7 +974,7 @@ export default function Questionnaire() {
                         onClick={() => toggleSport(sport)}
                         className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors"
                       >
-                        Ã—
+                        ×
                       </button>
                     </span>
                   ))}
@@ -1003,7 +1003,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 5 â€” Diet */}
+        {/* Step 5 — Diet */}
         {step === 5 && (
           <div className="space-y-6">
             <StepHeader title="Your Diet" subtitle="Help us tailor your nutrition guidance to how you already eat." />
@@ -1107,7 +1107,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 6 â€” Space (optional) */}
+        {/* Step 6 — Space (optional) */}
         {step === 6 && (
           <div className="space-y-6">
             <StepHeader
@@ -1128,7 +1128,7 @@ export default function Questionnaire() {
                   className="hidden"
                   onChange={handleImageUpload}
                 />
-                <div className="text-4xl mb-3">ðŸ“¸</div>
+                <div className="text-4xl mb-3">📸</div>
                 <p className="text-white/60 font-medium">Drop photos here or click to upload</p>
                 <p className="text-white/30 text-sm mt-1">
                   Up to {3 - form.images.length} more image{3 - form.images.length !== 1 ? 's' : ''}
@@ -1146,7 +1146,7 @@ export default function Questionnaire() {
                                  text-white flex items-center justify-center opacity-0
                                  group-hover:opacity-100 transition-opacity shadow-lg"
                     >
-                      Ã—
+                      ×
                     </button>
                   </div>
                 ))}
@@ -1161,7 +1161,7 @@ export default function Questionnaire() {
           </div>
         )}
 
-        {/* Step 7 â€” Notifications */}
+        {/* Step 7 — Notifications */}
         {step === 7 && (
           <div className="space-y-6">
             {existingPlanIds.length > 0 && (
@@ -1177,7 +1177,7 @@ export default function Questionnaire() {
                 className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
                 style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)' }}
               >
-                ðŸ””
+                🔔
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Stay on track</h2>
               <p className="text-white/50 text-sm leading-relaxed max-w-xs mx-auto">

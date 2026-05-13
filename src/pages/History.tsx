@@ -86,7 +86,7 @@ function InteractivePlan({ planId, planText, blockedDays, dayOverrides, onExerci
   return (
     <div className="px-4 pb-5">
       <p className="text-white/35 text-xs pt-4 pb-3 flex items-center gap-1.5">
-        <span className="text-purple-400">â–¶</span>
+        <span className="text-purple-400">▶</span>
         Tap any exercise for a guide. Log weights below.
       </p>
       <WorkoutDayView plan={planText} planComponents={components} blockedDays={blockedDays}
@@ -190,7 +190,7 @@ export default function History() {
     return (
       <main className="w-full md:max-w-2xl md:mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="glass-card p-8">
-          <div className="text-4xl mb-4">âš ï¸</div>
+          <div className="text-4xl mb-4">⚠️</div>
           <p className="text-red-300">Failed to load plan. Please try again later.</p>
         </div>
       </main>
