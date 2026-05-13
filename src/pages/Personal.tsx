@@ -4,35 +4,36 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
+import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 
 export default function Personal() {
-  const userId   = getUserId()
+  const userId = getUserId()
   const navigate = useNavigate()
 
   const { user } = db.useAuth()
 
   // Queries — kept for delete-account logic even when not displayed
-  const { data: mealData }    = db.useQuery({ mealEntries:        { $: { where: { userId } } } })
+  const { data: mealData } = db.useQuery({ mealEntries: { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
-  const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
-  const { data: waterData }   = db.useQuery({ waterLogs:          { $: { where: { userId } } } })
-  const { data: planData }    = db.useQuery({ workoutPlans:       { $: { where: { userId } } } })
-  const { data: ticketData }  = db.useQuery({ supportTickets:     { $: { where: { userId } } } })
-  const { data: ratingData }  = db.useQuery({ gymRatings:         { $: { where: { userId } } } })
-  const { data: findsData }   = db.useQuery({ communityFinds:     { $: { where: { sharedBy: userId } } } })
-  const { data: profileData } = db.useQuery({ userProfiles:       { $: { where: { userId } } } })
+  const { data: lbData } = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
+  const { data: waterData } = db.useQuery({ waterLogs: { $: { where: { userId } } } })
+  const { data: planData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
+  const { data: ticketData } = db.useQuery({ supportTickets: { $: { where: { userId } } } })
+  const { data: ratingData } = db.useQuery({ gymRatings: { $: { where: { userId } } } })
+  const { data: findsData } = db.useQuery({ communityFinds: { $: { where: { sharedBy: userId } } } })
+  const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
 
   const userProfile = (profileData?.userProfiles ?? [])[0] as { id: string; name?: string } | undefined
 
-  const allPlans   = (planData?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
+  const allPlans = (planData?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
   const latestPlan = [...allPlans].sort((a, b) => b.createdAt - a.createdAt)[0]
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deleteBusy, setDeleteBusy]               = useState(false)
-  const [editingField, setEditingField]            = useState<null | 'name'>(null)
-  const [editValue, setEditValue]                  = useState('')
-  const [notifPermission, setNotifPermission]      = useState(() => getNotificationPermission())
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [editingField, setEditingField] = useState<null | 'name'>(null)
+  const [editValue, setEditValue] = useState('')
+  const [notifPermission, setNotifPermission] = useState(() => getNotificationPermission())
 
   const saveProfileField = async (field: 'name', value: string) => {
     if (!userProfile) return
@@ -54,15 +55,15 @@ export default function Personal() {
     setDeleteBusy(true)
     try {
       const txns = [
-        ...(mealData?.mealEntries        ?? []).map((r: { id: string }) => db.tx.mealEntries[r.id].delete()),
+        ...(mealData?.mealEntries ?? []).map((r: { id: string }) => db.tx.mealEntries[r.id].delete()),
         ...(workoutData?.workoutCompletions ?? []).map((r: { id: string }) => db.tx.workoutCompletions[r.id].delete()),
-        ...(lbData?.leaderboardEntries   ?? []).map((r: { id: string }) => db.tx.leaderboardEntries[r.id].delete()),
-        ...(waterData?.waterLogs         ?? []).map((r: { id: string }) => db.tx.waterLogs[r.id].delete()),
-        ...(planData?.workoutPlans       ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete()),
-        ...(ticketData?.supportTickets   ?? []).map((r: { id: string }) => db.tx.supportTickets[r.id].delete()),
-        ...(ratingData?.gymRatings       ?? []).map((r: { id: string }) => db.tx.gymRatings[r.id].delete()),
-        ...(findsData?.communityFinds    ?? []).map((r: { id: string }) => db.tx.communityFinds[r.id].delete()),
-        ...(profileData?.userProfiles    ?? []).map((r: { id: string }) => db.tx.userProfiles[r.id].delete()),
+        ...(lbData?.leaderboardEntries ?? []).map((r: { id: string }) => db.tx.leaderboardEntries[r.id].delete()),
+        ...(waterData?.waterLogs ?? []).map((r: { id: string }) => db.tx.waterLogs[r.id].delete()),
+        ...(planData?.workoutPlans ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete()),
+        ...(ticketData?.supportTickets ?? []).map((r: { id: string }) => db.tx.supportTickets[r.id].delete()),
+        ...(ratingData?.gymRatings ?? []).map((r: { id: string }) => db.tx.gymRatings[r.id].delete()),
+        ...(findsData?.communityFinds ?? []).map((r: { id: string }) => db.tx.communityFinds[r.id].delete()),
+        ...(profileData?.userProfiles ?? []).map((r: { id: string }) => db.tx.userProfiles[r.id].delete()),
       ]
       if (txns.length > 0) await db.transact(txns)
       const KEYS = ['tyw_user_id', 'uplift_nutrition_profile', 'tyw_scan_history', 'tyw_notif_seen', 'tyw_lb_ts', 'tyw_notif_ts']
@@ -156,12 +157,12 @@ export default function Personal() {
                 if (!latestPlan) { navigate('/questionnaire'); return }
                 navigate('/reevaluate', {
                   state: {
-                    planId:       latestPlan.id,
+                    planId: latestPlan.id,
                     originalPlan: latestPlan.plan,
-                    userName:     latestPlan.userName,
+                    userName: latestPlan.userName,
                     fitnessLevel: latestPlan.fitnessLevel ?? '',
-                    goals:        latestPlan.goals ?? '[]',
-                    equipment:    latestPlan.equipment ?? '[]',
+                    goals: latestPlan.goals ?? '[]',
+                    equipment: latestPlan.equipment ?? '[]',
                   },
                 })
               }}
@@ -232,7 +233,17 @@ export default function Personal() {
             </button>
           </div>
         </div>
-
+        <div className="w-full h-px bg-gray-600" />
+        <Link
+          to="/support"
+          className="inline-flex items-center gap-2 text-sm transition-colors"
+          style={{ color: 'rgba(255,255,255,0.32)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.32)')}
+        >
+          <HiQuestionMarkCircle className="w-4 h-4" />
+          Need help or have feedback?
+        </Link>
       </div>
 
       {/* Delete confirmation modal */}

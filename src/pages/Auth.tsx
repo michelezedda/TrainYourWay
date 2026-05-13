@@ -115,10 +115,10 @@ export default function Auth() {
         {/* Feature grid */}
         <div className="grid grid-cols-2 gap-2.5 mb-7">
           {[
-            { icon: '🏋️', label: 'AI Workout Plans', sub: 'Built for your setup and goals' },
+            { icon: '🏋️', label: 'Personalized Workout Plans', sub: 'Built for your setup and goals' },
             { icon: '🥗', label: 'Nutrition Tracking', sub: 'Macros, calories, food scanner' },
-            { icon: '🤖', label: 'Kai AI Coach', sub: 'Ask anything, any time' },
-            { icon: '📈', label: 'Auto-Progress', sub: 'Plan evolves every 2 weeks' },
+            { icon: '🤖', label: 'Meet KAI, Your AI Coach', sub: 'Ask anything, any time' },
+            { icon: '📈', label: 'Auto-Progress', sub: 'Evolve your plan every 4 weeks' },
           ].map(({ icon, label, sub }) => (
             <div
               key={label}

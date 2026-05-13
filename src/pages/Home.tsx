@@ -5,14 +5,14 @@ import { db } from '@/lib/db'
 
 const features = [
   {
-    icon: '🏠',
-    title: 'Home Equipment Analysis',
-    desc: 'Tell us what you have: dumbbells, bands, bodyweight, anything. The plan is built around your setup, not a gym.',
+    icon: '🔍',
+    title: 'Equipment Analysis',
+    desc: 'Tell us what equipment you actually have: dumbbells, resistance bands, benches, pull-up bars, or just bodyweight. Your plan adapts to your setup, whether you train at home or in a full gym.',
   },
   {
     icon: '📸',
     title: 'Photo Recognition',
-    desc: 'Upload pictures of your space and get a visual analysis of your equipment with suggestions for useful additions.',
+    desc: 'Upload photos of your gym setup, meals, or workout machines. The app can recognize your equipment, analyze food, identify gym machines, and give smart training and nutrition suggestions.',
   },
   {
     icon: '🥗',
@@ -26,13 +26,13 @@ const features = [
   },
   {
     icon: '🤖',
-    title: 'Kai, Your AI Coach',
+    title: 'Meet Kai, Your AI Coach',
     desc: 'Ask Kai anything about your training, nutrition, or recovery at any time. Real answers, not generic advice.',
   },
   {
     icon: '📈',
     title: 'Built to Progress',
-    desc: 'Evolve your plan every two weeks as you get stronger. Weights, reps, and exercises adapt with you.',
+    desc: 'Evolve your plan every four weeks as you get stronger. Weights, reps, and exercises adapt with you.',
   },
 ]
 
@@ -45,7 +45,7 @@ const steps = [
   },
   {
     number: '02',
-    title: 'AI analyses everything',
+    title: 'UPLIFT analyses everything',
     desc: 'Your profile, photos, dietary needs, and training space are all considered before crafting a plan built specifically for you.',
     icon: '🤖',
   },
@@ -66,12 +66,12 @@ const planIncludes = [
   { icon: '🍽️', text: 'Daily calorie and macro targets matched to your dietary profile' },
   { icon: '🥗', text: 'Nutrition strategy aligned with your diet type and goals' },
   { icon: '⚖️', text: 'Honest assessment of your starting point and what to expect' },
-  { icon: '🔄', text: 'Plan evolution every 2 weeks to match your progress' },
+  { icon: '🔄', text: 'Plan evolution every 4 weeks to match your progress' },
   { icon: '💬', text: 'On-demand guidance from Kai, your personal AI coach' },
 ]
 
 const stats = [
-  { value: '5 min', label: 'to set up your profile' },
+  { value: '< 5 min', label: 'to set up your profile' },
   { value: '< 30s', label: 'to generate your plan' },
   { value: '100%', label: 'tailored to you' },
   { value: 'Free', label: 'no subscription needed' },
@@ -113,7 +113,7 @@ export default function Home() {
           and nutrition plan built around who you are, generated in seconds.
         </p>
         <p className="text-sm text-white/30 max-w-lg mx-auto mb-10">
-          No gym required. No subscription. Just results.
+          No gym required. Just results.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -261,7 +261,7 @@ export default function Home() {
       {/* Kai callout */}
       <section className="max-w-5xl mx-auto px-4 pb-20">
         <div
-          className="rounded-3xl border border-white/8 px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-8"
+          className="rounded-3xl border border-white/20 px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-8"
           style={{ background: 'rgba(168,85,247,0.06)' }}
         >
           <img src="/kai-avatar.svg" alt="Kai" className="w-16 h-16 rounded-full flex-shrink-0" />
