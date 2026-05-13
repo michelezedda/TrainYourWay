@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { HiArrowNarrowLeft, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
-import { IoIosMale, IoIosFemale } from "react-icons/io";
+import { IoIosMale } from "react-icons/io";
+import { CgShapeTriangle, CgShapeSquare, CgShapeCircle } from "react-icons/cg";
+import { IoFemaleOutline } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom'
 import StepIndicator from '@/components/StepIndicator'
 import GlassCard from '@/components/GlassCard'
@@ -62,7 +64,7 @@ const INITIAL: FormData = {
 
 // --- unit helpers ---
 function lbsToKg(lbs: number) { return lbs / 2.2046 }
-function kgToLbs(kg: number)  { return kg * 2.2046 }
+function kgToLbs(kg: number) { return kg * 2.2046 }
 function cmToFtIn(cm: number) {
   const totalIn = cm / 2.54
   return { ft: Math.floor(totalIn / 12), inches: Math.round(totalIn % 12) }
@@ -147,66 +149,66 @@ function getBmiRecommendations(wKg: number, hCm: number): BmiRec | null {
 const MAX_GOALS = 3
 
 const GOAL_OPTIONS = [
-  { label: 'Weight Loss',          icon: '🔥', conflictsWith: ['Muscle Gain'] },
-  { label: 'Muscle Gain',          icon: '💪', conflictsWith: ['Weight Loss'] },
-  { label: 'Body Recomposition',   icon: '⚖️', conflictsWith: [] },
-  { label: 'Strength',             icon: '🏋️', conflictsWith: [] },
-  { label: 'Endurance',            icon: '🏃', conflictsWith: [] },
+  { label: 'Weight Loss', icon: '🔥', conflictsWith: ['Muscle Gain'] },
+  { label: 'Muscle Gain', icon: '💪', conflictsWith: ['Weight Loss'] },
+  { label: 'Body Recomposition', icon: '⚖️', conflictsWith: [] },
+  { label: 'Strength', icon: '🏋️', conflictsWith: [] },
+  { label: 'Endurance', icon: '🏃', conflictsWith: [] },
   { label: 'Athletic Performance', icon: '🏆', conflictsWith: [] },
-  { label: 'Flexibility',          icon: '🧘', conflictsWith: [] },
-  { label: 'General Fitness',      icon: '⚡', conflictsWith: [] },
-  { label: 'Stress Relief',        icon: '🌿', conflictsWith: [] },
+  { label: 'Flexibility', icon: '🧘', conflictsWith: [] },
+  { label: 'General Fitness', icon: '⚡', conflictsWith: [] },
+  { label: 'Stress Relief', icon: '🌿', conflictsWith: [] },
 ]
 
 const DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const DAY_FULL    = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const DAY_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 const SPORT_OPTIONS = [
-  { label: 'Basketball',   icon: '🏀' },
-  { label: 'Volleyball',   icon: '🏐' },
-  { label: 'Soccer',       icon: '⚽' },
-  { label: 'Tennis',       icon: '🎾' },
-  { label: 'Swimming',     icon: '🏊' },
-  { label: 'Cycling',      icon: '🚴' },
-  { label: 'Running',      icon: '🏃' },
-  { label: 'Boxing',       icon: '🥊' },
+  { label: 'Basketball', icon: '🏀' },
+  { label: 'Volleyball', icon: '🏐' },
+  { label: 'Soccer', icon: '⚽' },
+  { label: 'Tennis', icon: '🎾' },
+  { label: 'Swimming', icon: '🏊' },
+  { label: 'Cycling', icon: '🚴' },
+  { label: 'Running', icon: '🏃' },
+  { label: 'Boxing', icon: '🥊' },
   { label: 'Martial Arts', icon: '🥋' },
-  { label: 'Yoga',         icon: '🧘' },
-  { label: 'Baseball',     icon: '⚾' },
-  { label: 'Golf',         icon: '⛳' },
-  { label: 'Climbing',     icon: '🧗' },
-  { label: 'Skiing',       icon: '⛷️' },
+  { label: 'Yoga', icon: '🧘' },
+  { label: 'Baseball', icon: '⚾' },
+  { label: 'Golf', icon: '⛳' },
+  { label: 'Climbing', icon: '🧗' },
+  { label: 'Skiing', icon: '⛷️' },
 ]
 
 const EQUIPMENT_OPTIONS = [
-  { label: 'Dumbbells',                  icon: '🏋️' },
-  { label: 'Resistance Bands',           icon: '🟡' },
-  { label: 'Pull-up Bar',                icon: '🔱' },
-  { label: 'Yoga Mat',                   icon: '🟪' },
-  { label: 'Jump Rope',                  icon: '🪢' },
-  { label: 'Kettlebell',                 icon: '⚙️' },
-  { label: 'Barbell',                    icon: '🏋️‍♂️' },
-  { label: 'Bench',                      icon: '🪑' },
-  { label: 'Squat Rack',                 icon: '🏗️' },
-  { label: 'Cable Machine',              icon: '🔗' },
-  { label: 'Dip Bars',                   icon: '⬇️' },
-  { label: 'TRX / Suspension Trainer',   icon: '🎯' },
+  { label: 'Dumbbells', icon: '🏋️' },
+  { label: 'Resistance Bands', icon: '🟡' },
+  { label: 'Pull-up Bar', icon: '🔱' },
+  { label: 'Yoga Mat', icon: '🟪' },
+  { label: 'Jump Rope', icon: '🪢' },
+  { label: 'Kettlebell', icon: '⚙️' },
+  { label: 'Barbell', icon: '🏋️‍♂️' },
+  { label: 'Bench', icon: '🪑' },
+  { label: 'Squat Rack', icon: '🏗️' },
+  { label: 'Cable Machine', icon: '🔗' },
+  { label: 'Dip Bars', icon: '⬇️' },
+  { label: 'TRX / Suspension Trainer', icon: '🎯' },
   { label: 'Treadmill / Cardio Machine', icon: '🏃' },
-  { label: 'Full Gym Access',            icon: '🏢' },
-  { label: 'Bodyweight Only',            icon: '🙆' },
+  { label: 'Full Gym Access', icon: '🏢' },
+  { label: 'Bodyweight Only', icon: '🙆' },
 ]
 
 const DIET_OPTIONS = [
-  { value: 'omnivore',     label: 'Omnivore',           desc: 'No restrictions' },
-  { value: 'vegetarian',   label: 'Vegetarian',         desc: 'No meat, includes dairy and eggs' },
-  { value: 'vegan',        label: 'Vegan',              desc: 'Entirely plant-based' },
-  { value: 'pescatarian',  label: 'Pescatarian',        desc: 'Fish ok, no other meat' },
-  { value: 'keto',         label: 'Keto / Low-carb',    desc: 'High fat, very low carbs' },
-  { value: 'paleo',        label: 'Paleo',              desc: 'Whole foods, no grains or dairy' },
-  { value: 'halal',        label: 'Halal',              desc: 'No pork or alcohol, halal-certified meat' },
-  { value: 'kosher',       label: 'Kosher',             desc: 'No pork or shellfish, no mixing meat and dairy' },
-  { value: 'hindu-veg',    label: 'Hindu Vegetarian',   desc: 'No beef, typically lacto-vegetarian' },
-  { value: 'jain',         label: 'Jain',               desc: 'No meat, no root vegetables (onion, garlic, potato)' },
+  { value: 'omnivore', label: 'Omnivore', desc: 'No restrictions' },
+  { value: 'vegetarian', label: 'Vegetarian', desc: 'No meat, includes dairy and eggs' },
+  { value: 'vegan', label: 'Vegan', desc: 'Entirely plant-based' },
+  { value: 'pescatarian', label: 'Pescatarian', desc: 'Fish ok, no other meat' },
+  { value: 'keto', label: 'Keto / Low-carb', desc: 'High fat, very low carbs' },
+  { value: 'paleo', label: 'Paleo', desc: 'Whole foods, no grains or dairy' },
+  { value: 'halal', label: 'Halal', desc: 'No pork or alcohol, halal-certified meat' },
+  { value: 'kosher', label: 'Kosher', desc: 'No pork or shellfish, no mixing meat and dairy' },
+  { value: 'hindu-veg', label: 'Hindu Vegetarian', desc: 'No beef, typically lacto-vegetarian' },
+  { value: 'jain', label: 'Jain', desc: 'No meat, no root vegetables (onion, garlic, potato)' },
 ]
 
 const ALLERGY_OPTIONS = ['Gluten-free', 'Dairy-free', 'Nut-free', 'Egg-free', 'Shellfish-free', 'Soy-free']
@@ -220,7 +222,7 @@ export default function Questionnaire() {
   const [error, setError] = useState('')
   const [goalConflictMsg, setGoalConflictMsg] = useState('')
   const [dayBlockError, setDayBlockError] = useState('')
-  const [customSport, setCustomSport]     = useState('')
+  const [customSport, setCustomSport] = useState('')
   const [customInput, setCustomInput] = useState('')
   const [showMoreDiets, setShowMoreDiets] = useState(false)
   const navigate = useNavigate()
@@ -350,12 +352,12 @@ export default function Questionnaire() {
   const wNum = parseFloat(form.weight)
   const weightInvalid = form.weight.trim() !== '' && (
     isNaN(wNum) ||
-    (form.unit === 'metric'   ? wNum < 30  || wNum > 300  : wNum < 66  || wNum > 661)
+    (form.unit === 'metric' ? wNum < 30 || wNum > 300 : wNum < 66 || wNum > 661)
   )
 
   const ftNum = parseInt(form.height, 10)
   const inNum = parseInt(form.heightIn || '0', 10)
-  const hNum  = parseFloat(form.height)
+  const hNum = parseFloat(form.height)
   const heightInvalid = form.height.trim() !== '' && (
     form.unit === 'metric'
       ? isNaN(hNum) || hNum < 100 || hNum > 250
@@ -364,7 +366,7 @@ export default function Questionnaire() {
 
   const weightKg = toMetricWeight(form.weight, form.unit)
   const heightCm = toMetricHeight(form.height, form.heightIn, form.unit)
-  const bmiRec   = getBmiRecommendations(weightKg, heightCm)
+  const bmiRec = getBmiRecommendations(weightKg, heightCm)
 
   const handleNext = () => {
     setError('')
@@ -456,11 +458,10 @@ export default function Questionnaire() {
                   <button
                     key={u}
                     onClick={() => switchUnit(u)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                      form.unit === u
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : 'bg-white/5 text-white/40 hover:text-white/70'
-                    } ${i === 0 ? 'border-r border-white/10' : ''}`}
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${form.unit === u
+                      ? 'bg-purple-500/20 text-purple-300'
+                      : 'bg-white/5 text-white/40 hover:text-white/70'
+                      } ${i === 0 ? 'border-r border-white/10' : ''}`}
                   >
                     {u === 'metric' ? 'Metric' : 'US Imperial'}
                   </button>
@@ -498,13 +499,12 @@ export default function Questionnaire() {
                       <button
                         key={s}
                         onClick={() => update({ sex: s })}
-                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex justify-center items-center gap-2 ${
-                          form.sex === s
-                            ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
-                            : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                        }`}
+                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex justify-center items-center gap-2 ${form.sex === s
+                          ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                          }`}
                       >
-                        {s === 'male' ? <><IoIosMale /> Male</>  : <><IoIosFemale/>Female</> }
+                        {s === 'male' ? <><IoIosMale /> Male</> : <><IoFemaleOutline /> Female</>}
                       </button>
                     ))}
                   </div>
@@ -585,11 +585,10 @@ export default function Questionnaire() {
                     <button
                       key={level}
                       onClick={() => update({ fitnessLevel: level })}
-                      className={`py-3 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize ${
-                        form.fitnessLevel === level
-                          ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
-                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                      }`}
+                      className={`py-3 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize ${form.fitnessLevel === level
+                        ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                        }`}
                     >
                       {level === 'beginner' ? '🌱' : level === 'intermediate' ? '🔥' : '⚡'} {level}
                     </button>
@@ -601,18 +600,26 @@ export default function Questionnaire() {
                 <label className="block text-sm font-medium text-white/60 mb-1.5">Body Type</label>
                 <div className="grid grid-cols-3 gap-3">
                   {([
-                    { value: 'ectomorph',  label: 'Ectomorph',  icon: '🦴', desc: 'Lean, fast metabolism' },
-                    { value: 'mesomorph',  label: 'Mesomorph',  icon: '💪', desc: 'Athletic, builds easily' },
-                    { value: 'endomorph',  label: 'Endomorph',  icon: '🧱', desc: 'Heavier, gains weight easily' },
+                    {
+                      value: 'ectomorph', label: 'Ectomorph', icon: <CgShapeCircle />
+                      , desc: 'Lean, fast metabolism'
+                    },
+                    {
+                      value: 'mesomorph', label: 'Mesomorph', icon: <CgShapeSquare />
+                      , desc: 'Athletic, builds easily'
+                    },
+                    {
+                      value: 'endomorph', label: 'Endomorph', icon: <CgShapeTriangle />
+                      , desc: 'Heavier, gains weight easily'
+                    },
                   ] as const).map(({ value, label, icon, desc }) => (
                     <button
                       key={value}
                       onClick={() => update({ bodyType: value })}
-                      className={`py-3 px-2 rounded-2xl text-sm border transition-all duration-200 flex flex-col items-center gap-1 ${
-                        form.bodyType === value
-                          ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
-                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                      }`}
+                      className={`py-3 px-2 rounded-2xl text-sm border transition-all duration-200 flex flex-col items-center gap-1 ${form.bodyType === value
+                        ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                        }`}
                     >
                       <span className="text-lg leading-none">{icon}</span>
                       <span className="font-medium text-xs">{label}</span>
@@ -644,7 +651,6 @@ export default function Questionnaire() {
                     {' '}<span className={`text-xs font-medium ${bmiRec.color}`}>({bmiRec.category})</span>
                     {'. '}{bmiRec.message}
                   </p>
-                  <p className="text-xs text-white/35">Goals marked with ✦ are suggested for your profile.</p>
                 </div>
               </div>
             )}
@@ -652,11 +658,11 @@ export default function Questionnaire() {
             <div className="flex flex-wrap gap-x-3 gap-y-5 pt-1">
               {GOAL_OPTIONS.map(({ label, icon }) => {
                 const suggested = bmiRec?.recommended.includes(label) ?? false
-                const selected  = form.goals.includes(label)
-                const opt       = GOAL_OPTIONS.find(o => o.label === label)!
+                const selected = form.goals.includes(label)
+                const opt = GOAL_OPTIONS.find(o => o.label === label)!
                 const hasConflict = opt.conflictsWith.some(c => form.goals.includes(c))
-                const atMax     = form.goals.length >= MAX_GOALS && !selected
-                const disabled  = !selected && (hasConflict || atMax)
+                const atMax = form.goals.length >= MAX_GOALS && !selected
+                const disabled = !selected && (hasConflict || atMax)
                 return (
                   <div key={label} className="relative">
                     {suggested && !selected && (
@@ -669,9 +675,8 @@ export default function Questionnaire() {
                     <button
                       onClick={() => toggleGoal(label)}
                       disabled={disabled}
-                      className={`chip ${selected ? 'active' : ''} ${
-                        suggested && !selected ? 'border-purple-500/50' : ''
-                      } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+                      className={`chip ${selected ? 'active' : ''} ${suggested && !selected ? 'border-purple-500/50' : ''
+                        } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
                     >
                       <span>{icon}</span> {label}
                     </button>
@@ -780,7 +785,7 @@ export default function Questionnaire() {
                 className="w-full accent-purple-500 h-2 rounded-full"
               />
               <div className="flex justify-between text-xs text-white/30 mt-1">
-                {[1,2,3,4,5,6,7].map((n) => <span key={n}>{n}</span>)}
+                {[1, 2, 3, 4, 5, 6, 7].map((n) => <span key={n}>{n}</span>)}
               </div>
             </div>
 
@@ -791,21 +796,20 @@ export default function Questionnaire() {
               </label>
               <div className="grid grid-cols-7 gap-1.5">
                 {DAY_OPTIONS.map((day, i) => {
-                  const unavailable  = form.unavailableDays.includes(DAY_FULL[i])
-                  const maxBlocked   = 7 - parseInt(form.daysPerWeek, 10)
-                  const atLimit      = !unavailable && form.unavailableDays.length >= maxBlocked
+                  const unavailable = form.unavailableDays.includes(DAY_FULL[i])
+                  const maxBlocked = 7 - parseInt(form.daysPerWeek, 10)
+                  const atLimit = !unavailable && form.unavailableDays.length >= maxBlocked
                   return (
                     <button
                       key={day}
                       onClick={() => toggleUnavailableDay(DAY_FULL[i])}
                       disabled={atLimit}
-                      className={`flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 ${
-                        unavailable
-                          ? 'border-red-500/50 bg-red-500/15 text-red-300'
-                          : atLimit
+                      className={`flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 ${unavailable
+                        ? 'border-red-500/50 bg-red-500/15 text-red-300'
+                        : atLimit
                           ? 'border-white/5 bg-white/2 text-white/20 cursor-not-allowed'
                           : 'border-white/10 bg-white/4 text-white/50 hover:bg-white/8 hover:text-white/80'
-                      }`}
+                        }`}
                     >
                       <span className="text-[11px] font-bold uppercase tracking-wide">{day}</span>
                       {unavailable && <span className="text-[9px] mt-0.5">✕</span>}
@@ -831,11 +835,10 @@ export default function Questionnaire() {
                   <button
                     key={d}
                     onClick={() => update({ sessionDuration: d })}
-                    className={`px-5 py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 ${
-                      form.sessionDuration === d
-                        ? 'text-white border-purple-500/60 bg-purple-500/15'
-                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                    }`}
+                    className={`px-5 py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 ${form.sessionDuration === d
+                      ? 'text-white border-purple-500/60 bg-purple-500/15'
+                      : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                      }`}
                   >
                     {d} min
                   </button>
@@ -858,11 +861,10 @@ export default function Questionnaire() {
                       key={label}
                       type="button"
                       onClick={() => toggleSport(label)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border transition-all duration-200 ${
-                        selected
-                          ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
-                          : 'border-white/10 bg-white/4 text-white/50 hover:bg-white/8 hover:text-white/80'
-                      }`}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border transition-all duration-200 ${selected
+                        ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
+                        : 'border-white/10 bg-white/4 text-white/50 hover:bg-white/8 hover:text-white/80'
+                        }`}
                     >
                       <span>{icon}</span>
                       <span>{label}</span>
@@ -941,11 +943,10 @@ export default function Questionnaire() {
                   <button
                     key={value}
                     onClick={() => update({ dietType: value })}
-                    className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${
-                      form.dietType === value
-                        ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
-                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
-                    }`}
+                    className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${form.dietType === value
+                      ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                      : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
+                      }`}
                   >
                     <span className="block text-sm font-medium">{label}</span>
                     <span className="block text-[11px] text-white/35 mt-0.5">{desc}</span>
@@ -960,11 +961,10 @@ export default function Questionnaire() {
                     <button
                       key={value}
                       onClick={() => update({ dietType: value })}
-                      className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${
-                        form.dietType === value
-                          ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
-                          : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
-                      }`}
+                      className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${form.dietType === value
+                        ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
+                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
+                        }`}
                     >
                       <span className="block text-sm font-medium">{label}</span>
                       <span className="block text-[11px] text-white/35 mt-0.5">{desc}</span>
@@ -1021,11 +1021,10 @@ export default function Questionnaire() {
                   <button
                     key={n}
                     onClick={() => update({ mealsPerDay: n })}
-                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border transition-all duration-200 ${
-                      form.mealsPerDay === n
-                        ? 'text-white border-purple-500/60 bg-purple-500/15'
-                        : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
-                    }`}
+                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border transition-all duration-200 ${form.mealsPerDay === n
+                      ? 'text-white border-purple-500/60 bg-purple-500/15'
+                      : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
+                      }`}
                   >
                     {n}
                   </button>
