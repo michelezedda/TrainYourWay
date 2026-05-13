@@ -125,10 +125,10 @@ export default function Personal() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8">
+    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Settings</h1>
-        <p className="text-white/40 text-sm">Manage your profile and account.</p>
+        <p className="text-white/40 text-sm mt-0.5">Manage your profile and account.</p>
       </div>
 
       <div className="space-y-6">
@@ -206,6 +206,7 @@ export default function Personal() {
                   <input
                     className="input-glass !py-1.5 !text-sm flex-1"
                     autoFocus
+                    style={{ fontSize: 16 }}
                     value={editValue}
                     onChange={e => setEditValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') void saveProfileField('name', editValue) }}
@@ -327,7 +328,7 @@ export default function Personal() {
             </button>
           </div>
         </div>
-        <div className="w-full h-px bg-gray-600" />
+        <div className="w-full h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
         <Link
           to="/support"
           className="inline-flex items-center gap-2 text-sm transition-colors"

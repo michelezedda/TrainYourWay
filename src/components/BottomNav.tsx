@@ -35,13 +35,13 @@ function PersonIcon({ active }: { active: boolean }) {
 }
 
 const LEFT_NAV = [
-  { to: '/history',   label: 'Workout',  Icon: DumbbellIcon },
-  { to: '/diet',      label: 'Diet',     Icon: ForkIcon     },
+  { to: '/history', label: 'Workout', Icon: DumbbellIcon },
+  { to: '/diet', label: 'Diet', Icon: ForkIcon },
 ]
 
 const RIGHT_NAV = [
-  { to: '/chat',      label: 'Kai',      Icon: ChatIcon     },
-  { to: '/me',        label: 'Settings', Icon: PersonIcon   },
+  { to: '/chat', label: 'Kai', Icon: ChatIcon },
+  { to: '/me', label: 'Settings', Icon: PersonIcon },
 ]
 
 export default function BottomNav() {
@@ -60,7 +60,7 @@ export default function BottomNav() {
       className="fixed bottom-0 inset-x-0 z-50 flex justify-center px-4"
       style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
     >
-      <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2">
+      <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2 backdrop-blur-sm">
         {/* Left items */}
         {LEFT_NAV.map(({ to, label, Icon }) => {
           const active = isActive(to)
@@ -87,12 +87,12 @@ export default function BottomNav() {
         {/* Home - centered, prominent */}
         <Link
           to="/dashboard"
-          className="flex flex-col items-center gap-0.5 py-2.5 px-4 rounded-full transition-all duration-200 active:scale-95 relative"
+          className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full transition-all duration-200 active:scale-95"
           style={{
             background: homeActive
               ? 'linear-gradient(135deg,rgba(168,85,247,0.25),rgba(34,211,238,0.15))'
-              : 'rgba(255,255,255,0.06)',
-            border: homeActive ? '1px solid rgba(168,85,247,0.35)' : '1px solid rgba(255,255,255,0.09)',
+              : 'transparent',
+            border: homeActive ? '1px solid rgba(168,85,247,0.35)' : 'transparent',
             boxShadow: homeActive ? '0 0 20px rgba(168,85,247,0.2)' : 'none',
             color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.5)',
           }}
@@ -101,6 +101,8 @@ export default function BottomNav() {
           <span className="font-semibold leading-none" style={{ fontSize: 10, color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.45)' }}>
             Home
           </span>
+          <span className="w-1 h-1 rounded-full transition-all duration-200"
+            style={{ background: '#c084fc', opacity: homeActive ? 1 : 0, boxShadow: homeActive ? '0 0 6px #c084fc' : 'none' }} />
         </Link>
 
         {/* Right items */}

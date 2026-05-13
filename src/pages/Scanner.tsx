@@ -4,7 +4,6 @@ import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { NotFoundException } from '@zxing/library'
 import type { IScannerControls } from '@zxing/browser'
-import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { fetchProduct, addToScanHistory, getScanHistory, type OFFProduct, type ScanHistoryEntry } from '@/lib/openFoodFacts'
 import { scoreProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
@@ -21,7 +20,7 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// ── Nutri-Score badge (European style) ────────────────────────────────────────
+// ── Nutri-Score badge ─────────────────────────────────────────────────────────
 
 const NS_COLORS: Record<string, string> = {
   A: '#1e8a3c',
@@ -38,10 +37,7 @@ function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: str
       className="rounded-2xl px-3 pt-2.5 pb-3 animate-fade-in"
       style={{ background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.1)' }}
     >
-      <p
-        className="text-center font-black tracking-[0.2em] mb-2.5 text-[10px] uppercase"
-        style={{ color: 'rgba(255,255,255,0.35)' }}
-      >
+      <p className="text-center font-black tracking-[0.2em] mb-2.5 text-[10px] uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
         Nutri-Score
       </p>
       <div className="flex items-end gap-1.5">
@@ -52,19 +48,9 @@ function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: str
             <div
               key={g}
               className="flex items-center justify-center flex-1 transition-all duration-300"
-              style={{
-                background: isActive ? color : color + '50',
-                height: isActive ? 56 : 38,
-                borderRadius: isActive ? 12 : 8,
-              }}
+              style={{ background: isActive ? color : color + '50', height: isActive ? 56 : 38, borderRadius: isActive ? 12 : 8 }}
             >
-              <span
-                className="font-black leading-none transition-all duration-300"
-                style={{
-                  color: isActive ? '#fff' : 'rgba(255,255,255,0.35)',
-                  fontSize: isActive ? 28 : 18,
-                }}
-              >
+              <span className="font-black leading-none transition-all duration-300" style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.35)', fontSize: isActive ? 28 : 18 }}>
                 {g}
               </span>
             </div>
@@ -88,11 +74,8 @@ function NovaDots({ group }: { group: number }) {
       <span className="text-white/30 text-xs">NOVA</span>
       <div className="flex gap-1">
         {[1, 2, 3, 4].map(i => (
-          <div
-            key={i}
-            className="w-2.5 h-2.5 rounded-full transition-colors"
-            style={{ background: i <= group ? novaColor(group) : 'rgba(255,255,255,0.1)' }}
-          />
+          <div key={i} className="w-2.5 h-2.5 rounded-full transition-colors"
+            style={{ background: i <= group ? novaColor(group) : 'rgba(255,255,255,0.1)' }} />
         ))}
       </div>
       <span className="text-white/40 text-[10px]">{labels[group] ?? ''}</span>
@@ -114,11 +97,8 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
       {verdicts.map((v, i) => {
         const s = styles[v.type]
         return (
-          <span
-            key={i}
-            className="px-3 py-1 rounded-full text-xs font-medium border"
-            style={{ background: s.bg, borderColor: s.border, color: s.color }}
-          >
+          <span key={i} className="px-3 py-1 rounded-full text-xs font-medium border"
+            style={{ background: s.bg, borderColor: s.border, color: s.color }}>
             {v.text}
           </span>
         )
@@ -141,10 +121,10 @@ function MacroRow({ product }: { product: OFFProduct }) {
   ]
   return (
     <div>
-      <p className="text-white/30 text-[9px] uppercase tracking-widest mb-3">Per 100g</p>
+      <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-3">Per 100g</p>
       <div className="grid grid-cols-3 gap-3">
         {items.map(({ label, value }) => (
-          <div key={label} className="text-center p-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div key={label} className="text-center p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <p className="text-white font-semibold text-sm">{value}</p>
             <p className="text-white/35 text-[10px] mt-0.5">{label}</p>
           </div>
@@ -179,7 +159,7 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="flex items-center gap-2 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <LoadingSpinner size="sm" />
         <span className="text-white/40 text-xs">Finding a better alternative...</span>
       </div>
@@ -187,10 +167,8 @@ function AlternativeCard({ product, scored }: { product: OFFProduct; scored: Sco
   }
   if (!alt) return null
   return (
-    <div
-      className="flex items-start gap-3 p-3.5 rounded-2xl border animate-fade-in"
-      style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}
-    >
+    <div className="flex items-start gap-3 p-4 rounded-2xl border animate-fade-in"
+      style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}>
       <HiCheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
       <div>
         <p className="text-green-300 text-xs font-semibold mb-0.5">Better alternative</p>
@@ -233,10 +211,8 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
       const reply = await sendChatMessage([{ role: 'user', content: prompt }], '')
       const colonIdx = reply.indexOf(':')
       if (colonIdx === -1) throw new Error('bad format')
-      const v = reply.slice(0, colonIdx).trim()
-      const r = reply.slice(colonIdx + 1).trim()
-      setVerdict(v)
-      setReason(r)
+      setVerdict(reply.slice(0, colonIdx).trim())
+      setReason(reply.slice(colonIdx + 1).trim())
       setStatus('done')
     } catch {
       setStatus('idle')
@@ -246,10 +222,7 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
   if (status === 'done') {
     const s = VERDICT_STYLES[verdict] ?? VERDICT_STYLES['Sometimes']
     return (
-      <div
-        className="rounded-2xl p-4 border animate-fade-in"
-        style={{ background: s.bg, borderColor: s.border }}
-      >
+      <div className="rounded-2xl p-4 border animate-fade-in" style={{ background: s.bg, borderColor: s.border }}>
         <div className="flex items-start gap-3">
           <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: s.dot }} />
           <div className="flex-1">
@@ -258,7 +231,7 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
           </div>
           <button
             onClick={() => { setStatus('idle'); setVerdict(''); setReason('') }}
-            className="text-white/25 text-[10px] hover:text-white/50 transition-colors mt-0.5 flex-shrink-0"
+            className="text-white/25 text-[10px] mt-0.5 flex-shrink-0"
           >
             Ask again
           </button>
@@ -271,24 +244,18 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
     <button
       onClick={() => void ask()}
       disabled={status === 'loading'}
-      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
       style={{
         background: 'rgba(255,255,255,0.04)',
-        borderColor: 'rgba(255,255,255,0.1)',
+        border: '1px solid rgba(255,255,255,0.1)',
         color: 'rgba(255,255,255,0.6)',
         opacity: status === 'loading' ? 0.7 : 1,
       }}
     >
       {status === 'loading' ? (
-        <>
-          <LoadingSpinner size="sm" />
-          <span>Asking coach...</span>
-        </>
+        <><LoadingSpinner size="sm" /><span>Asking coach...</span></>
       ) : (
-        <>
-          <HiQuestionMarkCircle className="w-4 h-4" />
-          <span>Can I eat this?</span>
-        </>
+        <><HiQuestionMarkCircle className="w-4 h-4" /><span>Can I eat this?</span></>
       )}
     </button>
   )
@@ -311,9 +278,9 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
   }
 
   return (
-    <GlassCard>
+    <div className="glass-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-white/50 text-xs font-medium uppercase tracking-wider">Gym Score</p>
+        <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Gym Score</p>
         {avg !== null && (
           <span className="text-white/40 text-xs">
             {avg.toFixed(1)} avg · {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
@@ -327,7 +294,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
             <button
               key={star}
               onClick={() => void handleRate(star)}
-              className="flex-1 py-1.5 transition-transform hover:scale-110 active:scale-95"
+              className="flex-1 py-2 transition-transform active:scale-95"
               aria-label={`Rate ${star} stars`}
             >
               <HiStar className="w-7 h-7 mx-auto" style={{ color: filled ? '#facc15' : 'rgba(255,255,255,0.2)' }} />
@@ -338,7 +305,7 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
       {!myRating && (
         <p className="text-white/25 text-[10px] text-center mt-2">Rate this product for the community</p>
       )}
-    </GlassCard>
+    </div>
   )
 }
 
@@ -358,11 +325,8 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
         db.tx.workoutCompletions[id()].update({ userId, date: todayStr(), createdAt: Date.now() })
       )
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        setStatus('idle')
-      } else {
-        setStatus('idle')
-      }
+      if (!(err instanceof Error && err.name === 'AbortError')) setStatus('idle')
+      else setStatus('idle')
     }
   }
 
@@ -370,26 +334,20 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
     <button
       onClick={() => void handleShare()}
       disabled={status === 'generating'}
-      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
+      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
       style={{
         background: status === 'shared' ? 'rgba(34,197,94,0.1)' : 'rgba(168,85,247,0.1)',
-        borderColor: status === 'shared' ? 'rgba(34,197,94,0.3)' : 'rgba(168,85,247,0.3)',
+        border: `1px solid ${status === 'shared' ? 'rgba(34,197,94,0.3)' : 'rgba(168,85,247,0.3)'}`,
         color: status === 'shared' ? '#86efac' : '#d8b4fe',
         opacity: status === 'generating' ? 0.7 : 1,
       }}
     >
       {status === 'generating' ? (
-        <>
-          <LoadingSpinner size="sm" />
-          <span>Generating story...</span>
-        </>
+        <><LoadingSpinner size="sm" /><span>Generating story...</span></>
       ) : status === 'shared' ? (
-        <span>Shared! Workout logged.</span>
+        <span>Shared!</span>
       ) : (
-        <>
-          <HiShare className="w-4 h-4" />
-          <span>Share Story</span>
-        </>
+        <><HiShare className="w-4 h-4" /><span>Share Story</span></>
       )}
     </button>
   )
@@ -419,20 +377,14 @@ function AddToFindsButton({
   }
 
   if (alreadyShared) {
-    return (
-      <p className="text-center text-xs text-white/30 py-1">Added to Healthy Finds</p>
-    )
+    return <p className="text-center text-xs text-white/30 py-2">Added to Healthy Finds</p>
   }
 
   return (
     <button
       onClick={() => void handleAdd()}
-      className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-all border"
-      style={{
-        background: 'rgba(34,197,94,0.08)',
-        borderColor: 'rgba(34,197,94,0.2)',
-        color: '#86efac',
-      }}
+      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
+      style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}
     >
       <HiPlus className="w-4 h-4" />
       Add to Healthy Finds
@@ -446,19 +398,17 @@ function HistoryChips({ history, onSelect }: { history: ScanHistoryEntry[]; onSe
   if (!history.length) return null
   return (
     <div>
-      <p className="text-white/30 text-[9px] uppercase tracking-widest mb-2">Recent scans</p>
+      <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2.5 px-1">Recent scans</p>
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {history.map(h => (
           <button
             key={h.barcode}
             onClick={() => onSelect(h.barcode)}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-colors hover:bg-white/8"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-left transition-all active:scale-[0.97]"
             style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}
           >
-            <span
-              className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black flex-shrink-0"
-              style={{ background: h.gradeColor, color: '#fff' }}
-            >
+            <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black flex-shrink-0"
+              style={{ background: h.gradeColor, color: '#fff' }}>
               {h.grade}
             </span>
             <span className="text-white/60 text-xs truncate max-w-[100px]">{h.name || h.barcode}</span>
@@ -483,10 +433,8 @@ function AimOverlay() {
         ].map((cls, i) => (
           <div key={i} className={`absolute w-6 h-6 ${cls}`} style={{ borderColor: 'rgba(168,85,247,0.8)' }} />
         ))}
-        <div
-          className="absolute left-2 right-2 h-0.5 top-1/2 -translate-y-1/2 rounded-full"
-          style={{ background: 'linear-gradient(90deg, transparent, #A855F7, transparent)' }}
-        />
+        <div className="absolute left-2 right-2 h-0.5 top-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: 'linear-gradient(90deg, transparent, #A855F7, transparent)' }} />
       </div>
     </div>
   )
@@ -595,7 +543,7 @@ export default function Scanner() {
     setState('idle')
   }
 
-  // ── Render states ──────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (state === 'loading') {
     return (
@@ -609,51 +557,68 @@ export default function Scanner() {
     )
   }
 
+  // ── Error ──────────────────────────────────────────────────────────────────
+
   if (state === 'error') {
     return (
-      <main className="max-w-lg mx-auto px-4 py-12 text-center animate-fade-in">
-        <GlassCard>
+      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+        <div className="glass-card p-8">
           <div className="text-4xl mb-4">📷</div>
           <h2 className="text-white font-bold text-lg mb-2">Camera unavailable</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">{errMsg}</p>
-          <button onClick={reset} className="btn-primary !text-sm">Try again</button>
-        </GlassCard>
+          <button
+            onClick={reset}
+            className="w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
+            style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
+          >
+            Try again
+          </button>
+        </div>
       </main>
     )
   }
 
+  // ── Not found ──────────────────────────────────────────────────────────────
+
   if (state === 'not-found') {
     return (
-      <main className="max-w-lg mx-auto px-4 py-12 text-center animate-fade-in">
-        <GlassCard>
+      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+        <div className="glass-card p-8">
           <div className="text-4xl mb-4">🔍</div>
           <h2 className="text-white font-bold text-lg mb-2">Product not found</h2>
           <p className="text-white/50 text-sm mb-6 leading-relaxed">
             This barcode isn't in the Open Food Facts database yet.
           </p>
-          <button onClick={reset} className="btn-primary !text-sm">Scan another</button>
-        </GlassCard>
+          <button
+            onClick={reset}
+            className="w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
+            style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
+          >
+            Scan another
+          </button>
+        </div>
       </main>
     )
   }
 
+  // ── Result ─────────────────────────────────────────────────────────────────
+
   if (state === 'result' && product && scored) {
     const n = product.nutriments ?? {}
     return (
-      <main className="max-w-lg mx-auto px-4 py-8 animate-fade-in">
+      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
         {/* Product header */}
         <div className="flex gap-4 mb-5">
           {product.image_url ? (
             <img
               src={product.image_url}
               alt={product.product_name}
-              className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 border border-white/10"
+              className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
+              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
             />
           ) : (
-            <div
-              className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span className="text-3xl">🛒</span>
             </div>
           )}
@@ -663,23 +628,21 @@ export default function Scanner() {
                 {product.brands.split(',')[0].trim()}
               </p>
             )}
-            <h2 className="text-white font-bold text-lg leading-snug">
+            <h2 className="text-white font-bold text-xl leading-snug">
               {product.product_name || 'Unknown product'}
             </h2>
           </div>
         </div>
 
         {/* Grade + NOVA */}
-        <GlassCard className="mb-4" padding={false}>
-          <div className="p-4">
-            <NutriScoreBadge grade={scored.grade} gradeLabel={scored.gradeLabel} />
-            {product.nova_group && (
-              <div className="mt-3 pt-3 border-t border-white/8">
-                <NovaDots group={product.nova_group} />
-              </div>
-            )}
-          </div>
-        </GlassCard>
+        <div className="glass-card p-4 mb-4">
+          <NutriScoreBadge grade={scored.grade} gradeLabel={scored.gradeLabel} />
+          {product.nova_group && (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <NovaDots group={product.nova_group} />
+            </div>
+          )}
+        </div>
 
         {/* Verdict chips */}
         {scored.verdicts.length > 0 && (
@@ -695,9 +658,9 @@ export default function Scanner() {
 
         {/* Macros */}
         {n['energy-kcal_100g'] != null && (
-          <GlassCard className="mb-4">
+          <div className="glass-card p-4 mb-4">
             <MacroRow product={product} />
-          </GlassCard>
+          </div>
         )}
 
         {/* Better alternative */}
@@ -726,17 +689,16 @@ export default function Scanner() {
 
         {/* Ingredients */}
         {product.ingredients_text && (
-          <GlassCard className="mb-4">
-            <p className="text-white/30 text-[9px] uppercase tracking-widest mb-2">Ingredients</p>
-            <p className="text-white/50 text-xs leading-relaxed line-clamp-4">
-              {product.ingredients_text}
-            </p>
-          </GlassCard>
+          <div className="glass-card p-4 mb-4">
+            <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2">Ingredients</p>
+            <p className="text-white/50 text-xs leading-relaxed line-clamp-4">{product.ingredients_text}</p>
+          </div>
         )}
 
         <button
           onClick={reset}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+          style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
         >
           <HiCamera className="w-4 h-4" />
           Scan another
@@ -745,23 +707,19 @@ export default function Scanner() {
     )
   }
 
-  // ── Idle / scanning state ──────────────────────────────────────────────────
+  // ── Idle / scanning ────────────────────────────────────────────────────────
 
   return (
-    <main className="max-w-lg mx-auto px-4 py-6 animate-fade-in">
+    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
-        <h1 className="text-2xl font-black gradient-text mb-1">Food Scanner</h1>
-        <p className="text-white/40 text-sm">Point at a barcode to get a personalized health score</p>
+        <h1 className="text-2xl font-black gradient-text">Food Scanner</h1>
+        <p className="text-white/40 text-sm mt-0.5">Point at a barcode for a personalized health score.</p>
       </div>
 
       {/* Camera viewfinder */}
       <div
         className="relative w-full rounded-3xl overflow-hidden mb-5"
-        style={{
-          aspectRatio: '4/3',
-          background: '#000',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}
+        style={{ aspectRatio: '4/3', background: '#000', border: '1px solid rgba(255,255,255,0.1)' }}
       >
         <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
         <AimOverlay />
@@ -776,8 +734,8 @@ export default function Scanner() {
       {/* Profile notice */}
       {!profile && (
         <div
-          className="flex items-start gap-2.5 px-4 py-3 rounded-2xl mb-5 border"
-          style={{ background: 'rgba(168,85,247,0.08)', borderColor: 'rgba(168,85,247,0.2)' }}
+          className="flex items-start gap-2.5 px-4 py-3.5 rounded-2xl mb-5"
+          style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)' }}
         >
           <HiInformationCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
           <p className="text-purple-300/80 text-xs leading-relaxed">
