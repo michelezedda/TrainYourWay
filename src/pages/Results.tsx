@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
 import ExerciseModal from '@/components/ExerciseModal'
@@ -360,7 +360,6 @@ function NutritionTargets() {
 
 export default function Results() {
   const location = useLocation()
-  const navigate = useNavigate()
 
   const plan = location.state?.plan as string | undefined
   const planId = location.state?.planId as string | undefined
