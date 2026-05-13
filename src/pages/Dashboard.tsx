@@ -22,6 +22,41 @@ function getGreeting(name: string | undefined): string {
   return first ? `Good ${period}, ${first}!` : `Good ${period}!`
 }
 
+function getWeeklyWorkoutDays(planText: string): number {
+  const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const lines = planText.split('\n')
+  let workoutDays = 0
+  let inSection = false
+  let sectionIsRest = false
+
+  const commitSection = () => {
+    if (inSection && !sectionIsRest) workoutDays++
+    inSection = false
+    sectionIsRest = false
+  }
+
+  for (const line of lines) {
+    const lower = line.toLowerCase()
+    const isHeading = line.startsWith('#') || /^\*\*Day \d+/i.test(line.trim())
+    const hasWeekday = weekdays.some(d => lower.includes(d))
+
+    if (isHeading && hasWeekday) {
+      commitSection()
+      inSection = true
+      sectionIsRest = /\brest\b/.test(lower) || lower.includes('recovery')
+    } else if (inSection) {
+      if (isHeading && !hasWeekday) {
+        commitSection()
+      } else if (lower.includes('rest day') || lower.includes('active recovery')) {
+        sectionIsRest = true
+      }
+    }
+  }
+  commitSection()
+
+  return workoutDays > 0 ? workoutDays : 5
+}
+
 function getTodayWorkout(planText: string): { dayName: string; exercises: string[] } | null {
   const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const todayName = weekdays[new Date().getDay()]
@@ -262,11 +297,6 @@ export default function Dashboard() {
 
   const latestPlan = useMemo(() => [...allPlans].sort((a, b) => b.createdAt - a.createdAt)[0], [allPlans])
 
-  const parsedGoals = useMemo(() => {
-    try { return JSON.parse(latestPlan?.goals ?? '[]') as string[] }
-    catch { return [] }
-  }, [latestPlan?.goals])
-
   const nutritionProfile = useMemo(() => getNutritionProfile(), [])
   const targets = useMemo(
     () => nutritionProfile ? calculateTargets(nutritionProfile) : { kcal: 2000, protein: 150, carbs: 200, fat: 65 },
@@ -326,7 +356,7 @@ export default function Dashboard() {
   }
 
   const logWorkout = async () => {
-    if (alreadyLoggedToday) return
+    if (alreadyLoggedToday || todayIsRest) return
     await db.transact(db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() }))
   }
 
@@ -334,6 +364,13 @@ export default function Dashboard() {
     () => latestPlan?.plan ? getTodayWorkout(latestPlan.plan) : null,
     [latestPlan?.plan],
   )
+
+  const weeklyWorkoutDays = useMemo(
+    () => latestPlan?.plan ? getWeeklyWorkoutDays(latestPlan.plan) : 5,
+    [latestPlan?.plan],
+  )
+
+  const todayIsRest = !!latestPlan && (!todayWorkout || todayWorkout.exercises[0] === 'Rest Day')
 
   const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
   const daysUntilEvolve = latestPlan && !canEvolve
@@ -367,9 +404,9 @@ export default function Dashboard() {
           />
           <MiniRing
             ringId="ring-week"
-            pct={weekWorkouts / 5}
+            pct={weekWorkouts / Math.max(1, weeklyWorkoutDays)}
             title="Workouts"
-            subtitle={`${weekWorkouts}/5 this week`}
+            subtitle={`${weekWorkouts}/${weeklyWorkoutDays} this week`}
             color1="#22D3EE"
             color2="#34d399"
           />
@@ -441,30 +478,22 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="mb-4">
-              <p className="text-sm font-bold text-white/60 capitalize mb-1">{latestPlan.fitnessLevel} level</p>
-              {parsedGoals.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {parsedGoals.map(g => (
-                    <span key={g} className="text-[10px] px-2.5 py-1 rounded-full font-medium"
-                      style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}>
-                      {g}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <p className="text-sm text-white/38">Rest day - recover and recharge.</p>
             </div>
           )}
           <div className="flex gap-2">
             <button
               onClick={() => void logWorkout()}
-              disabled={alreadyLoggedToday}
+              disabled={alreadyLoggedToday || todayIsRest}
               className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed"
               style={alreadyLoggedToday
                 ? { background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.22)' }
-                : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
+                : todayIsRest
+                  ? { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.07)' }
+                  : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
               }
             >
-              {alreadyLoggedToday ? '✓ Logged today' : 'Log workout'}
+              {alreadyLoggedToday ? '✓ Logged today' : todayIsRest ? 'Rest day' : 'Log workout'}
             </button>
             <button
               onClick={() => {
