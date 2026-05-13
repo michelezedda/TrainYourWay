@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk'
+import type { ChatCompletionCreateParamsNonStreaming } from 'groq-sdk/resources/chat/completions'
 
 let _groq: Groq | null = null
 function getGroq(): Groq {
@@ -12,12 +13,10 @@ function getGroq(): Groq {
 }
 
 async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
-  let lastErr: unknown
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await fn()
     } catch (err) {
-      lastErr = err
       const status = (err as { status?: number }).status
       if (status === 429) {
         throw new Error('Rate limit reached. Please wait a minute and try again.')
@@ -32,7 +31,7 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
 }
 
 async function groqComplete(
-  params: Groq.Chat.CompletionCreateParamsNonStreaming,
+  params: ChatCompletionCreateParamsNonStreaming,
 ): Promise<Groq.Chat.ChatCompletion> {
   return withRetry(() => getGroq().chat.completions.create(params))
 }

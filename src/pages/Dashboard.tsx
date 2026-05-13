@@ -374,9 +374,6 @@ export default function Dashboard() {
   const todayIsRest = !!latestPlan && (!todayWorkout || todayWorkout.exercises[0] === 'Rest Day')
 
   const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
-  const daysUntilEvolve = latestPlan && !canEvolve
-    ? Math.ceil((FOUR_WEEKS_MS - (Date.now() - latestPlan.createdAt)) / (24 * 60 * 60 * 1000))
-    : 0
 
   return (
     <main className="max-w-sm md:max-w-2xl lg:max-w-4xl mx-auto px-4 pt-6 pb-nav space-y-3.5 animate-fade-in">
