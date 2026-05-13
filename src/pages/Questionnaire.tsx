@@ -24,6 +24,7 @@ interface FormData {
   heightIn: string // inches — imperial only
   fitnessLevel: '' | 'beginner' | 'intermediate' | 'advanced'
   goals: string[]
+  gymAccess: '' | 'gym' | 'home'
   equipment: string[]
   equipmentNotes: string
   injuries: string
@@ -48,6 +49,7 @@ const INITIAL: FormData = {
   heightIn: '',
   fitnessLevel: '',
   goals: [],
+  gymAccess: '',
   equipment: [],
   equipmentNotes: '',
   injuries: '',
@@ -180,23 +182,40 @@ const SPORT_OPTIONS = [
   { label: 'Skiing', icon: '⛷️' },
 ]
 
-const EQUIPMENT_OPTIONS = [
+const HOME_EQUIPMENT_OPTIONS = [
+  { label: 'Bodyweight Only', icon: '🙆' },
   { label: 'Dumbbells', icon: '🏋️' },
   { label: 'Resistance Bands', icon: '🟡' },
+  { label: 'Kettlebell', icon: '⚙️' },
   { label: 'Pull-up Bar', icon: '🔱' },
+  { label: 'Dip Bars', icon: '⬇️' },
   { label: 'Yoga Mat', icon: '🟪' },
   { label: 'Jump Rope', icon: '🪢' },
-  { label: 'Kettlebell', icon: '⚙️' },
-  { label: 'Barbell', icon: '🏋️‍♂️' },
   { label: 'Bench', icon: '🪑' },
+  { label: 'TRX / Suspension Trainer', icon: '🎯' },
+]
+
+const GYM_EQUIPMENT_OPTIONS = [
+  { label: 'Barbell', icon: '🏋️‍♂️' },
+  { label: 'Dumbbells', icon: '🏋️' },
   { label: 'Squat Rack', icon: '🏗️' },
   { label: 'Cable Machine', icon: '🔗' },
-  { label: 'Dip Bars', icon: '⬇️' },
-  { label: 'TRX / Suspension Trainer', icon: '🎯' },
-  { label: 'Treadmill / Cardio Machine', icon: '🏃' },
-  { label: 'Full Gym Access', icon: '🏢' },
-  { label: 'Bodyweight Only', icon: '🙆' },
+  { label: 'Smith Machine', icon: '🔩' },
+  { label: 'Leg Press Machine', icon: '🦵' },
+  { label: 'Chest Press Machine', icon: '💪' },
+  { label: 'Lat Pulldown Machine', icon: '⬇️' },
+  { label: 'Seated Row Machine', icon: '🚣' },
+  { label: 'Shoulder Press Machine', icon: '🔼' },
+  { label: 'Leg Curl / Extension Machine', icon: '🦿' },
+  { label: 'Treadmill', icon: '🏃' },
+  { label: 'Stationary Bike', icon: '🚴' },
+  { label: 'Elliptical', icon: '〰️' },
+  { label: 'Rowing Machine', icon: '🛶' },
+  { label: 'Bench', icon: '🪑' },
+  { label: 'Kettlebell', icon: '⚙️' },
 ]
+
+const EQUIPMENT_OPTIONS = [...HOME_EQUIPMENT_OPTIONS, ...GYM_EQUIPMENT_OPTIONS]
 
 const DIET_OPTIONS = [
   { value: 'omnivore', label: 'Omnivore', desc: 'No restrictions' },
@@ -380,7 +399,7 @@ export default function Questionnaire() {
       form.height.trim() && !heightInvalid
     )
     if (step === 2) return form.goals.length > 0
-    if (step === 3) return form.equipment.length > 0
+    if (step === 3) return !!(form.gymAccess && form.equipment.length > 0)
     if (step === 4) return !!(form.daysPerWeek && form.sessionDuration)
     if (step === 5) return !!form.dietType
     return true
@@ -705,55 +724,85 @@ export default function Questionnaire() {
         {/* Step 3 — Equipment */}
         {step === 3 && (
           <div className="space-y-6">
-            <StepHeader title="Available Equipment" subtitle="Select presets or type anything you have at home." />
-            <div className="flex flex-wrap gap-3">
-              {EQUIPMENT_OPTIONS.map(({ label, icon }) => (
-                <button
-                  key={label}
-                  onClick={() => toggleArray('equipment', label)}
-                  className={`chip ${form.equipment.includes(label) ? 'active' : ''}`}
-                >
-                  <span>{icon}</span> {label}
-                </button>
-              ))}
-            </div>
+            <StepHeader title="Available Equipment" subtitle="Tell us where you train, then select your equipment." />
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">Add your own equipment</label>
-              <div className="flex gap-2">
-                <input
-                  className="input-glass flex-1"
-                  placeholder="e.g. chair, bed, water bottles, stairs..."
-                  value={customInput}
-                  onChange={(e) => setCustomInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomEquipment() } }}
-                />
-                <button
-                  onClick={addCustomEquipment}
-                  disabled={!customInput.trim() || form.equipment.includes(customInput.trim())}
-                  className="btn-ghost !px-4 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-                >
-                  Add
-                </button>
+              <p className="text-sm font-medium text-white/60 mb-3">Where do you train?</p>
+              <div className="flex gap-3">
+                {([
+                  { value: 'gym', label: 'Gym', icon: '🏢' },
+                  { value: 'home', label: 'Home', icon: '🏠' },
+                ] as const).map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => { if (form.gymAccess !== value) setForm(p => ({ ...p, gymAccess: value, equipment: value === 'gym' ? ['Full Gym Access'] : [] })) }}
+                    className={`chip p-5 ${form.gymAccess === value ? 'active' : ''}`}
+                  >
+                    <span>{icon}</span> {label}
+                  </button>
+                ))}
               </div>
             </div>
-            {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e)) && (
-              <div>
-                <p className="text-xs text-white/40 mb-2">Your custom items</p>
-                <div className="flex flex-wrap gap-2">
-                  {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e)).map((item) => (
-                    <span key={item} className="chip active flex items-center gap-1.5">
-                      {item}
-                      <button
-                        onClick={() => removeEquipment(item)}
-                        className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors"
-                        aria-label={`Remove ${item}`}
-                      >
-                        ×
-                      </button>
-                    </span>
+
+            {form.gymAccess && (
+              <>
+                {form.gymAccess === 'gym' && (
+                  <p className="text-sm text-white/60 bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
+                    Perfect! Your plan will be built for a fully equipped gym setup so you can take advantage of every machine, free weight, and training option available. Optionally, tell us what equipment your gym has to make your workouts even more personalized.
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  {(form.gymAccess === 'gym'
+                    ? GYM_EQUIPMENT_OPTIONS.filter(o => o.label !== 'Full Gym Access')
+                    : HOME_EQUIPMENT_OPTIONS
+                  ).map(({ label, icon }) => (
+                    <button
+                      key={label}
+                      onClick={() => toggleArray('equipment', label)}
+                      className={`chip ${form.equipment.includes(label) ? 'active' : ''}`}
+                    >
+                      <span>{icon}</span> {label}
+                    </button>
                   ))}
                 </div>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Add your own equipment</label>
+                  <div className="flex gap-2">
+                    <input
+                      className="input-glass flex-1"
+                      placeholder={form.gymAccess === 'gym' ? 'e.g. leg press, smith machine, ...' : 'e.g. chair, water bottles, ...'}
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomEquipment() } }}
+                    />
+                    <button
+                      onClick={addCustomEquipment}
+                      disabled={!customInput.trim() || form.equipment.includes(customInput.trim())}
+                      className="btn-ghost !px-4 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e)) && (
+                  <div>
+                    <p className="text-xs text-white/40 mb-2">Your custom items</p>
+                    <div className="flex flex-wrap gap-2">
+                      {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e)).map((item) => (
+                        <span key={item} className="chip active flex items-center gap-1.5">
+                          {item}
+                          <button
+                            onClick={() => removeEquipment(item)}
+                            className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors"
+                            aria-label={`Remove ${item}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
