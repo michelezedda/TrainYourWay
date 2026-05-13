@@ -109,7 +109,7 @@ function PlanPreview({
 const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 
 export default function Dashboard() {
-  const today  = toDateStr(new Date())
+  const today = toDateStr(new Date())
   const userId = getUserId()
   const navigate = useNavigate()
 
@@ -117,17 +117,17 @@ export default function Dashboard() {
   const [planExpanded, setPlanExpanded] = useState(true)
 
   const { data } = db.useQuery({
-    workoutPlans:       { $: { where: { userId } } },
-    mealEntries:        { $: { where: { userId } } },
+    workoutPlans: { $: { where: { userId } } },
+    mealEntries: { $: { where: { userId } } },
     workoutCompletions: { $: { where: { userId } } },
-    waterLogs:          { $: { where: { userId } } },
-    userProfiles:       { $: { where: { userId } } },
+    waterLogs: { $: { where: { userId } } },
+    userProfiles: { $: { where: { userId } } },
   })
 
-  const allPlans    = (data?.workoutPlans       ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
-  const mealEntries = (data?.mealEntries        ?? []) as Array<{ date: string; protein?: number }>
+  const allPlans = (data?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
+  const mealEntries = (data?.mealEntries ?? []) as Array<{ date: string; protein?: number }>
   const completions = (data?.workoutCompletions ?? []) as Array<{ date: string }>
-  const waterLogs   = (data?.waterLogs          ?? []) as Array<{ id: string; date: string; glasses: number }>
+  const waterLogs = (data?.waterLogs ?? []) as Array<{ id: string; date: string; glasses: number }>
   const userProfile = ((data?.userProfiles ?? []) as Array<{ id: string; name?: string }>)[0]
 
   const latestPlan = useMemo(
@@ -140,7 +140,7 @@ export default function Dashboard() {
     catch { return [] }
   }, [latestPlan?.goals])
 
-  const mealDates    = useMemo(() => [...new Set(mealEntries.map(e => e.date))], [mealEntries])
+  const mealDates = useMemo(() => [...new Set(mealEntries.map(e => e.date))], [mealEntries])
   const workoutDates = useMemo(() => [...new Set(completions.map(e => e.date))], [completions])
 
   const hydratedDates = useMemo(
@@ -164,13 +164,13 @@ export default function Dashboard() {
     )]
   }, [mealEntries, targets.protein])
 
-  const mealStreak      = calcStreak(mealDates, today)
-  const workoutStreak   = calcStreak(workoutDates, today)
+  const mealStreak = calcStreak(mealDates, today)
+  const workoutStreak = calcStreak(workoutDates, today)
   const hydrationStreak = calcStreak(hydratedDates, today)
-  const proteinStreak   = calcStreak(proteinHitDates, today)
+  const proteinStreak = calcStreak(proteinHitDates, today)
 
-  const todayWaterLog      = waterLogs.find(w => w.date === today)
-  const glasses            = todayWaterLog?.glasses ?? 0
+  const todayWaterLog = waterLogs.find(w => w.date === today)
+  const glasses = todayWaterLog?.glasses ?? 0
   const alreadyLoggedToday = workoutDates.includes(today)
 
   const setGlasses = async (next: number) => {
@@ -238,11 +238,11 @@ export default function Dashboard() {
                       className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-center transition-all active:scale-[0.97]"
                       style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}
                     >
-                     History
+                      View Plan
                     </Link>
                     <button
                       onClick={() => {
-                        if (!canEvolve || !latestPlan){return}
+                        if (!canEvolve || !latestPlan) { return }
                         navigate('/reevaluate', {
                           state: {
                             planId: latestPlan.id,
@@ -301,10 +301,10 @@ export default function Dashboard() {
           {/* 4-streak grid */}
           <GlassCard padding={false}>
             <div className="grid grid-cols-4 divide-x divide-white/[0.07]">
-              <MiniStreakCard label="Meals"    emoji="🍽️" streak={mealStreak}      gradient="linear-gradient(135deg,#A855F7,#ec4899)" />
-              <MiniStreakCard label="Workouts" emoji="⚡" streak={workoutStreak}   gradient="linear-gradient(135deg,#22D3EE,#34d399)" />
-              <MiniStreakCard label="Water"    emoji="💧" streak={hydrationStreak} gradient="linear-gradient(135deg,#22D3EE,#06b6d4)" />
-              <MiniStreakCard label="Protein"  emoji="🔥" streak={proteinStreak}   gradient="linear-gradient(135deg,#f97316,#facc15)" />
+              <MiniStreakCard label="Meals" emoji="🍽️" streak={mealStreak} gradient="linear-gradient(135deg,#A855F7,#ec4899)" />
+              <MiniStreakCard label="Workouts" emoji="⚡" streak={workoutStreak} gradient="linear-gradient(135deg,#22D3EE,#34d399)" />
+              <MiniStreakCard label="Water" emoji="💧" streak={hydrationStreak} gradient="linear-gradient(135deg,#22D3EE,#06b6d4)" />
+              <MiniStreakCard label="Protein" emoji="🔥" streak={proteinStreak} gradient="linear-gradient(135deg,#f97316,#facc15)" />
             </div>
           </GlassCard>
 
@@ -367,10 +367,10 @@ export default function Dashboard() {
           <GlassCard padding={false}>
             <div className="divide-y divide-white/[0.07]">
               {[
-                { to: '/diet',      emoji: '🍽️', label: 'Diet Log',       sub: 'Track meals and macros' },
-                { to: '/machine',   emoji: '🏋️', label: 'Machine Guide', sub: 'Photo any gym machine' },
-                { to: '/community', emoji: '🏆', label: 'Community',     sub: 'Leaderboard and finds' },
-                { to: '/chat',      emoji: '🤖', label: 'Ask Kai',        sub: 'Your AI fitness coach' },
+                { to: '/diet', emoji: '🍽️', label: 'Diet Log', sub: 'Track meals and macros' },
+                { to: '/machine', emoji: '🏋️', label: 'Machine Guide', sub: 'Photo any gym machine' },
+                { to: '/community', emoji: '🏆', label: 'Community', sub: 'Leaderboard and finds' },
+                { to: '/chat', emoji: '🤖', label: 'Ask Kai', sub: 'Your AI fitness coach' },
               ].map(({ to, emoji, label, sub }) => (
                 <Link
                   key={to}
@@ -443,9 +443,9 @@ export default function Dashboard() {
           <GlassCard padding={false}>
             <div className="divide-y divide-white/[0.07]">
               {[
-                { to: '/diet',    emoji: '🥗', label: 'Nutrition tracking', sub: 'Log meals, scan barcodes, hit macros' },
-                { to: '/machine', emoji: '🏋️', label: 'Machine Guide',     sub: 'Photo any gym machine for instructions' },
-                { to: '/scanner', emoji: '📷', label: 'Food scanner',       sub: 'Scan any product for nutrition info' },
+                { to: '/diet', emoji: '🥗', label: 'Nutrition tracking', sub: 'Log meals, scan barcodes, hit macros' },
+                { to: '/machine', emoji: '🏋️', label: 'Machine Guide', sub: 'Photo any gym machine for instructions' },
+                { to: '/scanner', emoji: '📷', label: 'Food scanner', sub: 'Scan any product for nutrition info' },
               ].map(({ to, emoji, label, sub }) => (
                 <Link
                   key={to}

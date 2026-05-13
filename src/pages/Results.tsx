@@ -20,15 +20,15 @@ import type { WorkoutFormData, ReevaluationData } from '@/lib/gemini'
 // ── Reevaluation helpers ──────────────────────────────────────────────────────
 
 const goalColor: Record<string, string> = {
-  'Weight Loss':          'bg-orange-500/15 text-orange-300 border-orange-500/30',
-  'Muscle Gain':          'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  'Body Recomposition':   'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-  'Strength':             'bg-red-500/15 text-red-300 border-red-500/30',
-  'Endurance':            'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+  'Weight Loss': 'bg-orange-500/15 text-orange-300 border-orange-500/30',
+  'Muscle Gain': 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+  'Body Recomposition': 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+  'Strength': 'bg-red-500/15 text-red-300 border-red-500/30',
+  'Endurance': 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
   'Athletic Performance': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  'Flexibility':          'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  'General Fitness':      'bg-green-500/15 text-green-300 border-green-500/30',
-  'Stress Relief':        'bg-pink-500/15 text-pink-300 border-pink-500/30',
+  'Flexibility': 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+  'General Fitness': 'bg-green-500/15 text-green-300 border-green-500/30',
+  'Stress Relief': 'bg-pink-500/15 text-pink-300 border-pink-500/30',
 }
 
 function StatPill({ label, value }: { label: string; value: string }) {
@@ -63,7 +63,7 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
   const [open, setOpen] = useState(true)
   const difficultyColor =
     data.difficulty === 'Too easy' ? 'text-blue-300' :
-    data.difficulty === 'Too hard' ? 'text-red-300'  : 'text-green-300'
+      data.difficulty === 'Too hard' ? 'text-red-300' : 'text-green-300'
 
   const prevBmi = computeBmi(data.originalWeight, data.originalHeight)
   const currBmi = computeBmi(data.currentWeight, data.currentHeight)
@@ -138,7 +138,7 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
 
           <div className="grid grid-cols-2 gap-3">
             <StatPill label="Time on plan" value={data.timeOnPlan} />
-            <StatPill label="Adherence"    value={data.adherence} />
+            <StatPill label="Adherence" value={data.adherence} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <StatPill label="Physical feel" value={data.physicalFeel} />
@@ -224,7 +224,7 @@ function AnalysisSlides({
   }
 
   const current = sections[idx]
-  const isLast  = idx === sections.length - 1
+  const isLast = idx === sections.length - 1
 
   return (
     <GlassCard padding={false} className="mb-8 overflow-hidden animate-fade-in">
@@ -232,11 +232,10 @@ function AnalysisSlides({
       {idx === 0 && formData.images.length > 0 && (
         <div className="px-6 pt-5">
           <p className="text-white/35 text-[10px] uppercase tracking-wider mb-3">Your workout space</p>
-          <div className={`grid gap-3 mb-1 ${
-            formData.images.length === 1 ? 'grid-cols-1 max-w-[200px]'
+          <div className={`grid gap-3 mb-1 ${formData.images.length === 1 ? 'grid-cols-1 max-w-[200px]'
             : formData.images.length === 2 ? 'grid-cols-2'
-            : 'grid-cols-3'
-          }`}>
+              : 'grid-cols-3'
+            }`}>
             {formData.images.map((src, i) => (
               <img key={i} src={src} alt="" className="w-full aspect-square object-cover rounded-2xl border border-white/10" />
             ))}
@@ -265,11 +264,10 @@ function AnalysisSlides({
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`rounded-full transition-all duration-200 ${
-                i === idx     ? 'w-4 h-1.5 bg-purple-400'
-                : i < idx    ? 'w-1.5 h-1.5 bg-purple-500/40'
-                               : 'w-1.5 h-1.5 bg-white/15 hover:bg-white/30'
-              }`}
+              className={`rounded-full transition-all duration-200 ${i === idx ? 'w-4 h-1.5 bg-purple-400'
+                : i < idx ? 'w-1.5 h-1.5 bg-purple-500/40'
+                  : 'w-1.5 h-1.5 bg-white/15 hover:bg-white/30'
+                }`}
             />
           ))}
         </div>
@@ -311,14 +309,14 @@ function NutritionTargets() {
   const adjustNote = isWeightLoss
     ? '400 kcal deficit for fat loss'
     : isMuscleGain
-    ? '200 kcal surplus for muscle gain'
-    : 'set at maintenance'
+      ? '200 kcal surplus for muscle gain'
+      : 'set at maintenance'
 
   const macros = [
-    { value: t.kcal,    label: 'Calories', unit: 'kcal', color: '#A855F7', pct: 1 },
-    { value: t.protein, label: 'Protein',  unit: 'g',    color: '#22D3EE', pct: (t.protein * 4) / t.kcal },
-    { value: t.carbs,   label: 'Carbs',    unit: 'g',    color: '#f59e0b', pct: (t.carbs * 4) / t.kcal },
-    { value: t.fat,     label: 'Fat',      unit: 'g',    color: '#ec4899', pct: (t.fat * 9) / t.kcal },
+    { value: t.kcal, label: 'Calories', unit: 'kcal', color: '#A855F7', pct: 1 },
+    { value: t.protein, label: 'Protein', unit: 'g', color: '#22D3EE', pct: (t.protein * 4) / t.kcal },
+    { value: t.carbs, label: 'Carbs', unit: 'g', color: '#f59e0b', pct: (t.carbs * 4) / t.kcal },
+    { value: t.fat, label: 'Fat', unit: 'g', color: '#ec4899', pct: (t.fat * 9) / t.kcal },
   ]
 
   return (
@@ -364,19 +362,19 @@ export default function Results() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const plan         = location.state?.plan         as string           | undefined
-  const planId       = location.state?.planId       as string           | undefined
-  const analysis     = location.state?.analysis     as string           | undefined
-  const formData     = location.state?.formData     as WorkoutFormData  | undefined
-  const reevalData   = location.state?.reevalData   as ReevaluationData | undefined
-  const reevalAnalysis = location.state?.reevalAnalysis as string       | undefined
+  const plan = location.state?.plan as string | undefined
+  const planId = location.state?.planId as string | undefined
+  const analysis = location.state?.analysis as string | undefined
+  const formData = location.state?.formData as WorkoutFormData | undefined
+  const reevalData = location.state?.reevalData as ReevaluationData | undefined
+  const reevalAnalysis = location.state?.reevalAnalysis as string | undefined
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const [planVisible, setPlanVisible] = useState(!(analysis || reevalAnalysis))
   const [weights, setWeights] = useState<Record<string, string>>(() =>
     planId ? getWeights(planId) : {}
   )
-  const [blockedDays, setBlockedDays]   = useState<string[]>(formData?.unavailableDays ?? [])
+  const [blockedDays, setBlockedDays] = useState<string[]>(formData?.unavailableDays ?? [])
   const [dayOverrides, setDayOverrides] = useState<Record<string, string>>({})
 
   const planRef = useRef<HTMLDivElement>(null)
@@ -403,12 +401,12 @@ export default function Results() {
     if (!plan) return
     const workoutText = await generateDayWorkout(plan, day)
     const newOverrides = { ...dayOverrides, [day]: workoutText }
-    const newBlocked   = blockedDays.filter(d => d !== day)
+    const newBlocked = blockedDays.filter(d => d !== day)
     setDayOverrides(newOverrides)
     setBlockedDays(newBlocked)
     if (planId) {
       void db.transact(db.tx.workoutPlans[planId].update({
-        dayOverrides:    JSON.stringify(newOverrides),
+        dayOverrides: JSON.stringify(newOverrides),
         unavailableDays: JSON.stringify(newBlocked),
       }))
     }
@@ -442,14 +440,6 @@ export default function Results() {
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold gradient-text">Your Workout Plan</h1>
-        <div className="flex gap-3">
-          <button onClick={() => navigate('/history')} className="btn-ghost !px-4 !py-2 !text-sm">
-            History
-          </button>
-          <Link to="/questionnaire" className="btn-primary !px-4 !py-2 !text-sm">
-            New Plan
-          </Link>
-        </div>
       </div>
 
       {/* Initial assessment slides */}

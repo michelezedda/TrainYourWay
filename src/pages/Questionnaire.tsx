@@ -747,7 +747,7 @@ export default function Questionnaire() {
               <>
                 {form.gymAccess === 'gym' && (
                   <p className="text-sm text-white/60 bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
-                    Perfect! Your plan will be built for a fully equipped gym setup so you can take advantage of every machine, free weight, and training option available. Optionally, tell us what equipment your gym has to make your workouts even more personalized.
+                    Perfect! Your plan will be built for a fully equipped gym setup so you can take advantage of every machine, free weight, and training option available.
                   </p>
                 )}
                 <div className="flex flex-wrap gap-3">
