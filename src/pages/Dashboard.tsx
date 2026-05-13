@@ -209,11 +209,11 @@ function MacroBar({ label, current, max, gradient }: { label: string; current: n
 }
 
 const MOODS = [
-  { emoji: '😔', label: 'Low' },
-  { emoji: '😐', label: 'Meh' },
-  { emoji: '🙂', label: 'OK' },
-  { emoji: '😊', label: 'Good' },
-  { emoji: '🤩', label: 'Great' },
+  { emoji: '😔', label: 'Low', anim: 'mood-anim-low', dur: '0.7s' },
+  { emoji: '😐', label: 'Meh', anim: 'mood-anim-meh', dur: '0.5s' },
+  { emoji: '🙂', label: 'OK', anim: 'mood-anim-ok', dur: '0.5s' },
+  { emoji: '😊', label: 'Good', anim: 'mood-anim-good', dur: '0.6s' },
+  { emoji: '🤩', label: 'Great', anim: 'mood-anim-great', dur: '0.65s' },
 ]
 
 function GlassIcon({ filled }: { filled: boolean }) {
@@ -270,14 +270,15 @@ export default function Dashboard() {
   const [waterCelebrating, setWaterCelebrating] = useState(false)
 
   const saveMood = (idx: number) => {
-    const next = mood === idx ? null : idx
-    setMood(next)
-    localStorage.setItem(`mood_${today}`, JSON.stringify(next))
+    if (mood === idx) return
+    setMood(idx)
+    localStorage.setItem(`mood_${today}`, JSON.stringify(idx))
   }
 
   const handleMoodClick = (i: number) => {
+    if (mood === i) return
     setMoodAnim(prev => ({ idx: i, tick: (prev?.tick ?? 0) + 1 }))
-    setTimeout(() => setMoodAnim(null), 580)
+    setTimeout(() => setMoodAnim(null), 700)
     saveMood(i)
   }
 
@@ -378,7 +379,7 @@ export default function Dashboard() {
     : 0
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav space-y-3.5 animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl lg:max-w-4xl mx-auto px-4 pt-6 pb-nav space-y-3.5 animate-fade-in">
       {selectedExercise && (
         <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
       )}
@@ -448,7 +449,6 @@ export default function Dashboard() {
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Today's Workout</p>
-            <Link to="/history" className="text-xs font-semibold" style={{ color: '#c084fc' }}>Full Plan</Link>
           </div>
           {todayWorkout ? (
             <>
@@ -482,6 +482,32 @@ export default function Dashboard() {
             </div>
           )}
           <div className="flex gap-2">
+            <Link to="/history">
+              <button
+                onClick={() => {
+                  if (!canEvolve || !latestPlan) return
+                  navigate('/reevaluate', {
+                    state: {
+                      planId: latestPlan.id,
+                      originalPlan: latestPlan.plan,
+                      userName: latestPlan.userName,
+                      fitnessLevel: latestPlan.fitnessLevel ?? '',
+                      goals: latestPlan.goals ?? '[]',
+                      equipment: latestPlan.equipment ?? '[]',
+                    },
+                  })
+                }}
+                className="px-4 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] text-[#c084fc]"
+                style={
+                  {
+                    background: 'rgba(168,85,247,0.15)',
+                    border: '1px solid rgba(168,85,247,0.4)'
+                  }
+                }
+              >
+                View Plan
+              </button>
+            </Link>
             <button
               onClick={() => void logWorkout()}
               disabled={alreadyLoggedToday || todayIsRest}
@@ -494,29 +520,6 @@ export default function Dashboard() {
               }
             >
               {alreadyLoggedToday ? '✓ Logged today' : todayIsRest ? 'Rest day' : 'Log workout'}
-            </button>
-            <button
-              onClick={() => {
-                if (!canEvolve || !latestPlan) return
-                navigate('/reevaluate', {
-                  state: {
-                    planId: latestPlan.id,
-                    originalPlan: latestPlan.plan,
-                    userName: latestPlan.userName,
-                    fitnessLevel: latestPlan.fitnessLevel ?? '',
-                    goals: latestPlan.goals ?? '[]',
-                    equipment: latestPlan.equipment ?? '[]',
-                  },
-                })
-              }}
-              title={canEvolve ? 'Evolve your plan' : `Evolve unlocks in ${daysUntilEvolve} day${daysUntilEvolve !== 1 ? 's' : ''}`}
-              className="px-4 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
-              style={canEvolve
-                ? { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.09)' }
-                : { background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'not-allowed' }
-              }
-            >
-              {canEvolve ? 'Evolve' : `${daysUntilEvolve}d`}
             </button>
           </div>
         </div>
@@ -545,95 +548,102 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Mood Tracker */}
-      <div className="glass-card p-5">
-        <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-4">How are you feeling?</p>
-        <div className="flex gap-2">
-          {MOODS.map((m, i) => {
-            const isAnimating = moodAnim?.idx === i
-            return (
-              <button
-                key={isAnimating ? `${i}-${moodAnim!.tick}` : i}
-                onClick={() => handleMoodClick(i)}
-                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl"
-                style={{
-                  background: mood === i ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: mood === i ? '1px solid rgba(168,85,247,0.4)' : '1px solid rgba(255,255,255,0.07)',
-                  boxShadow: mood === i ? '0 0 16px rgba(168,85,247,0.15)' : 'none',
-                  animation: isAnimating ? 'mood-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both' : undefined,
-                  transformOrigin: 'center bottom',
-                }}
-              >
-                <span
-                  className="text-2xl leading-none"
+      {/* Mood + Hydration: stacked on mobile, side-by-side on md */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+
+        {/* Mood Tracker */}
+        <div className="glass-card p-5">
+          <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-4">How are you feeling today?</p>
+          <div className="flex gap-2">
+            {MOODS.map((m, i) => {
+              const isAnimating = moodAnim?.idx === i
+              const isSelected = mood === i
+              return (
+                <button
+                  key={isAnimating ? `${i}-${moodAnim!.tick}` : i}
+                  onClick={() => handleMoodClick(i)}
+                  className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all duration-200"
                   style={{
-                    display: 'inline-block',
-                    animation: isAnimating ? 'emoji-wobble 0.52s ease both' : undefined,
+                    background: isSelected ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: isSelected ? '1px solid rgba(168,85,247,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: isSelected ? '0 0 16px rgba(168,85,247,0.15)' : 'none',
+                    animation: isAnimating ? `mood-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both` : undefined,
+                    transformOrigin: 'center bottom',
+                    cursor: isSelected ? 'default' : 'pointer',
                   }}
                 >
-                  {m.emoji}
-                </span>
-                <span className="text-[10px] font-medium" style={{ color: mood === i ? '#c084fc' : 'rgba(255,255,255,0.35)' }}>
-                  {m.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Hydration Card */}
-      <div
-        className="glass-card p-5"
-        style={{
-          transition: 'box-shadow 0.35s ease',
-          ...(waterCelebrating ? {
-            boxShadow: '0 8px 32px rgba(0,0,0,0.45), inset 0 1.5px 0 rgba(255,255,255,0.13), inset 0 -1px 0 rgba(0,0,0,0.15), 0 0 0 1.5px rgba(34,211,238,0.55), 0 0 36px rgba(34,211,238,0.22)',
-          } : {}),
-        }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Hydration</p>
-          <div className="flex items-baseline gap-1">
-            <span
-              className="text-base font-black tabular-nums"
-              style={glasses >= DAILY_GOAL
-                ? { background: 'linear-gradient(135deg,#22D3EE,#34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
-                : { color: 'rgba(255,255,255,0.55)' }
-              }
-            >
-              {liters}L
-            </span>
-            <span className="text-xs text-white/25">/ 2.0L</span>
+                  <span
+                    className="text-2xl leading-none"
+                    style={{
+                      display: 'inline-block',
+                      animation: isAnimating ? `${m.anim} ${m.dur} ease both` : undefined,
+                    }}
+                  >
+                    {m.emoji}
+                  </span>
+                  <span className="text-[10px] font-medium" style={{ color: isSelected ? '#c084fc' : 'rgba(255,255,255,0.35)' }}>
+                    {m.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
-        <div className="flex justify-between gap-1">
-          {Array.from({ length: DAILY_GOAL }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => handleGlassClick(i)}
-              className="flex-1 flex justify-center py-1 active:scale-90 hover:scale-105"
-              aria-label={`Set ${i + 1} glass${i > 0 ? 'es' : ''}`}
-              style={{
-                animation: waterCelebrating
-                  ? `glass-bounce 0.55s cubic-bezier(0.34,1.56,0.64,1) ${(i * 0.07).toFixed(2)}s both`
-                  : undefined,
-              }}
-            >
-              <GlassIcon filled={i < glasses} />
-            </button>
-          ))}
+
+        {/* Hydration Card */}
+        <div
+          className="glass-card p-5"
+          style={{
+            transition: 'box-shadow 0.35s ease',
+            ...(waterCelebrating ? {
+              boxShadow: '0 8px 32px rgba(0,0,0,0.45), inset 0 1.5px 0 rgba(255,255,255,0.13), inset 0 -1px 0 rgba(0,0,0,0.15), 0 0 0 1.5px rgba(34,211,238,0.55), 0 0 36px rgba(34,211,238,0.22)',
+            } : {}),
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Hydration</p>
+            <div className="flex items-baseline gap-1">
+              <span
+                className="text-base font-black tabular-nums"
+                style={glasses >= DAILY_GOAL
+                  ? { background: 'linear-gradient(135deg,#22D3EE,#34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+                  : { color: 'rgba(255,255,255,0.55)' }
+                }
+              >
+                {liters}L
+              </span>
+              <span className="text-xs text-white/25">/ 2.0L</span>
+            </div>
+          </div>
+          <div className="flex justify-between gap-1">
+            {Array.from({ length: DAILY_GOAL }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handleGlassClick(i)}
+                className="flex-1 flex justify-center py-1 active:scale-90 hover:scale-105"
+                aria-label={`Set ${i + 1} glass${i > 0 ? 'es' : ''}`}
+                style={{
+                  animation: waterCelebrating
+                    ? `glass-bounce 0.55s cubic-bezier(0.34,1.56,0.64,1) ${(i * 0.07).toFixed(2)}s both`
+                    : undefined,
+                }}
+              >
+                <GlassIcon filled={i < glasses} />
+              </button>
+            ))}
+          </div>
+          <div className="mt-3.5 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, (glasses / DAILY_GOAL) * 100)}%`, background: 'linear-gradient(90deg,#22D3EE,#34d399)' }}
+            />
+          </div>
         </div>
-        <div className="mt-3.5 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(100, (glasses / DAILY_GOAL) * 100)}%`, background: 'linear-gradient(90deg,#22D3EE,#34d399)' }}
-          />
-        </div>
-      </div>
+
+      </div>{/* end mood+hydration grid */}
 
       {/* Feature Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-10">
         <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
         <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />

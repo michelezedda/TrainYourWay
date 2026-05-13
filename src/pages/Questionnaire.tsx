@@ -452,10 +452,25 @@ export default function Questionnaire() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      {/* Progress bar */}
       {step > 0 && (
-        <div className="mb-8">
-          <StepIndicator currentStep={step} totalSteps={7} labels={STEP_LABELS} />
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Step {step} of 7 - {STEP_LABELS[step - 1]}
+            </p>
+            <p className="text-xs text-white/25">{Math.round((step / 7) * 100)}%</p>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${(step / 7) * 100}%`, background: 'linear-gradient(90deg, #A855F7, #22D3EE)' }}
+            />
+          </div>
+          <div className="hidden">
+            <StepIndicator currentStep={step} totalSteps={7} labels={STEP_LABELS} />
+          </div>
         </div>
       )}
 
@@ -498,6 +513,7 @@ export default function Questionnaire() {
                     min="14"
                     max="79"
                     placeholder="e.g. 28"
+                    style={{ fontSize: 16 }}
                     value={form.age}
                     onChange={(e) => update({ age: e.target.value })}
                   />
@@ -518,7 +534,7 @@ export default function Questionnaire() {
                       <button
                         key={s}
                         onClick={() => update({ sex: s })}
-                        className={`py-2.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex justify-center items-center gap-2 ${form.sex === s
+                        className={`py-3.5 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize flex justify-center items-center gap-2 active:scale-[0.97] ${form.sex === s
                           ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                           : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                           }`}
@@ -540,6 +556,7 @@ export default function Questionnaire() {
                     className="input-glass"
                     type="number"
                     placeholder={form.unit === 'metric' ? 'e.g. 75' : 'e.g. 165'}
+                    style={{ fontSize: 16 }}
                     value={form.weight}
                     onChange={(e) => update({ weight: e.target.value })}
                   />
@@ -557,6 +574,7 @@ export default function Questionnaire() {
                       className="input-glass"
                       type="number"
                       placeholder="e.g. 175"
+                      style={{ fontSize: 16 }}
                       value={form.height}
                       onChange={(e) => update({ height: e.target.value })}
                     />
@@ -571,6 +589,7 @@ export default function Questionnaire() {
                       <input
                         className="input-glass"
                         type="number"
+                        style={{ fontSize: 16 }}
                         placeholder="e.g. 5"
                         min="3"
                         max="8"
@@ -583,6 +602,7 @@ export default function Questionnaire() {
                       <input
                         className="input-glass"
                         type="number"
+                        style={{ fontSize: 16 }}
                         placeholder="e.g. 11"
                         min="0"
                         max="11"
@@ -604,7 +624,7 @@ export default function Questionnaire() {
                     <button
                       key={level}
                       onClick={() => update({ fitnessLevel: level })}
-                      className={`py-3 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize ${form.fitnessLevel === level
+                      className={`py-4 rounded-2xl text-sm font-medium border transition-all duration-200 capitalize active:scale-[0.97] ${form.fitnessLevel === level
                         ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                         : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                         }`}
@@ -635,7 +655,7 @@ export default function Questionnaire() {
                     <button
                       key={value}
                       onClick={() => update({ bodyType: value })}
-                      className={`py-3 px-2 rounded-2xl text-sm border transition-all duration-200 flex flex-col items-center gap-1 ${form.bodyType === value
+                      className={`py-4 px-2 rounded-2xl text-sm border transition-all duration-200 flex flex-col items-center gap-1 active:scale-[0.97] ${form.bodyType === value
                         ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                         : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                         }`}
@@ -769,6 +789,7 @@ export default function Questionnaire() {
                   <div className="flex gap-2">
                     <input
                       className="input-glass flex-1"
+                      style={{ fontSize: 16 }}
                       placeholder={form.gymAccess === 'gym' ? 'e.g. leg press, smith machine, ...' : 'e.g. chair, water bottles, ...'}
                       value={customInput}
                       onChange={(e) => setCustomInput(e.target.value)}
@@ -926,6 +947,7 @@ export default function Questionnaire() {
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"
+                  style={{ fontSize: 16 }}
                   value={customSport}
                   onChange={e => setCustomSport(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addCustomSport()}
@@ -973,6 +995,7 @@ export default function Questionnaire() {
                 className="input-glass resize-none"
                 rows={3}
                 placeholder="e.g. Lower back pain, avoid high-impact, left knee surgery..."
+                style={{ fontSize: 16 }}
                 value={form.injuries}
                 onChange={(e) => update({ injuries: e.target.value })}
               />
@@ -992,13 +1015,13 @@ export default function Questionnaire() {
                   <button
                     key={value}
                     onClick={() => update({ dietType: value })}
-                    className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${form.dietType === value
+                    className={`text-left py-4 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${form.dietType === value
                       ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                       : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
                       }`}
                   >
                     <span className="block text-sm font-medium">{label}</span>
-                    <span className="block text-[11px] text-white/35 mt-0.5">{desc}</span>
+                    <span className="block text-xs text-white/35 mt-0.5">{desc}</span>
                   </button>
                 ))}
               </div>
@@ -1010,13 +1033,13 @@ export default function Questionnaire() {
                     <button
                       key={value}
                       onClick={() => update({ dietType: value })}
-                      className={`text-left py-3 px-4 rounded-2xl border transition-all duration-200 ${form.dietType === value
+                      className={`text-left py-4 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${form.dietType === value
                         ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow'
                         : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'
                         }`}
                     >
                       <span className="block text-sm font-medium">{label}</span>
-                      <span className="block text-[11px] text-white/35 mt-0.5">{desc}</span>
+                      <span className="block text-xs text-white/35 mt-0.5">{desc}</span>
                     </button>
                   ))}
                 </div>
@@ -1058,6 +1081,7 @@ export default function Questionnaire() {
                 className="input-glass resize-none"
                 rows={2}
                 placeholder="e.g. no red meat, no MSG, no onion or garlic, specific cultural rules..."
+                style={{ fontSize: 16 }}
                 value={form.customRestrictions}
                 onChange={(e) => update({ customRestrictions: e.target.value })}
               />
@@ -1070,7 +1094,7 @@ export default function Questionnaire() {
                   <button
                     key={n}
                     onClick={() => update({ mealsPerDay: n })}
-                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border transition-all duration-200 ${form.mealsPerDay === n
+                    className={`flex-1 py-4 rounded-2xl text-sm font-medium border transition-all duration-200 active:scale-[0.97] ${form.mealsPerDay === n
                       ? 'text-white border-purple-500/60 bg-purple-500/15'
                       : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'
                       }`}

@@ -561,7 +561,7 @@ export default function Scanner() {
 
   if (state === 'error') {
     return (
-      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
           <div className="text-4xl mb-4">📷</div>
           <h2 className="text-white font-bold text-lg mb-2">Camera unavailable</h2>
@@ -582,7 +582,7 @@ export default function Scanner() {
 
   if (state === 'not-found') {
     return (
-      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav text-center animate-fade-in">
         <div className="glass-card p-8">
           <div className="text-4xl mb-4">🔍</div>
           <h2 className="text-white font-bold text-lg mb-2">Product not found</h2>
@@ -606,7 +606,7 @@ export default function Scanner() {
   if (state === 'result' && product && scored) {
     const n = product.nutriments ?? {}
     return (
-      <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
         {/* Product header */}
         <div className="flex gap-4 mb-5">
           {product.image_url ? (
@@ -710,7 +710,7 @@ export default function Scanner() {
   // ── Idle / scanning ────────────────────────────────────────────────────────
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Food Scanner</h1>
         <p className="text-white/40 text-sm mt-0.5">Point at a barcode for a personalized health score.</p>

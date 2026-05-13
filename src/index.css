@@ -66,6 +66,31 @@
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }
 
+  @media (min-width: 768px) {
+    .pb-nav {
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  .chat-height {
+    height: calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    .chat-height {
+      height: 100dvh;
+    }
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .glass-card-hover {
     @apply glass-card transition-all duration-300;
   }
@@ -155,11 +180,47 @@
   100% { transform: scale(1);    }
 }
 
-@keyframes emoji-wobble {
-  0%   { transform: rotate(0deg)    scale(1);    }
-  18%  { transform: rotate(-16deg)  scale(1.18); }
-  38%  { transform: rotate(12deg)   scale(1.08); }
-  58%  { transform: rotate(-7deg)   scale(1.02); }
-  78%  { transform: rotate(4deg); }
-  100% { transform: rotate(0deg)    scale(1);    }
+/* Per-mood emoji animations */
+@keyframes mood-anim-low {
+  0%   { transform: scale(1)    rotate(0deg)   translateY(0); }
+  25%  { transform: scale(0.9)  rotate(-14deg) translateY(3px); }
+  55%  { transform: scale(0.85) rotate(-18deg) translateY(7px); }
+  80%  { transform: scale(0.92) rotate(-9deg)  translateY(3px); }
+  100% { transform: scale(1)    rotate(0deg)   translateY(0); }
+}
+
+@keyframes mood-anim-meh {
+  0%   { transform: translateX(0)    rotate(0deg);  }
+  18%  { transform: translateX(-6px) rotate(-4deg); }
+  36%  { transform: translateX(6px)  rotate(4deg);  }
+  54%  { transform: translateX(-4px) rotate(-2deg); }
+  72%  { transform: translateX(3px)  rotate(1deg);  }
+  100% { transform: translateX(0)    rotate(0deg);  }
+}
+
+@keyframes mood-anim-ok {
+  0%   { transform: translateY(0)    scale(1);    }
+  32%  { transform: translateY(-8px) scale(1.1);  }
+  56%  { transform: translateY(2px)  scale(0.95); }
+  76%  { transform: translateY(-3px) scale(1.04); }
+  100% { transform: translateY(0)    scale(1);    }
+}
+
+@keyframes mood-anim-good {
+  0%   { transform: scale(1)    rotate(0deg)  translateY(0);   }
+  20%  { transform: scale(1.22) rotate(9deg)  translateY(-9px); }
+  42%  { transform: scale(1.12) rotate(-5deg) translateY(-4px); }
+  62%  { transform: scale(1.2)  rotate(6deg)  translateY(-7px); }
+  82%  { transform: scale(1.06) rotate(-2deg) translateY(-1px); }
+  100% { transform: scale(1)    rotate(0deg)  translateY(0);   }
+}
+
+@keyframes mood-anim-great {
+  0%   { transform: scale(1)    rotate(0deg);  }
+  14%  { transform: scale(1.45) rotate(22deg); }
+  30%  { transform: scale(1.32) rotate(-18deg);}
+  50%  { transform: scale(1.5)  rotate(28deg); }
+  68%  { transform: scale(1.22) rotate(-10deg);}
+  84%  { transform: scale(1.1)  rotate(5deg);  }
+  100% { transform: scale(1)    rotate(0deg);  }
 }

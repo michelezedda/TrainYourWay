@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { HiInformationCircle } from 'react-icons/hi'
+import { useState, useRef, useEffect } from 'react'
+import { HiInformationCircle, HiChevronDown } from 'react-icons/hi'
 import type { Components } from 'react-markdown'
 import type React from 'react'
 
@@ -9,8 +9,6 @@ export function sanitizePlan(text: string): string {
     .replace(/–/g, '-')
 }
 
-// Convert numbered exercise blocks into fenced ```exercise code blocks so they
-// can be rendered as table cards without markdown interpreting inner asterisks.
 export function transformExercises(text: string): string {
   const lines = text.split('\n')
   const result: string[] = []
@@ -19,7 +17,6 @@ export function transformExercises(text: string): string {
   while (i < lines.length) {
     const trimmed = lines[i].trim()
 
-    // Detect: **N. Exercise name** (possibly ending ***)
     if (/^\*\*\d+\./.test(trimmed)) {
       const name = trimmed.replace(/^\*\*/, '').replace(/\*+$/, '').trim()
       const nextTrimmed = lines[i + 1]?.trim() ?? ''
@@ -120,27 +117,40 @@ const scheduleCard = (
   </button>
 )
 
-// ── Exercise table card ───────────────────────────────────────────────────────
+// ── Exercise card ──────────────────────────────────────────────────────────────
 
 interface ExerciseTableCardProps {
-  name: string   // e.g. "1. Dumbbell Curl *(new)*"
-  meta: string   // e.g. "Sets: 3 × 12 | Rest: 60s | Weight: 10-12 kg"
-  tip: string    // e.g. "Form tip: Keep elbows tucked."
+  name: string
+  meta: string
+  tip: string
   exerciseKey: string
   weight: string
   onWeightChange: (value: string) => void
   onGuideClick: (name: string) => void
 }
 
+function parseRestSeconds(restStr: string): number {
+  const minMatch = restStr.match(/(\d+)\s*min/i)
+  if (minMatch) return parseInt(minMatch[1], 10) * 60
+  const numMatch = restStr.match(/\d+/)
+  return numMatch ? parseInt(numMatch[0], 10) : 60
+}
+
 function ExerciseTableCard({
   name, meta, tip, exerciseKey, weight, onWeightChange, onGuideClick,
 }: ExerciseTableCardProps) {
   const [localWeight, setLocalWeight] = useState(weight)
+  const [isDone, setIsDone] = useState(false)
+  const [restActive, setRestActive] = useState(false)
+  const [restSecsLeft, setRestSecsLeft] = useState(0)
+  const [showTip, setShowTip] = useState(false)
+  const restTotalRef = useRef(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const num = name.match(/^(\d+)\./)?.[1] ?? ''
   const displayName = name.replace(/^\d+\.\s*/, '').replace(/\s*\*+\([^)]+\)\*+\s*/g, '').trim()
   const isNew = /\*+\(new\)\*+/.test(name)
 
-  // Parse "Sets: 3 × 12 | Rest: 60s | Weight: 10-12 kg"
   const metaParts: Record<string, string> = {}
   for (const part of meta.split('|')) {
     const colon = part.indexOf(':')
@@ -151,83 +161,204 @@ function ExerciseTableCard({
 
   const tipText = tip.replace(/^Form tip:\s*/i, '').trim()
 
-  return (
-    <div className="my-4 rounded-2xl border border-white/10 overflow-hidden" style={{ background: 'rgba(255,255,255,0.025)' }}>
+  const startRestTimer = (totalSecs: number) => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    restTotalRef.current = totalSecs
+    setRestSecsLeft(totalSecs)
+    setRestActive(true)
+    timerRef.current = setInterval(() => {
+      setRestSecsLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!)
+          timerRef.current = null
+          setRestActive(false)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
 
+  const skipRest = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    setRestActive(false)
+    setRestSecsLeft(0)
+  }
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
+
+  const handleDoneToggle = () => {
+    const next = !isDone
+    setIsDone(next)
+    if (next && metaParts['rest'] && !restActive) {
+      startRestTimer(parseRestSeconds(metaParts['rest']))
+    } else if (!next) {
+      skipRest()
+    }
+  }
+
+  const restPct = restTotalRef.current > 0 ? restSecsLeft / restTotalRef.current : 0
+  const restMins = Math.floor(restSecsLeft / 60)
+  const restSecs = restSecsLeft % 60
+
+  return (
+    <div
+      className={`my-4 rounded-2xl border overflow-hidden transition-all duration-300 ${
+        isDone ? 'border-green-500/25' : 'border-white/10'
+      }`}
+      style={{ background: isDone ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.025)' }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="text-sm font-black flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            {num}.
-          </span>
-          <span className="text-white font-semibold text-sm truncate">{displayName}</span>
-          {isNew && (
-            <span className="flex-shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold uppercase tracking-wide">
-              new
+      <div
+        className="flex items-center gap-3 px-4 py-4"
+        style={{ background: isDone ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.04)' }}
+      >
+        <button
+          onClick={handleDoneToggle}
+          className="flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200 active:scale-90"
+          style={isDone
+            ? { background: 'linear-gradient(135deg, #22C55E, #16A34A)', borderColor: '#22C55E' }
+            : { borderColor: 'rgba(255,255,255,0.20)' }}
+          aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
+        >
+          {isDone && <span className="text-white text-xs font-bold leading-none">✓</span>}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-base font-black flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+            >
+              {num}.
             </span>
-          )}
+            <span className={`font-bold text-base leading-tight transition-all duration-200 ${isDone ? 'text-white/35 line-through decoration-white/20' : 'text-white'}`}>
+              {displayName}
+            </span>
+            {isNew && (
+              <span className="flex-shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold uppercase tracking-wide">
+                new
+              </span>
+            )}
+          </div>
         </div>
+
         <button
           onClick={() => onGuideClick(exerciseKey)}
-          className="flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all duration-200 active:scale-95"
-          style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.22)' }}
+          className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95"
+          style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.22)' }}
+          aria-label="Exercise guide"
         >
-          <HiInformationCircle className="w-3 h-3" />
-          Info
+          <HiInformationCircle className="w-4 h-4 text-purple-400" />
         </button>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 divide-x divide-white/8 border-b border-white/8">
-        {metaParts['sets'] && (
-          <div className="px-3 py-2.5">
-            <p className="text-white/35 text-[9px] uppercase tracking-wider mb-1">Sets</p>
-            <p className="text-white/85 text-xs font-semibold leading-snug">{metaParts['sets']}</p>
+      {/* Stats chips */}
+      {(metaParts['sets'] || metaParts['rest'] || metaParts['weight']) && (
+        <div className="flex gap-2 px-4 pb-3 pt-1 flex-wrap">
+          {metaParts['sets'] && (
+            <div
+              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl"
+              style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.22)' }}
+            >
+              <p className="text-purple-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Sets</p>
+              <p className="text-purple-100 text-sm font-bold">{metaParts['sets']}</p>
+            </div>
+          )}
+          {metaParts['rest'] && (
+            <button
+              onClick={() => startRestTimer(parseRestSeconds(metaParts['rest']))}
+              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-95"
+              style={{
+                background: restActive ? 'rgba(34,211,238,0.18)' : 'rgba(34,211,238,0.08)',
+                border: `1px solid ${restActive ? 'rgba(34,211,238,0.4)' : 'rgba(34,211,238,0.22)'}`,
+              }}
+            >
+              <p className="text-cyan-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Rest</p>
+              <p className="text-cyan-100 text-sm font-bold">
+                {restActive
+                  ? `${restMins > 0 ? `${restMins}:` : ''}${String(restSecs).padStart(2, '0')}s`
+                  : metaParts['rest']}
+              </p>
+            </button>
+          )}
+          {metaParts['weight'] && (
+            <div
+              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl"
+              style={{ background: 'rgba(251,146,60,0.10)', border: '1px solid rgba(251,146,60,0.22)' }}
+            >
+              <p className="text-orange-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Suggested</p>
+              <p className="text-orange-100 text-sm font-bold">{metaParts['weight']}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rest timer progress bar */}
+      {restActive && (
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-cyan-300 text-xs font-semibold">
+              Resting - {restMins > 0 ? `${restMins}m ` : ''}{String(restSecs).padStart(2, '0')}s left
+            </span>
+            <button
+              onClick={skipRest}
+              className="text-white/35 text-xs hover:text-white/60 transition-colors"
+            >
+              Skip
+            </button>
           </div>
-        )}
-        {metaParts['rest'] && (
-          <div className="px-3 py-2.5">
-            <p className="text-white/35 text-[9px] uppercase tracking-wider mb-1">Rest</p>
-            <p className="text-white/85 text-xs font-semibold leading-snug">{metaParts['rest']}</p>
+          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-1000"
+              style={{ width: `${restPct * 100}%`, background: 'linear-gradient(90deg, #22D3EE, #A855F7)' }}
+            />
           </div>
-        )}
-        {metaParts['weight'] && (
-          <div className="px-3 py-2.5">
-            <p className="text-white/35 text-[9px] uppercase tracking-wider mb-1">Suggested</p>
-            <p className="text-white/85 text-xs font-semibold leading-snug">{metaParts['weight']}</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* My weight input */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/8" style={{ background: 'rgba(168,85,247,0.03)' }}>
+      <div
+        className="flex items-center gap-3 px-4 py-3 border-t border-white/8"
+        style={{ background: 'rgba(168,85,247,0.03)' }}
+      >
         <span className="text-purple-400/60 text-[9px] uppercase tracking-wider whitespace-nowrap font-semibold">
           My weight
         </span>
         <input
-          className="flex-1 bg-transparent border-none outline-none text-sm placeholder-white/20 min-w-0"
-          style={{ color: localWeight ? 'rgba(255,255,255,0.9)' : undefined }}
+          className="flex-1 bg-transparent border-none outline-none placeholder-white/20 min-w-0"
+          style={{ fontSize: 16, color: localWeight ? 'rgba(255,255,255,0.9)' : undefined }}
           placeholder="e.g. 12 kg, bodyweight..."
           value={localWeight}
-          onChange={(e) => { setLocalWeight(e.target.value); onWeightChange(e.target.value) }}
+          onChange={e => { setLocalWeight(e.target.value); onWeightChange(e.target.value) }}
         />
         {localWeight && (
           <button
             onClick={() => { setLocalWeight(''); onWeightChange('') }}
-            className="flex-shrink-0 text-white/20 hover:text-white/50 transition-colors text-base leading-none"
+            className="flex-shrink-0 text-white/20 hover:text-white/50 transition-colors text-lg leading-none"
           >
             ×
           </button>
         )}
       </div>
 
-      {/* Form tip */}
+      {/* Form tip collapsible */}
       {tipText && (
-        <div className="px-4 py-2.5">
-          <p className="text-white/40 text-xs italic leading-relaxed">{tipText}</p>
+        <div className="border-t border-white/8">
+          <button
+            onClick={() => setShowTip(p => !p)}
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/3 transition-colors"
+          >
+            <span className="text-white/40 text-xs font-medium">Form tip</span>
+            <HiChevronDown
+              className={`w-3.5 h-3.5 text-white/25 transition-transform duration-200 ${showTip ? '' : '-rotate-90'}`}
+            />
+          </button>
+          {showTip && (
+            <div className="px-4 pb-3.5">
+              <p className="text-white/50 text-xs italic leading-relaxed">{tipText}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -291,7 +422,6 @@ export function buildPlanComponents(
         <div className="flex-1 h-px bg-white/8" />
       </div>
     ),
-    // Strip <pre> wrapper so exercise cards render without a code block frame
     pre: ({ children }) => <>{children}</>,
     code: ({ className, children }) => {
       if (String(className ?? '').includes('language-exercise')) {

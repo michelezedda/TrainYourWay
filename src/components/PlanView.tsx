@@ -229,49 +229,60 @@ export function WorkoutDayView({
         </div>
       )}
 
-      {/* Day selector */}
-      <div className="grid grid-cols-7 gap-1.5 mb-5">
+      {/* Day selector - horizontal scroll pills */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
         {DAY_NAMES.map((day, i) => {
-          const label       = schedule[day] ?? ''
-          const isRestDay   = !label || /rest/i.test(label)
-          const hasOvr      = !!(dayWorkoutOverrides?.[day])
+          const label        = schedule[day] ?? ''
+          const isRestDay    = !label || /rest/i.test(label)
+          const hasOvr       = !!(dayWorkoutOverrides?.[day])
           const isDayBlocked = (blockedDays?.includes(day) ?? false) && !hasOvr
-          const isSel       = selectedDay === i
+          const isSel        = selectedDay === i
+          const shortLabel   = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 10)
           return (
             <button
               key={day}
               onClick={() => setSelectedDay(i)}
-              className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-all duration-200 ${
+              className={`flex-shrink-0 flex flex-col items-center gap-1 px-4 py-3.5 rounded-2xl border transition-all duration-200 min-w-[72px] active:scale-95 ${
                 isSel && isDayBlocked
                   ? 'border-red-500/60 bg-red-500/20'
-                  : isSel && (isRestDay && !hasOvr)
+                  : isSel && isRestDay && !hasOvr
                   ? 'border-white/20 bg-white/8'
                   : isSel
-                  ? 'border-white/60 bg-white/15'
+                  ? 'border-purple-500/50 bg-purple-500/15'
                   : isDayBlocked
-                  ? 'border-red-500/30 bg-red-500/8 hover:bg-red-500/14'
+                  ? 'border-red-500/30 bg-red-500/8'
                   : isRestDay && !hasOvr
-                  ? 'border-white/6 bg-transparent hover:bg-white/3'
-                  : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/35'
+                  ? 'border-white/6 bg-transparent'
+                  : 'border-white/14 bg-white/5 hover:bg-white/10'
               }`}
             >
               <span className={`text-[11px] font-bold uppercase tracking-wide ${
-                isSel && isDayBlocked    ? 'text-red-200'
-                : isSel && (isRestDay && !hasOvr) ? 'text-white/50'
-                : isSel                  ? 'text-white'
-                : isDayBlocked           ? 'text-red-400/80'
-                : isRestDay && !hasOvr   ? 'text-white/25'
-                                         : 'text-white/75'
+                isSel && isDayBlocked      ? 'text-red-200'
+                : isSel && isRestDay       ? 'text-white/50'
+                : isSel                    ? 'text-purple-200'
+                : isDayBlocked             ? 'text-red-400/80'
+                : isRestDay && !hasOvr     ? 'text-white/25'
+                                           : 'text-white/75'
               }`}>
                 {DAY_SHORT[i]}
               </span>
-              <span className={`w-1.5 h-1.5 rounded-full ${
+              <span className={`text-[10px] leading-tight text-center max-w-[64px] truncate ${
+                isSel && isDayBlocked  ? 'text-red-300/70'
+                : isSel && isRestDay   ? 'text-white/30'
+                : isSel                ? 'text-purple-300/80'
+                : isDayBlocked         ? 'text-red-400/50'
+                : isRestDay && !hasOvr ? 'text-white/18'
+                                       : 'text-white/40'
+              }`}>
+                {shortLabel}
+              </span>
+              <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
                 isSel && isDayBlocked    ? 'bg-red-400'
-                : isSel && (isRestDay && !hasOvr) ? 'bg-white/40'
-                : isSel                  ? 'bg-white'
-                : isDayBlocked           ? 'bg-red-500/50'
-                : isRestDay && !hasOvr   ? 'bg-white/12'
-                                         : 'bg-white/50'
+                : isSel && isRestDay     ? 'bg-white/35'
+                : isSel                  ? 'bg-purple-400'
+                : isDayBlocked           ? 'bg-red-500/40'
+                : isRestDay && !hasOvr   ? 'bg-white/10'
+                                         : 'bg-white/30'
               }`} />
             </button>
           )
@@ -281,18 +292,23 @@ export function WorkoutDayView({
       {/* Selected day card */}
       <GlassCard padding={false} className="overflow-hidden mb-4">
         <div
-          className={`flex items-center justify-between px-4 py-3 border-b ${isBlocked ? 'border-red-500/20' : 'border-white/8'}`}
-          style={{ background: isBlocked ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)' }}
+          className={`flex items-center justify-between px-5 py-4 border-b ${isBlocked ? 'border-red-500/20' : 'border-white/8'}`}
+          style={{ background: isBlocked ? 'rgba(239,68,68,0.06)' : isRest ? 'rgba(255,255,255,0.02)' : 'rgba(168,85,247,0.05)' }}
         >
-          <span className="text-white font-semibold text-sm">{currentDayName}</span>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+          <div>
+            <span className="text-white font-bold text-xl">{currentDayName}</span>
+            {!isRest && !isBlocked && selectedLabel && (
+              <p className="text-white/40 text-xs mt-0.5">{selectedLabel}</p>
+            )}
+          </div>
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
             isBlocked
               ? 'text-red-300 border-red-500/35 bg-red-500/12'
               : isRest
               ? 'text-white/30 border-white/8'
-              : 'text-purple-300 border-purple-500/30 bg-purple-500/10'
+              : 'text-purple-200 border-purple-500/35 bg-purple-500/12'
           }`}>
-            {isBlocked ? 'Blocked' : isRest ? 'Rest' : selectedLabel}
+            {isBlocked ? 'Blocked' : isRest ? 'Rest Day' : 'Active'}
           </span>
         </div>
 

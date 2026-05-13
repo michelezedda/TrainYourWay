@@ -48,7 +48,7 @@ export default function App() {
       <BrowserRouter>
         <AuthSync />
         <div className="min-h-screen flex flex-col">
-          <div className="flex-1 pb-nav">
+          <div className="flex-1 md:pl-56">
             <Routes>
               <Route path="/"     element={<Home />} />
               <Route path="/auth" element={<Auth />} />

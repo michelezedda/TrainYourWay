@@ -125,8 +125,8 @@ export default function Personal() {
   }
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
-      <div className="mb-5">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      <div className="mb-6">
         <h1 className="text-2xl font-black gradient-text">Settings</h1>
         <p className="text-white/40 text-sm mt-0.5">Manage your profile and account.</p>
       </div>
@@ -136,9 +136,9 @@ export default function Personal() {
         {/* Profile */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Profile</p>
-          <div className="glass-card p-4 space-y-3">
-            {/* Avatar + email header */}
-            <div className="flex items-center gap-3 pb-3 border-b border-white/8">
+          <div className="glass-card overflow-hidden">
+            {/* Avatar hero row */}
+            <div className="px-5 py-5 flex items-center gap-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -156,41 +156,40 @@ export default function Personal() {
                   <img
                     src={avatarUrl}
                     alt="Avatar"
-                    className="w-14 h-14 rounded-full object-cover"
-                    style={{ border: '2px solid rgba(168,85,247,0.35)' }}
+                    className="w-20 h-20 rounded-full object-cover"
+                    style={{ border: '2.5px solid rgba(168,85,247,0.4)' }}
                   />
                 ) : (
                   <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold"
+                    className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black"
                     style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', color: 'white' }}
                   >
                     {avatarUploading ? (
-                      <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     ) : (
                       (userProfile?.name?.[0] ?? user?.email?.[0] ?? '?').toUpperCase()
                     )}
                   </div>
                 )}
-                {/* Camera overlay on hover/tap */}
                 <div
                   className="absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-200 opacity-0 group-hover:opacity-100 group-active:opacity-100"
                   style={{ background: 'rgba(0,0,0,0.5)' }}
                 >
                   {avatarUploading
-                    ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    : <HiCamera className="w-5 h-5 text-white" />
+                    ? <span className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    : <HiCamera className="w-6 h-6 text-white" />
                   }
                 </div>
               </button>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-white truncate">
+                <p className="text-base font-bold text-white truncate leading-tight">
                   {userProfile?.name ?? 'Set your name'}
                 </p>
-                <p className="text-xs text-white/40 truncate">{user?.email}</p>
+                <p className="text-sm text-white/40 truncate mt-0.5">{user?.email}</p>
                 {avatarUrl && (
                   <button
                     onClick={handleRemoveAvatar}
-                    className="text-[11px] text-white/25 hover:text-red-400/70 transition-colors mt-0.5"
+                    className="text-xs text-white/25 hover:text-red-400/70 transition-colors mt-1.5"
                   >
                     Remove photo
                   </button>
@@ -198,13 +197,13 @@ export default function Personal() {
               </div>
             </div>
 
-            {/* Name */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-white/40 w-20 flex-shrink-0">Name</span>
+            {/* Name row */}
+            <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="text-xs text-white/35 mb-1.5">Display Name</p>
               {editingField === 'name' ? (
-                <div className="flex-1 flex gap-2">
+                <div className="flex gap-2">
                   <input
-                    className="input-glass !py-1.5 !text-sm flex-1"
+                    className="input-glass !py-2 flex-1"
                     autoFocus
                     style={{ fontSize: 16 }}
                     value={editValue}
@@ -213,32 +212,33 @@ export default function Personal() {
                   />
                   <button
                     onClick={() => void saveProfileField('name', editValue)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
+                    className="text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
                     style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}
                   >
                     Save
                   </button>
-                  <button onClick={() => setEditingField(null)} className="text-xs text-white/35 px-2">Cancel</button>
+                  <button onClick={() => setEditingField(null)} className="text-sm text-white/35 px-2">Cancel</button>
                 </div>
               ) : (
-                <div className="flex-1 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-white/70">{userProfile?.name ?? 'Not set'}</span>
                   {userProfile && (
                     <button
                       onClick={() => { setEditingField('name'); setEditValue(userProfile.name ?? '') }}
-                      className="text-white/30 hover:text-white/60 transition-colors ml-2"
+                      className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/60 transition-colors"
                     >
                       <HiPencil className="w-3.5 h-3.5" />
+                      Edit
                     </button>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Email (read-only) */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-white/40 w-20 flex-shrink-0">Email</span>
-              <span className="text-sm text-white/50 flex-1 truncate">{user?.email}</span>
+            {/* Email row */}
+            <div className="px-5 py-4">
+              <p className="text-xs text-white/35 mb-1.5">Email</p>
+              <span className="text-sm text-white/50">{user?.email}</span>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function Personal() {
         {/* Training & Nutrition */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Training & Nutrition</p>
-          <div className="space-y-2">
+          <div className="glass-card overflow-hidden">
             <button
               onClick={() => {
                 if (!latestPlan) { navigate('/questionnaire'); return }
@@ -261,19 +261,24 @@ export default function Personal() {
                   },
                 })
               }}
-              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              className="w-full flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <span className="text-sm text-white/70">Edit Training Goals</span>
-              <HiChevronRight className="w-4 h-4 text-white/25" />
+              <div className="text-left">
+                <p className="text-sm font-medium text-white/80">Edit Training Goals</p>
+                <p className="text-xs text-white/35 mt-0.5">Update your plan based on new goals</p>
+              </div>
+              <HiChevronRight className="w-5 h-5 text-white/25 flex-shrink-0" />
             </button>
             <Link
               to="/questionnaire"
-              className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              className="flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
             >
-              <span className="text-sm text-white/70">Start Over </span>
-              <HiChevronRight className="w-4 h-4 text-white/25" />
+              <div>
+                <p className="text-sm font-medium text-white/80">Start Over</p>
+                <p className="text-xs text-white/35 mt-0.5">Generate a completely new plan</p>
+              </div>
+              <HiChevronRight className="w-5 h-5 text-white/25 flex-shrink-0" />
             </Link>
           </div>
         </div>
@@ -281,26 +286,30 @@ export default function Personal() {
         {/* Notifications */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Notifications</p>
-          <div
-            className="px-4 py-3.5 rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
+          <div className="glass-card px-5 py-4">
             {notifPermission === 'granted' ? (
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-                <span className="text-sm text-green-300/80">Notifications enabled</span>
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-300/90">Notifications enabled</p>
+                  <p className="text-xs text-white/35 mt-0.5">You'll receive goal and workout reminders</p>
+                </div>
               </div>
             ) : notifPermission === 'denied' ? (
-              <p className="text-sm text-white/40">
-                Notifications are blocked. Open your device settings to enable them.
-              </p>
+              <div>
+                <p className="text-sm text-white/60 font-medium">Notifications blocked</p>
+                <p className="text-xs text-white/35 mt-1">Open your device settings to enable them.</p>
+              </div>
             ) : (
               <button
                 onClick={() => void handleEnableNotifications()}
-                className="text-sm font-medium"
-                style={{ color: '#c084fc' }}
+                className="flex items-center justify-between w-full"
               >
-                Enable goal alerts
+                <div className="text-left">
+                  <p className="text-sm font-medium" style={{ color: '#c084fc' }}>Enable goal alerts</p>
+                  <p className="text-xs text-white/35 mt-0.5">Stay on track with reminders</p>
+                </div>
+                <HiChevronRight className="w-5 h-5 text-white/25" />
               </button>
             )}
           </div>
@@ -308,26 +317,26 @@ export default function Personal() {
 
         {/* Privacy & Account */}
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Privacy & Account</p>
-          <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Account</p>
+          <div className="glass-card overflow-hidden">
             <button
               onClick={() => void handleLogout()}
-              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              className="w-full flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <span className="text-sm text-white/70">Log Out</span>
-              <HiLogout className="w-4 h-4 text-white/25" />
+              <p className="text-sm font-medium text-white/70">Log Out</p>
+              <HiLogout className="w-5 h-5 text-white/25" />
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors active:scale-[0.98]"
-              style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}
+              className="w-full flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
             >
-              <span className="text-sm text-red-400/80">Delete Account</span>
-              <HiTrash className="w-4 h-4 text-red-400/40" />
+              <p className="text-sm font-medium text-red-400/80">Delete Account</p>
+              <HiTrash className="w-5 h-5 text-red-400/35" />
             </button>
           </div>
         </div>
+
         <div className="w-full h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
         <Link
           to="/support"
@@ -349,11 +358,11 @@ export default function Personal() {
           onClick={() => !deleteBusy && setShowDeleteConfirm(false)}
         >
           <div
-            className="glass-card w-full max-w-sm p-6 space-y-4 mb-20"
+            className="glass-card w-full max-w-sm p-6 space-y-5 mb-20"
             onClick={e => e.stopPropagation()}
           >
             <div>
-              <h3 className="text-base font-bold text-white mb-1">Delete account?</h3>
+              <h3 className="text-lg font-bold text-white mb-2">Delete account?</h3>
               <p className="text-sm text-white/45 leading-relaxed">
                 This permanently deletes all your data including meals, workouts, streaks, and scan history. This cannot be undone.
               </p>
@@ -362,7 +371,7 @@ export default function Personal() {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleteBusy}
-                className="flex-1 py-2.5 rounded-2xl text-sm font-medium text-white/60 transition-colors disabled:opacity-50"
+                className="flex-1 py-3.5 rounded-2xl text-sm font-medium text-white/60 transition-colors disabled:opacity-50"
                 style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 Cancel
@@ -370,7 +379,7 @@ export default function Personal() {
               <button
                 onClick={() => void handleDeleteAccount()}
                 disabled={deleteBusy}
-                className="flex-1 py-2.5 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ background: 'rgba(239,68,68,0.8)' }}
               >
                 {deleteBusy ? (

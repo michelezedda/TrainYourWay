@@ -88,7 +88,7 @@ export default function MachineGuide() {
   }
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Machine Guide</h1>
         <p className="text-white/40 text-sm mt-0.5">Photo any gym machine for instant instructions.</p>

@@ -62,9 +62,9 @@ function parseList(json: string): string[] {
 }
 
 const levelColor: Record<string, { bg: string; color: string; border: string }> = {
-  beginner:     { bg: 'rgba(34,197,94,0.12)',  color: '#86efac', border: 'rgba(34,197,94,0.3)' },
-  intermediate: { bg: 'rgba(234,179,8,0.12)',  color: '#fde68a', border: 'rgba(234,179,8,0.3)' },
-  advanced:     { bg: 'rgba(239,68,68,0.12)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
+  beginner: { bg: 'rgba(34,197,94,0.12)', color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  intermediate: { bg: 'rgba(234,179,8,0.12)', color: '#fde68a', border: 'rgba(234,179,8,0.3)' },
+  advanced: { bg: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
 }
 
 const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
@@ -180,7 +180,7 @@ export default function History() {
 
   if (isLoading) {
     return (
-      <main className="max-w-sm mx-auto px-4 py-20 flex justify-center animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 flex justify-center animate-fade-in">
         <LoadingSpinner size="lg" message="Loading your plan..." />
       </main>
     )
@@ -188,7 +188,7 @@ export default function History() {
 
   if (error) {
     return (
-      <main className="max-w-sm mx-auto px-4 py-20 text-center animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="glass-card p-8">
           <div className="text-4xl mb-4">⚠️</div>
           <p className="text-red-300">Failed to load plan. Please try again later.</p>
@@ -199,7 +199,7 @@ export default function History() {
 
   if (chain.length === 0) {
     return (
-      <main className="max-w-sm mx-auto px-4 py-20 text-center animate-fade-in">
+      <main className="max-w-sm md:max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="glass-card p-8">
           <div className="text-5xl mb-4">📋</div>
           <h2 className="text-xl font-bold text-white mb-2">No plan yet</h2>
@@ -215,7 +215,7 @@ export default function History() {
   const lvl = levelColor[latestPlan.fitnessLevel] ?? null
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {selectedExercise && <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />}
 
       {/* Header */}
@@ -352,7 +352,7 @@ export default function History() {
       )}
 
       {/* Start over */}
-      <div className="pt-4 border-t border-white/[0.08]">
+      <div className="pt-4 border-t border-white/[0.08] pb-10">
         {!confirmStartOver ? (
           <button
             onClick={() => setConfirmStartOver(true)}

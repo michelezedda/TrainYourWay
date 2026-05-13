@@ -44,6 +44,14 @@ const RIGHT_NAV = [
   { to: '/me', label: 'Settings', Icon: PersonIcon },
 ]
 
+const ALL_NAV = [
+  { to: '/history', label: 'Workout', Icon: DumbbellIcon },
+  { to: '/diet', label: 'Diet', Icon: ForkIcon },
+  { to: '/dashboard', label: 'Home', Icon: HomeIcon },
+  { to: '/chat', label: 'Kai', Icon: ChatIcon },
+  { to: '/me', label: 'Settings', Icon: PersonIcon },
+]
+
 export default function BottomNav() {
   const { user } = db.useAuth()
   const location = useLocation()
@@ -56,78 +64,130 @@ export default function BottomNav() {
   const homeActive = isActive('/dashboard')
 
   return (
-    <div
-      className="fixed bottom-0 inset-x-0 z-50 flex justify-center px-4"
-      style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
-    >
-      <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2 backdrop-blur-sm">
-        {/* Left items */}
-        {LEFT_NAV.map(({ to, label, Icon }) => {
-          const active = isActive(to)
-          return (
-            <Link
-              key={to}
-              to={to}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
-              style={{
-                background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
-                color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
-              }}
-            >
-              <Icon active={active} />
-              <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
-                {label}
-              </span>
-              <span className="w-1 h-1 rounded-full transition-all duration-200"
-                style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
-            </Link>
-          )
-        })}
+    <>
+      {/* ── Mobile: fixed bottom pill (hidden on md+) ─────────────────────── */}
+      <div
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 flex justify-center px-4"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      >
+        <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2 backdrop-blur-sm">
+          {LEFT_NAV.map(({ to, label, Icon }) => {
+            const active = isActive(to)
+            return (
+              <Link
+                key={to}
+                to={to}
+                className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
+                style={{
+                  background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
+                  color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
+                }}
+              >
+                <Icon active={active} />
+                <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
+                  {label}
+                </span>
+                <span className="w-1 h-1 rounded-full transition-all duration-200"
+                  style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
+              </Link>
+            )
+          })}
 
-        {/* Home - centered, prominent */}
-        <Link
-          to="/dashboard"
-          className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full transition-all duration-200 active:scale-95"
-          style={{
-            background: homeActive
-              ? 'linear-gradient(135deg,rgba(168,85,247,0.25),rgba(34,211,238,0.15))'
-              : 'transparent',
-            border: homeActive ? '1px solid rgba(168,85,247,0.35)' : 'transparent',
-            boxShadow: homeActive ? '0 0 20px rgba(168,85,247,0.2)' : 'none',
-            color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.5)',
-          }}
-        >
-          <HomeIcon active={homeActive} />
-          <span className="font-semibold leading-none" style={{ fontSize: 10, color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.45)' }}>
-            Home
-          </span>
-          <span className="w-1 h-1 rounded-full transition-all duration-200"
-            style={{ background: '#c084fc', opacity: homeActive ? 1 : 0, boxShadow: homeActive ? '0 0 6px #c084fc' : 'none' }} />
-        </Link>
+          <Link
+            to="/dashboard"
+            className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full transition-all duration-200 active:scale-95"
+            style={{
+              background: homeActive
+                ? 'linear-gradient(135deg,rgba(168,85,247,0.25),rgba(34,211,238,0.15))'
+                : 'transparent',
+              border: homeActive ? '1px solid rgba(168,85,247,0.35)' : 'transparent',
+              boxShadow: homeActive ? '0 0 20px rgba(168,85,247,0.2)' : 'none',
+              color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.5)',
+            }}
+          >
+            <HomeIcon active={homeActive} />
+            <span className="font-semibold leading-none" style={{ fontSize: 10, color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.45)' }}>
+              Home
+            </span>
+            <span className="w-1 h-1 rounded-full transition-all duration-200"
+              style={{ background: '#c084fc', opacity: homeActive ? 1 : 0, boxShadow: homeActive ? '0 0 6px #c084fc' : 'none' }} />
+          </Link>
 
-        {/* Right items */}
-        {RIGHT_NAV.map(({ to, label, Icon }) => {
-          const active = isActive(to)
-          return (
-            <Link
-              key={to}
-              to={to}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
-              style={{
-                background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
-                color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
-              }}
-            >
-              <Icon active={active} />
-              <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
-                {label}
-              </span>
-              <span className="w-1 h-1 rounded-full transition-all duration-200"
-                style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
-            </Link>
-          )
-        })}
-      </nav>
-    </div>
+          {RIGHT_NAV.map(({ to, label, Icon }) => {
+            const active = isActive(to)
+            return (
+              <Link
+                key={to}
+                to={to}
+                className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
+                style={{
+                  background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
+                  color: active ? '#c084fc' : 'rgba(255,255,255,0.38)',
+                }}
+              >
+                <Icon active={active} />
+                <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
+                  {label}
+                </span>
+                <span className="w-1 h-1 rounded-full transition-all duration-200"
+                  style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* ── Desktop: fixed left sidebar (hidden below md) ──────────────────── */}
+      <aside
+        className="hidden md:flex fixed left-0 top-0 h-full w-56 flex-col z-50 py-6 px-3"
+        style={{
+          background: 'rgba(5,5,16,0.94)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderRight: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <div className="px-3 mb-8">
+          <h1 className="text-2xl font-black gradient-text leading-tight">UPLIFT</h1>
+          <p className="text-[11px] text-white/30 mt-0.5">Train Your Way</p>
+        </div>
+
+        <nav className="flex flex-col gap-1 flex-1">
+          {ALL_NAV.map(({ to, label, Icon }) => {
+            const active = isActive(to)
+            const isHome = to === '/dashboard'
+            return (
+              <Link
+                key={to}
+                to={to}
+                className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 active:scale-[0.97]"
+                style={active
+                  ? isHome
+                    ? {
+                      background: 'linear-gradient(135deg,rgba(168,85,247,0.18),rgba(34,211,238,0.1))',
+                      color: '#e9d5ff',
+                      border: '1px solid rgba(168,85,247,0.28)',
+                    }
+                    : {
+                      background: 'rgba(168,85,247,0.12)',
+                      color: '#c084fc',
+                      border: '1px solid rgba(168,85,247,0.2)',
+                    }
+                  : {
+                    color: 'rgba(255,255,255,0.42)',
+                    border: '1px solid transparent',
+                  }
+                }
+              >
+                <Icon active={active} />
+                <span className="text-sm font-medium">{label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        <p className="px-3 text-[10px] text-white/15">v1.0</p>
+      </aside>
+    </>
   )
 }

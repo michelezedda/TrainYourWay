@@ -46,20 +46,21 @@ interface AddState {
 const EMPTY_ADD: AddState = { mode: 'manual', input: '', imageDataUrl: null, loading: false, estimate: null, error: '' }
 const ZERO_TOTALS = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
 
-function MacroBar({ label, unit, current, max, gradient }: {
-  label: string; unit: string; current: number; max: number; gradient: string
+function MacroBar({ label, unit, current, max, gradient, color }: {
+  label: string; unit: string; current: number; max: number; gradient: string; color: string
 }) {
   const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0
   const isOver = current > max
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1.5">
-        <span className="text-white/45 text-xs font-medium">{label}</span>
-        <span className={`text-xs font-semibold tabular-nums ${isOver ? 'text-red-400' : 'text-white/55'}`}>
-          {Math.round(current)}{unit} / {max}{unit}
+      <div className="flex justify-between items-baseline mb-2">
+        <span className="text-white/60 text-sm font-medium">{label}</span>
+        <span className={`text-sm font-bold tabular-nums ${isOver ? 'text-red-400' : ''}`} style={isOver ? {} : { color }}>
+          {Math.round(current)}<span className="text-white/30 font-normal text-xs">{unit}</span>
+          <span className="text-white/25 font-normal"> / {max}{unit}</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${pct}%`, background: isOver ? 'rgba(239,68,68,0.8)' : gradient }}
@@ -73,28 +74,37 @@ function MacroSummary({ targets, totals }: { targets: DailyTargets | null; total
   if (!targets) return null
   const kcalPct = Math.min(100, (totals.kcal / targets.kcal) * 100)
   const remaining = Math.max(0, targets.kcal - Math.round(totals.kcal))
+  const isOver = totals.kcal > targets.kcal
   return (
-    <div className="glass-card p-5 mb-3.5">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Today's Targets</p>
-        <Link to="/diet" className="text-xs font-semibold" style={{ color: '#c084fc' }}>
-          {remaining > 0 ? `${remaining} kcal left` : '✓ Goal hit'}
-        </Link>
+    <div className="glass-card p-5 mb-4">
+      {/* Calorie hero */}
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <p className="text-[11px] font-semibold text-white/30 uppercase tracking-wider mb-1">Calories</p>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-3xl font-black tabular-nums" style={{ color: isOver ? '#f87171' : '#c084fc' }}>
+              {Math.round(totals.kcal)}
+            </span>
+            <span className="text-white/30 text-sm">/ {targets.kcal} kcal</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-white/30 mb-0.5">{isOver ? 'Over by' : 'Remaining'}</p>
+          <p className={`text-lg font-bold tabular-nums ${isOver ? 'text-red-400' : 'text-green-400'}`}>
+            {isOver ? `+${Math.round(totals.kcal) - targets.kcal}` : remaining}
+          </p>
+        </div>
       </div>
-      <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: 'rgba(255,255,255,0.07)' }}>
+      <div className="h-2.5 rounded-full overflow-hidden mb-5" style={{ background: 'rgba(255,255,255,0.07)' }}>
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${kcalPct}%`, background: 'linear-gradient(90deg,#A855F7,#22D3EE)' }}
+          style={{ width: `${kcalPct}%`, background: isOver ? 'rgba(239,68,68,0.8)' : 'linear-gradient(90deg,#A855F7,#22D3EE)' }}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-white/30 mb-4">
-        <span>{Math.round(totals.kcal)} eaten</span>
-        <span>{targets.kcal} kcal goal</span>
-      </div>
-      <div className="space-y-3">
-        <MacroBar label="Protein"  unit="g"     current={totals.protein}  max={targets.protein}  gradient="linear-gradient(90deg,#22D3EE,#34d399)" />
-        <MacroBar label="Carbs"    unit="g"     current={totals.carbs}    max={targets.carbs}    gradient="linear-gradient(90deg,#f59e0b,#f97316)" />
-        <MacroBar label="Fat"      unit="g"     current={totals.fat}      max={targets.fat}      gradient="linear-gradient(90deg,#ec4899,#f43f5e)" />
+      <div className="space-y-4">
+        <MacroBar label="Protein" unit="g" current={totals.protein} max={targets.protein} gradient="linear-gradient(90deg,#22D3EE,#34d399)" color="#34d399" />
+        <MacroBar label="Carbs" unit="g" current={totals.carbs} max={targets.carbs} gradient="linear-gradient(90deg,#f59e0b,#f97316)" color="#f97316" />
+        <MacroBar label="Fat" unit="g" current={totals.fat} max={targets.fat} gradient="linear-gradient(90deg,#ec4899,#f43f5e)" color="#ec4899" />
       </div>
     </div>
   )
@@ -121,17 +131,17 @@ function EstimateResult({ estimate, onReenter, onConfirm }: {
           </div>
         ))}
       </div>
-      <div className="flex gap-2 px-4 py-3 border-t border-white/[0.08]">
+      <div className="flex gap-2 px-4 py-3.5 border-t border-white/[0.08]">
         <button
           onClick={onReenter}
-          className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-[0.97]"
+          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
           style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
         >
           Re-enter
         </button>
         <button
           onClick={onConfirm}
-          className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-[0.97]"
+          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
           style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
         >
           Log it
@@ -221,7 +231,7 @@ export default function Diet() {
   const isToday = selectedDate === today
 
   return (
-    <main className="max-w-sm mx-auto px-4 pt-6 pb-nav animate-fade-in">
+    <main className="max-w-sm md:max-w-2xl mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-2xl font-black gradient-text">Diet</h1>
@@ -229,17 +239,17 @@ export default function Diet() {
       </div>
 
       {/* Date navigator */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-5">
         <button
           onClick={() => goToDate(shiftDate(selectedDate, -1))}
-          className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0"
+          className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0"
           style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
           aria-label="Previous day"
         >
-          <HiChevronLeft className="w-4 h-4 text-white/60" />
+          <HiChevronLeft className="w-5 h-5 text-white/60" />
         </button>
         <div className="flex-1 text-center">
-          <p className={`font-bold text-base ${isToday ? 'gradient-text' : 'text-white/85'}`}>
+          <p className={`font-bold text-lg ${isToday ? 'gradient-text' : 'text-white/85'}`}>
             {isToday ? 'Today' : formatDate(selectedDate)}
           </p>
           {!isToday && (
@@ -251,11 +261,11 @@ export default function Diet() {
         <button
           onClick={() => goToDate(shiftDate(selectedDate, 1))}
           disabled={isToday}
-          className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0 disabled:opacity-30"
+          className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0 disabled:opacity-30"
           style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
           aria-label="Next day"
         >
-          <HiChevronRight className="w-4 h-4 text-white/60" />
+          <HiChevronRight className="w-5 h-5 text-white/60" />
         </button>
       </div>
 
@@ -294,7 +304,7 @@ export default function Diet() {
       )}
 
       {/* Meal sections */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-10">
         {MEALS.map(meal => {
           const mealEntries = entries.filter(e => e.meal.toLowerCase() === meal.toLowerCase())
           const mealKcal = mealEntries.reduce((a, e) => a + (e.kcal || 0), 0)
@@ -309,71 +319,73 @@ export default function Diet() {
                   if (isActive) { setActiveMeal(null) }
                   else { setActiveMeal(meal); patch(meal, EMPTY_ADD) }
                 }}
-                className="w-full flex items-center justify-between px-4 py-3.5 transition-all active:bg-white/[0.03]"
+                className="w-full flex items-center justify-between px-5 py-4 transition-all active:bg-white/[0.03]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-lg">{MEAL_EMOJI[meal]}</span>
-                  <span className="text-sm font-semibold text-white/85">{meal}</span>
-                  {mealKcal > 0 && (
-                    <span className="text-[10px] text-white/30 tabular-nums">{Math.round(mealKcal)} kcal</span>
-                  )}
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{MEAL_EMOJI[meal]}</span>
+                  <div className="text-left">
+                    <p className="text-base font-bold text-white/90">{meal}</p>
+                    {mealKcal > 0 && (
+                      <p className="text-xs text-white/35 tabular-nums mt-0.5">{Math.round(mealKcal)} kcal logged</p>
+                    )}
+                  </div>
                 </div>
                 <span
-                  className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all"
+                  className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
                   style={isActive
                     ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
                     : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
                   }
                 >
-                  {isActive ? '✕ Cancel' : '+ Add'}
+                  {isActive ? '✕ Close' : '+ Add'}
                 </span>
               </button>
 
               {/* Logged entries */}
               {mealEntries.map(entry => (
-                <div key={entry.id} className="flex items-center gap-3 px-4 py-3 border-t border-white/[0.06]">
+                <div key={entry.id} className="flex items-center gap-3 px-5 py-3.5 border-t border-white/[0.06]">
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/80 text-sm truncate">{entry.description}</p>
-                    <p className="text-white/30 text-xs mt-0.5 tabular-nums">
-                      {Math.round(entry.kcal)} kcal
-                      <span className="mx-1.5 text-white/15">·</span>P {Math.round(entry.protein)}g
-                      <span className="mx-1.5 text-white/15">·</span>C {Math.round(entry.carbs)}g
-                      <span className="mx-1.5 text-white/15">·</span>F {Math.round(entry.fat)}g
+                    <p className="text-white/80 text-sm font-medium truncate">{entry.description}</p>
+                    <p className="text-white/35 text-xs mt-1 tabular-nums">
+                      <span className="font-semibold text-white/55">{Math.round(entry.kcal)}</span> kcal
+                      <span className="mx-2 text-white/15">|</span>P <span className="font-semibold">{Math.round(entry.protein)}g</span>
+                      <span className="mx-2 text-white/15">|</span>C <span className="font-semibold">{Math.round(entry.carbs)}g</span>
+                      <span className="mx-2 text-white/15">|</span>F <span className="font-semibold">{Math.round(entry.fat)}g</span>
                     </p>
                   </div>
                   <button
                     onClick={() => void handleDelete(entry.id)}
-                    className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-white/20 transition-all active:scale-90"
+                    className="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90"
                     style={{ background: 'rgba(239,68,68,0.08)' }}
                     aria-label="Remove entry"
                   >
-                    <span className="text-red-400/60 text-sm leading-none">×</span>
+                    <span className="text-red-400/60 text-base leading-none">×</span>
                   </button>
                 </div>
               ))}
 
               {mealEntries.length === 0 && !isActive && (
-                <div className="px-4 py-3 border-t border-white/[0.05]">
-                  <p className="text-white/20 text-sm">Nothing logged yet.</p>
+                <div className="px-5 py-4 border-t border-white/[0.05]">
+                  <p className="text-white/25 text-sm">Nothing logged yet.</p>
                 </div>
               )}
 
               {/* Add food panel */}
               {isActive && (
-                <div className="border-t border-white/[0.08] p-4 space-y-3" style={{ background: 'rgba(168,85,247,0.03)' }}>
+                <div className="border-t border-white/[0.08] px-5 py-4 space-y-4" style={{ background: 'rgba(168,85,247,0.03)' }}>
                   {/* Mode tabs */}
                   <div className="flex gap-2">
                     {(['manual', 'photo'] as const).map(mode => (
                       <button
                         key={mode}
                         onClick={() => patch(meal, { mode, input: '', imageDataUrl: null, estimate: null, error: '' })}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
                         style={st.mode === mode
                           ? { background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
                           : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.38)', border: '1px solid rgba(255,255,255,0.07)' }
                         }
                       >
-                        {mode === 'manual' ? <><HiPencil className="w-3.5 h-3.5" />Manual</> : <><HiCamera className="w-3.5 h-3.5" />Photo</>}
+                        {mode === 'manual' ? <><HiPencil className="w-4 h-4" />Manual</> : <><HiCamera className="w-4 h-4" />Photo</>}
                       </button>
                     ))}
                   </div>
@@ -382,7 +394,7 @@ export default function Diet() {
                   {st.mode === 'manual' && !st.estimate && (
                     <div className="flex gap-2">
                       <input
-                        className="flex-1 px-4 py-3 rounded-2xl outline-none text-white placeholder-white/30"
+                        className="flex-1 px-4 py-3.5 rounded-2xl outline-none text-white placeholder-white/30"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 16 }}
                         placeholder="e.g. 2 eggs with toast..."
                         value={st.input}
@@ -393,7 +405,7 @@ export default function Diet() {
                       <button
                         onClick={() => void handleEstimate(meal)}
                         disabled={!st.input.trim() || st.loading}
-                        className="px-4 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-40 flex-shrink-0"
+                        className="px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-40 flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
                       >
                         {st.loading
@@ -444,9 +456,9 @@ export default function Diet() {
                       >
                         {st.loading
                           ? <span className="flex items-center justify-center gap-2">
-                              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block" />
-                              Analyzing...
-                            </span>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block" />
+                            Analyzing...
+                          </span>
                           : 'Analyze Photo'}
                       </button>
                     </>

@@ -11,6 +11,32 @@ function getGroq(): Groq {
   return _groq
 }
 
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  let lastErr: unknown
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastErr = err
+      const status = (err as { status?: number }).status
+      if (status === 429) {
+        throw new Error('Rate limit reached. Please wait a minute and try again.')
+      }
+      if (status !== 500 && status !== 503) throw err
+      if (attempt < maxAttempts - 1) {
+        await new Promise(r => setTimeout(r, 2 ** attempt * 1000))
+      }
+    }
+  }
+  throw new Error('The AI service is temporarily unavailable. Please try again in a moment.')
+}
+
+async function groqComplete(
+  params: Groq.Chat.CompletionCreateParamsNonStreaming,
+): Promise<Groq.Chat.ChatCompletion> {
+  return withRetry(() => getGroq().chat.completions.create(params))
+}
+
 export interface WorkoutFormData {
   planName: string  // auto-generated descriptive name
   age: string
@@ -215,7 +241,7 @@ export async function generateAnalysis(data: WorkoutFormData): Promise<string> {
   for (const dataUrl of data.images) {
     content.push({ type: 'image_url', image_url: { url: dataUrl } })
   }
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 2048,
@@ -233,7 +259,7 @@ export async function generateWorkoutPlan(data: WorkoutFormData): Promise<string
     })
   }
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 8192,
@@ -340,7 +366,7 @@ Rules:
 - Every change must be explicit — no vague "adjust as needed"
 - Write the full plan, do not truncate or skip any day`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 8192,
@@ -399,7 +425,7 @@ Rules:
 - Each section: 3-5 sentences. Be concise and specific.
 - Bullet points use - not *.`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1536,
@@ -460,7 +486,7 @@ Rules:
     content.push({ type: 'image_url', image_url: { url: imageDataUrl } })
   }
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 200,
@@ -516,7 +542,7 @@ chest, front_delts, rear_delts, biceps, triceps, forearms,
 abs, obliques, hip_flexors, adductors, quads, calves_front,
 traps, rhomboids, lats, lower_back, glutes, hamstrings, calves`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 512,
@@ -566,7 +592,7 @@ FORMATTING:
 
 ${contextBlock}`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [
       { role: 'system', content: systemPrompt },
@@ -638,7 +664,7 @@ Rules:
     { type: 'image_url', image_url: { url: imageDataUrl } },
   ]
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 4096,
@@ -700,7 +726,7 @@ Rules:
     { type: 'image_url', image_url: { url: imageDataUrl } },
   ]
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 1024,
@@ -742,7 +768,7 @@ Rules:
 - Write in second person.
 - Each section: 2-4 sentences or bullet points.`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 1536,
@@ -794,7 +820,7 @@ Rules:
     content.push({ type: 'image_url', image_url: { url: imageDataUrl } })
   }
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content }],
     max_tokens: 768,
@@ -824,7 +850,7 @@ Requirements:
 Output ONLY the workout content. Start directly with **Warm-Up**. Do not include any day heading, preamble, or closing remarks.
 No markdown tables. No long dashes. Bullet points use - not *.`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 2048,
@@ -877,7 +903,7 @@ Rules:
 - Never use long dashes. Use commas or colons instead.
 - Keep changes minimal but impactful, respect the spirit of the original`
 
-  const completion = await getGroq().chat.completions.create({
+  const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 6144,

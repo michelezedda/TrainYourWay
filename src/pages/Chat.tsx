@@ -7,7 +7,7 @@ import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { sendChatMessage, type ChatMessage } from '@/lib/gemini'
 
 type WorkoutPlan = { id: string; plan: string; createdAt: number }
-type MealEntry  = { id: string; meal: string; description: string; kcal: number }
+type MealEntry = { id: string; meal: string; description: string; kcal: number }
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -53,29 +53,29 @@ function TypingIndicator() {
 }
 
 const mdComponents = {
-  p:      ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
-  ul:     ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 space-y-0.5 mb-2">{children}</ul>,
-  ol:     ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal pl-4 space-y-0.5 mb-2">{children}</ol>,
-  li:     ({ children }: { children?: React.ReactNode }) => <li>{children}</li>,
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 space-y-0.5 mb-2">{children}</ul>,
+  ol: ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal pl-4 space-y-0.5 mb-2">{children}</ol>,
+  li: ({ children }: { children?: React.ReactNode }) => <li>{children}</li>,
   strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-white font-semibold">{children}</strong>,
-  code:   ({ children }: { children?: React.ReactNode }) => (
+  code: ({ children }: { children?: React.ReactNode }) => (
     <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
   ),
 }
 
 export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef  = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const userId  = getUserId()
+  const userId = getUserId()
   const profile = getNutritionProfile()
   const targets = profile ? calculateTargets(profile) : null
 
   const { data: plansData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
-  const { data: mealsData } = db.useQuery({ mealEntries:  { $: { where: { userId, date: toDateStr(new Date()) } } } })
+  const { data: mealsData } = db.useQuery({ mealEntries: { $: { where: { userId, date: toDateStr(new Date()) } } } })
 
   const latestPlan = ((plansData?.workoutPlans ?? []) as WorkoutPlan[])
     .sort((a, b) => b.createdAt - a.createdAt)[0]?.plan ?? null
@@ -140,10 +140,7 @@ export default function Chat() {
   const isEmpty = messages.length === 0
 
   return (
-    <main
-      className="max-w-lg mx-auto px-4 flex flex-col animate-fade-in"
-      style={{ height: 'calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px))' }}
-    >
+    <main className="max-w-lg md:max-w-2xl mx-auto px-4 flex flex-col animate-fade-in chat-height">
       {/* Header */}
       <div className="pt-5 pb-3 flex-shrink-0 flex items-center gap-3.5">
         <KaiAvatar size="lg" />
@@ -184,14 +181,13 @@ export default function Chat() {
               Ask me about your training, nutrition, recovery, or anything Uplift-related.
             </p>
           </div>
-          <div className="flex flex-col gap-2 w-full max-w-sm">
+          <div className="flex flex-col gap-2.5 w-full max-w-sm">
             {SUGGESTIONS.map(s => (
               <button
                 key={s}
-                onClick={() => handleSend(s)}
-                className="text-left px-4 py-3 rounded-2xl border border-white/8 text-sm text-white/55
-                           hover:text-white/85 hover:border-purple-500/30 hover:bg-white/4 transition-all"
-                style={{ background: 'rgba(255,255,255,0.025)' }}
+                onClick={() => void handleSend(s)}
+                className="text-left px-5 py-4 rounded-2xl border text-sm transition-all active:scale-[0.98]"
+                style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.60)' }}
               >
                 {s}
               </button>
@@ -211,11 +207,10 @@ export default function Chat() {
               {msg.role === 'assistant' && <KaiAvatar />}
 
               <div
-                className={`max-w-[82%] px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'rounded-2xl rounded-br-sm text-white'
-                    : 'rounded-2xl rounded-bl-sm text-white/80'
-                }`}
+                className={`max-w-[82%] px-4 py-3.5 text-[15px] leading-relaxed ${msg.role === 'user'
+                  ? 'rounded-2xl rounded-br-sm text-white'
+                  : 'rounded-2xl rounded-bl-sm text-white/80'
+                  }`}
                 style={
                   msg.role === 'user'
                     ? { background: 'linear-gradient(135deg, #A855F7, #22D3EE)' }
@@ -237,18 +232,18 @@ export default function Chat() {
       )}
 
       {/* Input bar */}
-      <div className="flex-shrink-0 pt-2 pb-3 mb-10">
+      <div className="flex-shrink-0 pt-2 pb-3 mb-2">
         <div
           className="flex items-center gap-3 px-4 rounded-2xl"
           style={{
             background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            minHeight: 52,
+            border: '1px solid rgba(255,255,255,0.12)',
+            minHeight: 60,
           }}
         >
           <input
             ref={inputRef}
-            className="flex-1 bg-transparent outline-none text-white placeholder-white/30 py-3.5"
+            className="flex-1 bg-transparent outline-none text-white placeholder-white/30 py-4"
             style={{ fontSize: 16 }}
             placeholder="Ask Kai anything..."
             value={input}
@@ -261,11 +256,11 @@ export default function Chat() {
           <button
             onClick={() => void handleSend()}
             disabled={!input.trim() || loading}
-            className="w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-30"
+            className="w-11 h-11 flex-shrink-0 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-30"
             style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)' }}
             aria-label="Send message"
           >
-            <HiPaperAirplane className="w-4 h-4 text-white" />
+            <HiPaperAirplane className="w-5 h-5 text-white" />
           </button>
         </div>
       </div>
