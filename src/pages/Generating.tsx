@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
-import LoadingSpinner from '@/components/LoadingSpinner'
-import GlassCard from '@/components/GlassCard'
 import { generateAnalysis, generateWorkoutPlan, generateReevaluationAnalysis, reevaluateWorkoutPlan, type WorkoutFormData, type ReevaluationData } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -38,6 +36,7 @@ export default function Generating() {
   const started = useRef(false)
 
   const tips = isReevaluation ? REEVALUATION_TIPS : TIPS
+  const progress = Math.min(100, ((tipIndex + 1) / tips.length) * 100)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -114,64 +113,104 @@ export default function Generating() {
 
   if (error) {
     return (
-      <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
-        <div className="max-w-md w-full">
-          <GlassCard className="text-center">
-            <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-white mb-2">Generation Failed</h2>
-            <p className="text-white/50 text-sm mb-2 leading-relaxed">
-              Your plan couldn't be generated. Here's what went wrong:
-            </p>
-            <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm mb-6 text-left break-words">
-              {error}
-            </div>
-            <div className="flex gap-3 justify-center">
-              <Link to="/history" className="btn-ghost !text-sm">
-                Go Back
-              </Link>
-              <button
-                onClick={() => {
-                  setError(null)
-                  started.current = false
-                }}
-                className="btn-primary !text-sm"
-              >
-                Try Again
-              </button>
-            </div>
-          </GlassCard>
+      <main className="min-h-screen flex items-center justify-center px-6 animate-fade-in">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-5xl mb-5">⚠️</div>
+          <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Generation Failed</h2>
+          <p className="text-white/45 text-sm mb-5 leading-relaxed">
+            Your plan couldn't be generated. Here's what went wrong:
+          </p>
+          <div
+            className="p-4 rounded-2xl text-red-300 text-sm mb-7 text-left break-words leading-relaxed"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+          >
+            {error}
+          </div>
+          <div className="flex gap-3">
+            <Link to="/history" className="btn-ghost flex-1 !justify-center">
+              Go Back
+            </Link>
+            <button
+              onClick={() => { setError(null); started.current = false }}
+              className="btn-primary flex-1"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
-      <div className="text-center">
-        <div className="mb-8">
-          <LoadingSpinner size="lg" />
+    <main className="min-h-screen flex items-center justify-center px-6 overflow-hidden">
+      <div className="text-center w-full max-w-xs animate-fade-up">
+
+        {/* Spinning gradient ring with icon */}
+        <div className="relative w-36 h-36 mx-auto mb-10">
+          {/* Outer spinning conic gradient ring */}
+          <div
+            className="absolute inset-0 rounded-full animate-spin-slow"
+            style={{
+              background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)',
+              padding: '3px',
+            }}
+          >
+            <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
+          </div>
+          {/* Inner glow */}
+          <div
+            className="absolute inset-2 rounded-full animate-pulse-slow"
+            style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.18) 0%, rgba(34,211,238,0.08) 60%, transparent 100%)' }}
+          />
+          {/* Center emoji */}
+          <div className="absolute inset-0 flex items-center justify-center text-4xl select-none">
+            {isReevaluation ? '🔄' : '🤖'}
+          </div>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-          {isReevaluation ? 'Evolving your plan' : 'Crafting your plan'}
-          <span className="animate-pulse">...</span>
+        {/* Heading */}
+        <h2 className="text-3xl font-black tracking-tight text-white mb-1">
+          {isReevaluation ? 'Evolving' : 'Crafting'}
         </h2>
+        <p className="gradient-text font-black text-xl mb-8">
+          your plan
+        </p>
 
+        {/* Animated tip */}
         <p
           key={tipIndex}
-          className="text-white/50 text-base mb-8 max-w-sm mx-auto leading-relaxed animate-fade-in"
+          className="text-white/50 text-sm leading-relaxed mb-8 animate-fade-in"
         >
           {tips[tipIndex]}
         </p>
 
-        <div className="flex justify-center gap-2">
-          {[0, 1, 2].map((i) => (
+        {/* Progress bar */}
+        <div
+          className="h-1 rounded-full overflow-hidden mb-4"
+          style={{ background: 'rgba(255,255,255,0.07)' }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-[2400ms] ease-out"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #A855F7, #22D3EE)',
+            }}
+          />
+        </div>
+
+        {/* Step dots */}
+        <div className="flex justify-center gap-1.5">
+          {tips.map((_, i) => (
             <div
               key={i}
-              className="w-2 h-2 rounded-full animate-pulse-slow"
+              className="rounded-full transition-all duration-300"
               style={{
-                background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
-                animationDelay: `${i * 0.3}s`,
+                width: i === tipIndex ? 20 : 6,
+                height: 6,
+                background: i === tipIndex
+                  ? 'linear-gradient(90deg, #A855F7, #22D3EE)'
+                  : 'rgba(255,255,255,0.15)',
               }}
             />
           ))}

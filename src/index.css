@@ -91,6 +91,51 @@
     display: none;
   }
 
+  /* Global ambient orbs */
+  .ambient-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .ambient-orb-1 {
+    position: absolute;
+    top: -20%;
+    left: -15%;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,85,247,0.13) 0%, transparent 68%);
+    filter: blur(72px);
+    animation: orbFloat1 14s ease-in-out infinite;
+  }
+
+  .ambient-orb-2 {
+    position: absolute;
+    bottom: -20%;
+    right: -15%;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,211,238,0.09) 0%, transparent 68%);
+    filter: blur(72px);
+    animation: orbFloat2 18s ease-in-out infinite;
+  }
+
+  .ambient-orb-3 {
+    position: absolute;
+    top: 40%;
+    left: 30%;
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%);
+    filter: blur(60px);
+    animation: orbFloat1 22s ease-in-out infinite reverse;
+  }
+
   .glass-card-hover {
     @apply glass-card transition-all duration-300;
   }
@@ -223,4 +268,21 @@
   68%  { transform: scale(1.22) rotate(-10deg);}
   84%  { transform: scale(1.1)  rotate(5deg);  }
   100% { transform: scale(1)    rotate(0deg);  }
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  35%      { transform: translate(5%,-5%) scale(1.1); }
+  70%      { transform: translate(-3%,4%) scale(0.93); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0,0) scale(1.06); }
+  40%      { transform: translate(-5%,5%) scale(0.97); }
+  75%      { transform: translate(4%,-3%) scale(1.13); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

@@ -278,7 +278,7 @@ export default function Home() {
                       >
                         <div className="flex items-center gap-5 relative z-10">
                           <div
-                            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${opt.color || 'from-white/10'
+                            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${'color' in opt ? opt.color : 'from-white/10'
                               } to-transparent flex items-center justify-center text-2xl shadow-inner`}
                           >
                             {opt.icon}

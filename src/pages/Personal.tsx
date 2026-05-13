@@ -340,7 +340,7 @@ export default function Personal() {
         <div className="w-full h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
         <Link
           to="/support"
-          className="inline-flex items-center gap-2 text-sm transition-colors"
+          className="inline-flex items-center gap-2 text-sm transition-colors pb-12"
           style={{ color: 'rgba(255,255,255,0.32)' }}
           onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.32)')}

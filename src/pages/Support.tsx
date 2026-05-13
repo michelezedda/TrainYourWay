@@ -5,7 +5,6 @@ import emailjs from '@emailjs/browser'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
-import LoadingSpinner from '@/components/LoadingSpinner'
 import { draftSupportTicket } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -286,8 +285,8 @@ export default function Support() {
   const PageHeader = () => (
     <div className="flex items-center justify-between mb-8">
       <div>
-        <h1 className="text-xl font-bold gradient-text">Support</h1>
-        <p className="text-white/35 text-xs mt-0.5">Kai helps write a clear ticket for the support team</p>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">Support</h1>
+        <p className="text-white/40 text-sm mt-1">Kai helps write a clear ticket for the support team</p>
       </div>
 
       {showTabs && (
@@ -326,8 +325,14 @@ export default function Support() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
         <div className="text-center">
-          <div className="mb-8"><LoadingSpinner size="lg" /></div>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <div className="relative w-24 h-24 mx-auto mb-8">
+            <div className="absolute inset-0 rounded-full animate-spin-slow"
+              style={{ background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)', padding: '3px' }}>
+              <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">🤖</div>
+          </div>
+          <h2 className="text-2xl font-black text-white mb-3 tracking-tight">
             Kai is reviewing your issue<span className="animate-pulse">...</span>
           </h2>
           <p className="text-white/50">Writing a clear summary for the support team</p>
@@ -340,8 +345,14 @@ export default function Support() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
         <div className="text-center">
-          <div className="mb-8"><LoadingSpinner size="lg" /></div>
-          <h2 className="text-2xl font-bold text-white mb-3">
+          <div className="relative w-24 h-24 mx-auto mb-8">
+            <div className="absolute inset-0 rounded-full animate-spin-slow"
+              style={{ background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)', padding: '3px' }}>
+              <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">📨</div>
+          </div>
+          <h2 className="text-2xl font-black text-white mb-3 tracking-tight">
             Sending your ticket<span className="animate-pulse">...</span>
           </h2>
         </div>
@@ -353,7 +364,7 @@ export default function Support() {
 
   if (view === 'tickets') {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         <PageHeader />
 
         {tickets.length === 0 ? (
@@ -387,27 +398,29 @@ export default function Support() {
 
   if (step === 'done') {
     return (
-      <main className="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <GlassCard>
-          <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-white mb-2">Ticket submitted</h2>
-          <p className="text-white/50 mb-1">
-            {emailJsConfigured
-              ? "Your support ticket has been sent. We'll get back to you as soon as possible."
-              : 'Your email client opened with the ticket pre-filled. Hit send to submit it.'}
-          </p>
-          <p className="text-white/30 text-sm mb-8">
-            Category: <span className="text-white/50">{category}</span>
-          </p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => { resetForm(); setView('tickets') }} className="btn-primary !text-sm">
-              View my tickets
-            </button>
-            <button onClick={resetForm} className="btn-ghost !text-sm">
-              Submit another
-            </button>
+      <main className="w-full md:max-w-xl md:mx-auto px-4 pt-16 pb-nav text-center animate-fade-in">
+        <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid rgba(34,197,94,0.25)' }}>
+          <div className="px-6 pt-10 pb-8" style={{ background: 'linear-gradient(160deg, rgba(34,197,94,0.1) 0%, rgba(34,211,238,0.06) 100%)' }}>
+            <div className="text-5xl mb-5">✅</div>
+            <h2 className="text-2xl font-black text-white tracking-tight mb-2">Ticket submitted</h2>
+            <p className="text-white/50 text-sm leading-relaxed mb-1">
+              {emailJsConfigured
+                ? "Your support ticket has been sent. We'll get back to you as soon as possible."
+                : 'Your email client opened with the ticket pre-filled. Hit send to submit it.'}
+            </p>
+            <p className="text-white/30 text-sm mb-8">
+              Category: <span className="text-white/50">{category}</span>
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => { resetForm(); setView('tickets') }} className="btn-primary !text-sm">
+                View my tickets
+              </button>
+              <button onClick={resetForm} className="btn-ghost !text-sm">
+                Submit another
+              </button>
+            </div>
           </div>
-        </GlassCard>
+        </div>
       </main>
     )
   }
@@ -416,15 +429,17 @@ export default function Support() {
 
   if (step === 'error') {
     return (
-      <main className="max-w-xl mx-auto px-4 py-20 animate-fade-in">
-        <GlassCard className="text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-white mb-2">Something went wrong</h2>
-          <p className="text-red-300 text-sm mb-6 px-4">{errorMsg}</p>
-          <button onClick={() => setStep('details')} className="btn-primary !text-sm">
-            Try again
-          </button>
-        </GlassCard>
+      <main className="w-full md:max-w-xl md:mx-auto px-4 pt-16 pb-nav animate-fade-in">
+        <div className="rounded-3xl overflow-hidden text-center" style={{ border: '1px solid rgba(239,68,68,0.2)' }}>
+          <div className="px-6 pt-10 pb-8" style={{ background: 'linear-gradient(160deg, rgba(239,68,68,0.08) 0%, transparent 100%)' }}>
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-black text-white tracking-tight mb-2">Something went wrong</h2>
+            <p className="text-red-300 text-sm mb-6 px-4">{errorMsg}</p>
+            <button onClick={() => setStep('details')} className="btn-primary !text-sm">
+              Try again
+            </button>
+          </div>
+        </div>
       </main>
     )
   }
@@ -433,7 +448,7 @@ export default function Support() {
 
   if (step === 'review') {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         <PageHeader />
 
         <div className="flex items-center gap-3 mb-6">
@@ -508,7 +523,7 @@ export default function Support() {
 
   if (step === 'details') {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         <PageHeader />
 
         <div className="flex items-center gap-3 mb-6">
@@ -579,7 +594,7 @@ export default function Support() {
   // ── Category step (default) ───────────────────────────────────────────────
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <PageHeader />
 
       <div className="grid gap-3 mb-8">

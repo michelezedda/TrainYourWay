@@ -549,7 +549,13 @@ export default function Scanner() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
         <div className="text-center">
-          <div className="mb-6"><LoadingSpinner size="lg" /></div>
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full animate-spin-slow"
+              style={{ background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)', padding: '2.5px' }}>
+              <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">🛒</div>
+          </div>
           <p className="text-white font-semibold">Looking up product...</p>
           <p className="text-white/40 text-sm mt-1">Checking Open Food Facts database</p>
         </div>
@@ -712,8 +718,8 @@ export default function Scanner() {
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
-        <h1 className="text-2xl font-black gradient-text">Food Scanner</h1>
-        <p className="text-white/40 text-sm mt-0.5">Point at a barcode for a personalized health score.</p>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">Food Scanner</h1>
+        <p className="text-white/40 text-sm mt-1">Point at a barcode for a personalized health score.</p>
       </div>
 
       {/* Camera viewfinder */}

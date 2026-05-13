@@ -126,8 +126,8 @@ export default function Community() {
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
-        <h1 className="text-2xl font-black gradient-text">Community</h1>
-        <p className="text-white/40 text-sm mt-0.5">Healthy finds and top streaks.</p>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">Community</h1>
+        <p className="text-white/40 text-sm mt-1">Healthy finds and top streaks.</p>
       </div>
 
       {/* Tabs */}

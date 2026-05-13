@@ -199,12 +199,27 @@ export default function History() {
 
   if (chain.length === 0) {
     return (
-      <main className="w-full md:max-w-2xl md:mx-auto px-4 py-20 text-center animate-fade-in">
-        <div className="glass-card p-8">
-          <div className="text-5xl mb-4">ðŸ“‹</div>
-          <h2 className="text-xl font-bold text-white mb-2">No plan yet</h2>
-          <p className="text-white/50 text-sm mb-6 leading-relaxed">Create your first personalised workout plan to get started.</p>
-          <Link to="/questionnaire" className="btn-primary">Create My Plan</Link>
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 py-16 animate-fade-in">
+        <div
+          className="rounded-3xl overflow-hidden text-center"
+          style={{ border: '1px solid rgba(168,85,247,0.22)' }}
+        >
+          <div
+            className="px-6 pt-10 pb-8"
+            style={{ background: 'linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.06) 100%)' }}
+          >
+            <div
+              className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center text-4xl"
+              style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}
+            >
+              📋
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight mb-2">No plan yet</h2>
+            <p className="text-white/45 text-sm mb-7 leading-relaxed font-medium max-w-xs mx-auto">
+              Create your first personalised workout plan to get started.
+            </p>
+            <Link to="/questionnaire" className="btn-primary inline-flex">Create My Plan</Link>
+          </div>
         </div>
       </main>
     )
@@ -221,8 +236,8 @@ export default function History() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-black gradient-text">My Plan</h1>
-          <p className="text-white/40 text-sm mt-0.5">
+          <h1 className="text-3xl font-black tracking-tight gradient-text">My Plan</h1>
+          <p className="text-white/40 text-sm mt-1 font-medium">
             {chain.length > 1 ? `${chain.length - 1} evolution${chain.length > 2 ? 's' : ''} from original` : 'Original plan'}
           </p>
         </div>

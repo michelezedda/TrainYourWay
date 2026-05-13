@@ -4,7 +4,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ReactMarkdown from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
-import LoadingSpinner from '@/components/LoadingSpinner'
 import ExerciseModal from '@/components/ExerciseModal'
 import {
   parseAnalysisSections,
@@ -44,8 +43,14 @@ function LoadingScreen({ title, subtitle }: { title: string; subtitle: string })
   return (
     <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
       <div className="text-center">
-        <div className="mb-8"><LoadingSpinner size="lg" /></div>
-        <h2 className="text-2xl font-bold text-white mb-3">
+        <div className="relative w-24 h-24 mx-auto mb-8">
+          <div className="absolute inset-0 rounded-full animate-spin-slow"
+            style={{ background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)', padding: '3px' }}>
+            <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center text-2xl">✨</div>
+        </div>
+        <h2 className="text-2xl font-black text-white mb-3 tracking-tight">
           {title}<span className="animate-pulse">...</span>
         </h2>
         <p className="text-white/50">{subtitle}</p>
@@ -261,12 +266,12 @@ export default function ImportPlan() {
 
   if (step === 'analysis') {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
           <BackButton onClick={() => setStep('preview')} />
           <div>
-            <h1 className="text-2xl font-bold gradient-text">Plan Analysis</h1>
-            <p className="text-white/40 text-sm mt-0.5">Here's what we found about this plan</p>
+            <h1 className="text-3xl font-black tracking-tight gradient-text">Plan Analysis</h1>
+            <p className="text-white/40 text-sm mt-1">Here's what we found about this plan</p>
           </div>
         </div>
 
@@ -306,15 +311,15 @@ export default function ImportPlan() {
 
   if (step === 'preview') {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="w-full md:max-w-2xl lg:max-w-3xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
         {selectedExercise && (
           <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
         )}
         <div className="flex items-center gap-3 mb-6">
           <BackButton onClick={() => setStep('upload')} />
           <div>
-            <h1 className="text-2xl font-bold gradient-text">Your Imported Plan</h1>
-            <p className="text-white/40 text-sm mt-0.5">We extracted and formatted it in Uplift style</p>
+            <h1 className="text-3xl font-black tracking-tight gradient-text">Your Imported Plan</h1>
+            <p className="text-white/40 text-sm mt-1">We extracted and formatted it in Uplift style</p>
           </div>
         </div>
 
@@ -359,12 +364,12 @@ export default function ImportPlan() {
   // ── Upload step (default) ─────────────────────────────────────────────────────
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="flex items-center gap-3 mb-8">
         <BackButton onClick={() => navigate(-1)} />
         <div>
-          <h1 className="text-2xl font-bold gradient-text">Import a Plan</h1>
-          <p className="text-white/40 text-sm mt-0.5">
+          <h1 className="text-3xl font-black tracking-tight gradient-text">Import a Plan</h1>
+          <p className="text-white/40 text-sm mt-1">
             Upload a photo and we'll reformat it in Uplift style
           </p>
         </div>

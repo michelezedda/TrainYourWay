@@ -420,25 +420,27 @@ export default function Results() {
 
   if (!plan) {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <GlassCard>
-          <div className="text-4xl mb-4">🤔</div>
-          <h2 className="text-xl font-semibold text-white mb-2">No plan found</h2>
-          <p className="text-white/50 mb-6">Let's create your personalized workout plan.</p>
-          <Link to="/questionnaire" className="btn-primary">Create a Plan</Link>
-        </GlassCard>
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-16 pb-nav text-center animate-fade-in">
+        <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid rgba(168,85,247,0.22)' }}>
+          <div className="px-6 pt-10 pb-8" style={{ background: 'linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.06) 100%)' }}>
+            <div className="text-4xl mb-4">🤔</div>
+            <h2 className="text-2xl font-black text-white tracking-tight mb-2">No plan found</h2>
+            <p className="text-white/50 text-sm mb-6">Let's create your personalized workout plan.</p>
+            <Link to="/questionnaire" className="btn-primary">Create a Plan</Link>
+          </div>
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+    <main className="w-full md:max-w-2xl lg:max-w-3xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {selectedExercise && (
         <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold gradient-text">Your Workout Plan</h1>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">Your Workout Plan</h1>
       </div>
 
       {/* Initial assessment slides */}

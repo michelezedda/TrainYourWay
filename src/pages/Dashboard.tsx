@@ -382,9 +382,9 @@ export default function Dashboard() {
       )}
 
       {/* Greeting */}
-      <div className="mb-1">
-        <h1 className="text-2xl font-black gradient-text">{getGreeting(userProfile?.name)}</h1>
-        <p className="text-white/40 text-sm mt-0.5">
+      <div className="mb-2">
+        <h1 className="text-3xl font-black tracking-tight gradient-text">{getGreeting(userProfile?.name)}</h1>
+        <p className="text-white/40 text-sm mt-1 font-medium">
           {latestPlan ? "Here's your day at a glance." : "Let's get you started."}
         </p>
       </div>
@@ -522,26 +522,33 @@ export default function Dashboard() {
         </div>
       ) : (
         /* No-plan CTA */
-        <div
-          className="rounded-3xl p-6 text-center"
-          style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(34,211,238,0.05) 100%)', border: '1px solid rgba(168,85,247,0.2)' }}
-        >
-          <div className="text-4xl mb-3">🏋️</div>
-          <h2 className="text-lg font-bold text-white/90 mb-1">Build your first plan</h2>
-          <p className="text-sm text-white/45 leading-relaxed mb-5 max-w-xs mx-auto">
-            Answer a few questions about your goals and equipment. Get a personalised workout and nutrition plan in seconds.
-          </p>
-          <Link to="/questionnaire" className="btn-primary w-full flex items-center justify-center gap-2 mb-3">
-            Generate My Plan
-            <HiArrowNarrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            to="/import"
-            className="block w-full py-2.5 rounded-2xl text-sm font-medium transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.09)' }}
+        <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid rgba(168,85,247,0.22)' }}>
+          <div
+            className="px-6 pt-8 pb-6 text-center"
+            style={{ background: 'linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.06) 100%)' }}
           >
-            Import an existing plan
-          </Link>
+            <div
+              className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center text-3xl"
+              style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}
+            >
+              🏋️
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight mb-2">Build your first plan</h2>
+            <p className="text-sm text-white/45 leading-relaxed mb-6 max-w-xs mx-auto font-medium">
+              Answer a few questions about your goals and equipment. Get a personalised plan in seconds.
+            </p>
+            <Link to="/questionnaire" className="btn-primary w-full flex items-center justify-center gap-2 mb-3">
+              Generate My Plan
+              <HiArrowNarrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/import"
+              className="block w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.09)' }}
+            >
+              Import an existing plan
+            </Link>
+          </div>
         </div>
       )}
 

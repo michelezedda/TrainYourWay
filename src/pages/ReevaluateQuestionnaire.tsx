@@ -210,10 +210,10 @@ export default function ReevaluateQuestionnaire() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+    <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-6">
         <p className="text-white/40 text-sm mb-1">Evolving plan for</p>
-        <h1 className="text-2xl font-bold gradient-text">{original.userName}'s Plan</h1>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">{original.userName}'s Plan</h1>
       </div>
 
       <div className="mb-8">

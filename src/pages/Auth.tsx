@@ -115,20 +115,22 @@ export default function Auth() {
         {/* Feature grid */}
         <div className="grid grid-cols-2 gap-2.5 mb-7">
           {[
-            { icon: '🏋️', label: 'Personalized Workout Plans', sub: 'Built for your setup and goals' },
-            { icon: '🥗', label: 'Nutrition Tracking', sub: 'Macros, calories, food scanner' },
-            { icon: '🤖', label: 'Meet KAI, Your AI Coach', sub: 'Ask anything, any time' },
-            { icon: '📈', label: 'Auto-Progress', sub: 'Evolve your plan every 4 weeks' },
-          ].map(({ icon, label, sub }) => (
+            { icon: '🏋️', label: 'Personalized Workout Plans', sub: 'Built for your setup and goals', color: 'from-violet-500' },
+            { icon: '🥗', label: 'Nutrition Tracking', sub: 'Macros, calories, food scanner', color: 'from-cyan-500' },
+            { icon: '🤖', label: 'Meet KAI, Your AI Coach', sub: 'Ask anything, any time', color: 'from-emerald-500' },
+            { icon: '📈', label: 'Auto-Progress', sub: 'Evolve your plan every 4 weeks', color: 'from-orange-500' },
+          ].map(({ icon, label, sub, color }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 p-3.5 rounded-2xl"
-              style={{ background: 'rgba(255,255,255,0.042)', border: '1px solid rgba(255,255,255,0.08)' }}
+              className="flex flex-col gap-3 p-4 rounded-2xl transition-all"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-              <span className="text-[1.35rem] leading-none">{icon}</span>
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} to-transparent flex items-center justify-center text-xl`}>
+                {icon}
+              </div>
               <div>
-                <p className="text-[12px] font-semibold text-white/85 leading-snug">{label}</p>
-                <p className="text-[10.5px] text-white/35 mt-0.5 leading-snug">{sub}</p>
+                <p className="text-[12px] font-bold text-white/90 leading-snug">{label}</p>
+                <p className="text-[10.5px] text-white/35 mt-0.5 leading-snug font-medium">{sub}</p>
               </div>
             </div>
           ))}
