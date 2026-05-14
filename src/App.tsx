@@ -6,6 +6,7 @@ import Home from '@/pages/Home'
 import Auth from '@/pages/Auth'
 import { db } from '@/lib/db'
 import { setAuthUserId } from '@/lib/userId'
+import { MoodProvider } from '@/context/MoodContext'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -63,12 +64,14 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthSync />
+        <MoodProvider>
         <div className="ambient-bg" aria-hidden>
           <div className="ambient-orb-1" />
           <div className="ambient-orb-2" />
           <div className="ambient-orb-3" />
         </div>
         <AppLayout />
+        </MoodProvider>
       </BrowserRouter>
     </ErrorBoundary>
   )

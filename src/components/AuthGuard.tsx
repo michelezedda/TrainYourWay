@@ -15,6 +15,7 @@ import Scanner from '@/pages/Scanner'
 import Community from '@/pages/Community'
 import MachineGuide from '@/pages/MachineGuide'
 import Wellness from '@/pages/Wellness'
+import OnboardingSummary from '@/pages/OnboardingSummary'
 import WellnessBreathing from '@/pages/WellnessBreathing'
 import WellnessFocus from '@/pages/WellnessFocus'
 import WellnessJournal from '@/pages/WellnessJournal'
@@ -52,6 +53,7 @@ export default function AuthGuard() {
       <Route path="/scanner"              element={<Scanner />} />
       <Route path="/community"            element={<Community />} />
       <Route path="/machine"              element={<MachineGuide />} />
+      <Route path="/onboarding-summary"    element={<OnboardingSummary />} />
       <Route path="/wellness"             element={<Wellness />} />
       <Route path="/wellness/breathing"   element={<WellnessBreathing />} />
       <Route path="/wellness/focus"       element={<WellnessFocus />} />

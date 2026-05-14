@@ -3,8 +3,9 @@ import { PiForkKnifeDuotone, PiUserGearLight } from 'react-icons/pi'
 import { IoChatbubblesOutline } from 'react-icons/io5'
 import { GrHomeOption } from 'react-icons/gr'
 import { db } from '@/lib/db'
+import { PiBrainLight } from "react-icons/pi";
 
-const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth']
+const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth', '/onboarding-summary']
 
 function DumbbellIcon({ active }: { active: boolean }) {
   return (
@@ -35,22 +36,13 @@ function PersonIcon({ active }: { active: boolean }) {
 }
 
 function MindIcon({ active }: { active: boolean }) {
-  const sw = active ? 2 : 1.6
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22v-5" />
-      <path d="M12 17C9.5 17 7.5 15 7.5 12.5C7.5 10 9.5 8 12 8C14.5 8 16.5 10 16.5 12.5C16.5 15 14.5 17 12 17Z" />
-      <path d="M12 8C12 8 10.5 5.5 8.5 5C6.5 4.5 5 6 5 8C5 10.5 8 13 12 13" />
-      <path d="M12 8C12 8 13.5 5.5 15.5 5C17.5 4.5 19 6 19 8C19 10.5 16 13 12 13" />
-    </svg>
-  )
+  return <PiBrainLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
+
 }
 
 const LEFT_NAV = [
   { to: '/history', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
-  { to: '/wellness', label: 'Mind', Icon: MindIcon },
 ]
 
 const RIGHT_NAV = [
@@ -59,10 +51,10 @@ const RIGHT_NAV = [
 ]
 
 const ALL_NAV = [
+  { to: '/dashboard', label: 'Home', Icon: HomeIcon },
   { to: '/history', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
-  { to: '/wellness', label: 'Mind', Icon: MindIcon },
-  { to: '/dashboard', label: 'Home', Icon: HomeIcon },
+  { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
   { to: '/chat', label: 'Kai', Icon: ChatIcon },
   { to: '/me', label: 'Settings', Icon: PersonIcon },
 ]

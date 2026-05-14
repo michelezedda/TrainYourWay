@@ -1,28 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { HiArrowNarrowRight, HiCheck } from 'react-icons/hi'
-import { motion, AnimatePresence } from 'framer-motion'
+import { HiArrowNarrowRight } from 'react-icons/hi'
+import { motion } from 'framer-motion'
 import { db } from '@/lib/db'
 import {
-  getTodayMood, saveMood, getStreak, getWeekSessions, getSessions,
+  getStreak, getWeekSessions, getSessions,
   formatDuration, type WellnessSession,
 } from '@/lib/wellness'
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const MOOD_OPTIONS = [
-  { value: 1 as const, emoji: '😞', label: 'Rough' },
-  { value: 2 as const, emoji: '😕', label: 'Low' },
-  { value: 3 as const, emoji: '😐', label: 'Okay' },
-  { value: 4 as const, emoji: '🙂', label: 'Good' },
-  { value: 5 as const, emoji: '😄', label: 'Great' },
-]
-
-const ENERGY_OPTIONS = [
-  { value: 1 as const, label: 'Drained', icon: '🪫' },
-  { value: 2 as const, label: 'Neutral', icon: '🔋' },
-  { value: 3 as const, label: 'Energised', icon: '⚡' },
-]
+import { useMood, MOODS } from '@/context/MoodContext'
 
 const SESSION_CARDS = [
   {
@@ -115,13 +100,6 @@ function getRecommendation(weekSessions: WellnessSession[]): typeof SESSION_CARD
   return SESSION_CARDS.find(s => s.id === 'focus')!
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function MoodDot({ mood }: { mood: number }) {
-  const opt = MOOD_OPTIONS.find(m => m.value === mood)
-  return <span className="text-lg">{opt?.emoji ?? '😐'}</span>
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Wellness() {
@@ -131,32 +109,23 @@ export default function Wellness() {
   })
   const userName = (profileData?.userProfiles?.[0] as { name?: string } | undefined)?.name?.split(' ')[0] ?? ''
 
-  const [todayMood, setTodayMood] = useState(getTodayMood)
+  const { mood, selectMood } = useMood()
+  const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
   const [streak, setStreak] = useState(getStreak)
   const [weekSessions, setWeekSessions] = useState(getWeekSessions)
   const [recentSessions, setRecentSessions] = useState(() => getSessions().slice(0, 5))
-  const [checkingIn, setCheckingIn] = useState(!getTodayMood())
-  const [selectedMood, setSelectedMood] = useState<1 | 2 | 3 | 4 | 5 | null>(null)
-  const [selectedEnergy, setSelectedEnergy] = useState<1 | 2 | 3 | null>(null)
-  const [moodSaved, setMoodSaved] = useState(false)
 
   useEffect(() => {
-    setTodayMood(getTodayMood())
     setStreak(getStreak())
     setWeekSessions(getWeekSessions())
     setRecentSessions(getSessions().slice(0, 5))
-    setCheckingIn(!getTodayMood())
   }, [])
 
-  const handleSaveMood = () => {
-    if (!selectedMood || !selectedEnergy) return
-    saveMood(selectedMood, selectedEnergy)
-    setTodayMood(getTodayMood())
-    setMoodSaved(true)
-    setTimeout(() => {
-      setCheckingIn(false)
-      setStreak(getStreak())
-    }, 900)
+  const handleMoodClick = (i: number) => {
+    if (mood === i) return
+    setMoodAnim(prev => ({ idx: i, tick: (prev?.tick ?? 0) + 1 }))
+    setTimeout(() => setMoodAnim(null), 700)
+    selectMood(i)
   }
 
   const weekMinutes = Math.round(weekSessions.reduce((acc, s) => acc + s.duration, 0) / 60)
@@ -182,7 +151,7 @@ export default function Wellness() {
             <div>
               <p className="text-white/35 text-xs font-medium uppercase tracking-wider">{getGreeting()}{userName ? `, ${userName}` : ''}</p>
               <h1 className="text-3xl font-black tracking-tight" style={{ background: 'linear-gradient(135deg, #22D3EE, #818CF8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Mind
+                Mindspace
               </h1>
             </div>
             {streak > 0 && (
@@ -197,97 +166,49 @@ export default function Wellness() {
         </div>
 
         {/* Mood check-in */}
-        <AnimatePresence mode="wait">
-          {checkingIn ? (
-            <motion.div
-              key="checkin"
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className="rounded-3xl overflow-hidden mb-5"
-              style={{ background: 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(99,102,241,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)' }}
-            >
-              <div className="px-5 pt-5 pb-4">
-                {moodSaved ? (
-                  <div className="flex items-center gap-3 py-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(34,211,238,0.2)' }}>
-                      <HiCheck className="w-4 h-4" style={{ color: '#22D3EE' }} />
-                    </div>
-                    <p className="text-white font-semibold text-sm">Check-in saved. Keep it up.</p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#22D3EE' }}>Daily check-in</p>
-                    <p className="text-white font-bold text-base mb-4">How are you feeling right now?</p>
-
-                    <div className="flex gap-2 mb-5">
-                      {MOOD_OPTIONS.map(m => (
-                        <button
-                          key={m.value}
-                          onClick={() => setSelectedMood(m.value)}
-                          className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border transition-all active:scale-95"
-                          style={selectedMood === m.value ? {
-                            background: 'rgba(34,211,238,0.15)', borderColor: 'rgba(34,211,238,0.4)',
-                          } : {
-                            background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)',
-                          }}
-                        >
-                          <span className="text-xl">{m.emoji}</span>
-                          <span className="text-[10px] text-white/50">{m.label}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {selectedMood && (
-                      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-                        <p className="text-white/60 text-sm font-medium mb-3">Energy level?</p>
-                        <div className="flex gap-2 mb-4">
-                          {ENERGY_OPTIONS.map(e => (
-                            <button
-                              key={e.value}
-                              onClick={() => setSelectedEnergy(e.value)}
-                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border text-sm font-medium transition-all active:scale-95"
-                              style={selectedEnergy === e.value ? {
-                                background: 'rgba(129,140,248,0.15)', borderColor: 'rgba(129,140,248,0.4)', color: '#818CF8',
-                              } : {
-                                background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)',
-                              }}
-                            >
-                              <span>{e.icon}</span> {e.label}
-                            </button>
-                          ))}
-                        </div>
-                        <button
-                          onClick={handleSaveMood}
-                          disabled={!selectedEnergy}
-                          className="w-full py-3 rounded-2xl text-sm font-bold transition-all disabled:opacity-40"
-                          style={{ background: 'linear-gradient(135deg, rgba(34,211,238,0.3), rgba(99,102,241,0.3))', border: '1px solid rgba(34,211,238,0.35)', color: '#fff' }}
-                        >
-                          Save check-in
-                        </button>
-                      </motion.div>
-                    )}
-                  </>
-                )}
-              </div>
-            </motion.div>
-          ) : todayMood && (
-            <motion.div
-              key="mood-done"
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 px-5 py-4 rounded-3xl mb-5"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <MoodDot mood={todayMood.mood} />
-              <div className="flex-1">
-                <p className="text-white/70 text-sm font-medium">
-                  {MOOD_OPTIONS.find(m => m.value === todayMood.mood)?.label} · {ENERGY_OPTIONS.find(e => e.value === todayMood.energy)?.label} energy
-                </p>
-                <p className="text-white/30 text-xs">Today's check-in done</p>
-              </div>
-              <button onClick={() => setCheckingIn(true)} className="text-xs font-medium" style={{ color: '#22D3EE' }}>Edit</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl overflow-hidden mb-5"
+          style={{ background: 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(99,102,241,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)' }}
+        >
+          <div className="px-5 pt-5 pb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#22D3EE' }}>How are you feeling today?</p>
+            <div className="flex gap-2">
+              {MOODS.map((m, i) => {
+                const isAnimating = moodAnim?.idx === i
+                const isSelected = mood === i
+                return (
+                  <button
+                    key={isAnimating ? `${i}-${moodAnim!.tick}` : i}
+                    onClick={() => handleMoodClick(i)}
+                    className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all duration-200"
+                    style={{
+                      background: isSelected ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)',
+                      border: isSelected ? '1px solid rgba(34,211,238,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                      boxShadow: isSelected ? '0 0 16px rgba(34,211,238,0.12)' : 'none',
+                      animation: isAnimating ? `mood-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both` : undefined,
+                      transformOrigin: 'center bottom',
+                      cursor: isSelected ? 'default' : 'pointer',
+                    }}
+                  >
+                    <span
+                      className="text-2xl leading-none"
+                      style={{
+                        display: 'inline-block',
+                        animation: isAnimating ? `${m.anim} ${m.dur} ease both` : undefined,
+                      }}
+                    >
+                      {m.emoji}
+                    </span>
+                    <span className="text-[10px] font-medium" style={{ color: isSelected ? '#22D3EE' : 'rgba(255,255,255,0.35)' }}>
+                      {m.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2.5 mb-6">

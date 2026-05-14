@@ -6,6 +6,7 @@ import ExerciseModal from '@/components/ExerciseModal'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
+import { useMood, MOODS } from '@/context/MoodContext'
 
 const DAILY_GOAL = 8
 const ML_PER_GLASS = 250
@@ -208,14 +209,6 @@ function MacroBar({ label, current, max, gradient }: { label: string; current: n
   )
 }
 
-const MOODS = [
-  { emoji: '😔', label: 'Low', anim: 'mood-anim-low', dur: '0.7s' },
-  { emoji: '😐', label: 'Meh', anim: 'mood-anim-meh', dur: '0.5s' },
-  { emoji: '🙂', label: 'OK', anim: 'mood-anim-ok', dur: '0.5s' },
-  { emoji: '😊', label: 'Good', anim: 'mood-anim-good', dur: '0.6s' },
-  { emoji: '🤩', label: 'Great', anim: 'mood-anim-great', dur: '0.65s' },
-]
-
 function GlassIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="22" height="30" viewBox="0 0 22 30" fill="none">
@@ -262,24 +255,15 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
-  const [mood, setMood] = useState<number | null>(() => {
-    try { return JSON.parse(localStorage.getItem(`mood_${today}`) ?? 'null') as number | null }
-    catch { return null }
-  })
+  const { mood, selectMood } = useMood()
   const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
   const [waterCelebrating, setWaterCelebrating] = useState(false)
-
-  const saveMood = (idx: number) => {
-    if (mood === idx) return
-    setMood(idx)
-    localStorage.setItem(`mood_${today}`, JSON.stringify(idx))
-  }
 
   const handleMoodClick = (i: number) => {
     if (mood === i) return
     setMoodAnim(prev => ({ idx: i, tick: (prev?.tick ?? 0) + 1 }))
     setTimeout(() => setMoodAnim(null), 700)
-    saveMood(i)
+    selectMood(i)
   }
 
   const { data } = db.useQuery({
@@ -557,7 +541,10 @@ export default function Dashboard() {
 
         {/* Mood Tracker */}
         <div className="glass-card p-5">
-          <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-4">How are you feeling today?</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">How are you feeling today?</p>
+            <Link to="/wellness" className="text-xs font-semibold" style={{ color: '#22D3EE' }}>Mindspace</Link>
+          </div>
           <div className="flex gap-2">
             {MOODS.map((m, i) => {
               const isAnimating = moodAnim?.idx === i
@@ -647,9 +634,10 @@ export default function Dashboard() {
       </div>{/* end mood+hydration grid */}
 
       {/* Feature Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
         <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
         <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
+        <FeatureCard to="/wellness" emoji="🧠" label="Mindspace" sub="Mental wellness" accent="99,102,241" />
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
         <FeatureCard to="/chat" emoji="🤖" label="Ask Kai" sub="Your AI coach" accent="52,211,153" />
       </div>

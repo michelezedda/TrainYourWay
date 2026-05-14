@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { HiArrowNarrowLeft, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
 import { IoIosMale } from "react-icons/io";
 import { CgShapeTriangle, CgShapeSquare, CgShapeCircle } from "react-icons/cg";
@@ -11,6 +11,7 @@ import { saveNutritionProfile } from '@/lib/nutrition'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { requestNotificationPermission } from '@/lib/notifications'
+import { hasSeenOnboarding } from '@/lib/onboarding'
 
 type Unit = 'metric' | 'imperial'
 
@@ -250,6 +251,14 @@ export default function Questionnaire() {
   const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
   const { data: plansData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
   const existingPlanIds = (plansData?.workoutPlans ?? []).map((p: { id: string }) => p.id)
+
+  // If user already has a plan and hasn't seen the onboarding summary, send them there
+  useEffect(() => {
+    if (plansData === undefined) return
+    if (!hasSeenOnboarding(userId) && existingPlanIds.length > 0) {
+      navigate('/onboarding-summary', { replace: true })
+    }
+  }, [plansData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (patch: Partial<FormData>) => setForm((p) => ({ ...p, ...patch }))
 
