@@ -517,6 +517,8 @@ export interface ExerciseInstructions {
   avoid: string[]
   primaryMuscles: string[]
   secondaryMuscles: string[]
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'
+  difficultyReason?: string
 }
 
 export async function getExerciseInstructions(exerciseName: string): Promise<ExerciseInstructions> {
@@ -533,18 +535,22 @@ Reply with ONLY valid JSON in this exact shape. No markdown, no extra text:
   "tips": ["tip 1", "tip 2", "tip 3"],
   "avoid": ["mistake 1", "mistake 2"],
   "primaryMuscles": ["muscle_id_1", "muscle_id_2"],
-  "secondaryMuscles": ["muscle_id_3"]
+  "secondaryMuscles": ["muscle_id_3"],
+  "difficulty": "Beginner" | "Intermediate" | "Advanced",
+  "difficultyReason": "one sentence explaining why this exercise has this difficulty level"
 }
 
 For primaryMuscles and secondaryMuscles, use ONLY these canonical IDs (choose the ones that apply):
 chest, front_delts, rear_delts, biceps, triceps, forearms,
 abs, obliques, hip_flexors, adductors, quads, calves_front,
-traps, rhomboids, lats, lower_back, glutes, hamstrings, calves`
+traps, rhomboids, lats, lower_back, glutes, hamstrings, calves
+
+For difficulty: Beginner = simple movement pattern, low coordination demand. Intermediate = requires some technique or body awareness. Advanced = complex movement, high stability or strength demand.`
 
   const completion = await groqComplete({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 512,
+    max_tokens: 640,
     temperature: 0.3,
   })
 

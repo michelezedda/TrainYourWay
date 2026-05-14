@@ -26,15 +26,15 @@ import type { WorkoutFormData, ReevaluationData } from '@/lib/gemini'
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const GOAL_META: Record<string, { color: string; bg: string; border: string; icon: string }> = {
-  'Weight Loss':          { color: 'text-orange-300',  bg: 'bg-orange-500/15',  border: 'border-orange-500/30',  icon: '🔥' },
-  'Muscle Gain':          { color: 'text-blue-300',    bg: 'bg-blue-500/15',    border: 'border-blue-500/30',    icon: '💪' },
-  'Body Recomposition':   { color: 'text-indigo-300',  bg: 'bg-indigo-500/15',  border: 'border-indigo-500/30',  icon: '⚡' },
-  'Strength':             { color: 'text-red-300',     bg: 'bg-red-500/15',     border: 'border-red-500/30',     icon: '🏋️' },
-  'Endurance':            { color: 'text-cyan-300',    bg: 'bg-cyan-500/15',    border: 'border-cyan-500/30',    icon: '🏃' },
-  'Athletic Performance': { color: 'text-amber-300',   bg: 'bg-amber-500/15',   border: 'border-amber-500/30',   icon: '🏆' },
-  'Flexibility':          { color: 'text-violet-300',  bg: 'bg-violet-500/15',  border: 'border-violet-500/30',  icon: '🧘' },
-  'General Fitness':      { color: 'text-green-300',   bg: 'bg-green-500/15',   border: 'border-green-500/30',   icon: '💚' },
-  'Stress Relief':        { color: 'text-pink-300',    bg: 'bg-pink-500/15',    border: 'border-pink-500/30',    icon: '🌿' },
+  'Weight Loss': { color: 'text-orange-300', bg: 'bg-orange-500/15', border: 'border-orange-500/30', icon: '🔥' },
+  'Muscle Gain': { color: 'text-blue-300', bg: 'bg-blue-500/15', border: 'border-blue-500/30', icon: '💪' },
+  'Body Recomposition': { color: 'text-indigo-300', bg: 'bg-indigo-500/15', border: 'border-indigo-500/30', icon: '⚡' },
+  'Strength': { color: 'text-red-300', bg: 'bg-red-500/15', border: 'border-red-500/30', icon: '🏋️' },
+  'Endurance': { color: 'text-cyan-300', bg: 'bg-cyan-500/15', border: 'border-cyan-500/30', icon: '🏃' },
+  'Athletic Performance': { color: 'text-amber-300', bg: 'bg-amber-500/15', border: 'border-amber-500/30', icon: '🏆' },
+  'Flexibility': { color: 'text-violet-300', bg: 'bg-violet-500/15', border: 'border-violet-500/30', icon: '🧘' },
+  'General Fitness': { color: 'text-green-300', bg: 'bg-green-500/15', border: 'border-green-500/30', icon: '💚' },
+  'Stress Relief': { color: 'text-pink-300', bg: 'bg-pink-500/15', border: 'border-pink-500/30', icon: '🌿' },
 }
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -43,22 +43,22 @@ const LEVEL_LABELS: Record<string, string> = {
 
 // Contextual theme per AI section
 const SECTION_THEME: Record<string, { icon: string; label: string; accentColor: string }> = {
-  'Profile Assessment':     { icon: '📊', label: 'Profile breakdown',    accentColor: '#A855F7' },
-  'Workout Space Analysis': { icon: '🏠', label: 'Space analysis',       accentColor: '#22D3EE' },
-  'Space Recommendations':  { icon: '💡', label: 'Pro recommendations',  accentColor: '#f59e0b' },
-  'Dietary Assessment':     { icon: '🥗', label: 'Nutrition strategy',   accentColor: '#10b981' },
-  'What to Expect':         { icon: '🎯', label: 'Your roadmap',         accentColor: '#ec4899' },
-  'Your Progress':          { icon: '📈', label: 'Progress snapshot',    accentColor: '#A855F7' },
-  'Training Assessment':    { icon: '🏋️', label: 'Training review',     accentColor: '#ef4444' },
-  'What Changes in This Phase': { icon: '🔄', label: 'Phase evolution',  accentColor: '#22D3EE' },
+  'Profile Assessment': { icon: '📊', label: 'Profile breakdown', accentColor: '#A855F7' },
+  'Workout Space Analysis': { icon: '🏠', label: 'Space analysis', accentColor: '#22D3EE' },
+  'Space Recommendations': { icon: '💡', label: 'Pro recommendations', accentColor: '#f59e0b' },
+  'Dietary Assessment': { icon: '🥗', label: 'Nutrition strategy', accentColor: '#10b981' },
+  'What to Expect': { icon: '🎯', label: 'Your roadmap', accentColor: '#ec4899' },
+  'Your Progress': { icon: '📈', label: 'Progress snapshot', accentColor: '#A855F7' },
+  'Training Assessment': { icon: '🏋️', label: 'Training review', accentColor: '#ef4444' },
+  'What Changes in This Phase': { icon: '🔄', label: 'Phase evolution', accentColor: '#22D3EE' },
 }
 
 const DID_YOU_KNOW: Record<string, string> = {
-  'Profile Assessment':     'Consistency beats intensity every time. Showing up is 80% of the result.',
+  'Profile Assessment': 'Consistency beats intensity every time. Showing up is 80% of the result.',
   'Workout Space Analysis': 'Home workouts are just as effective as gym sessions when the programming is right.',
-  'Space Recommendations':  'Adding just one or two pieces of equipment unlocks dozens of exercise variations.',
-  'Dietary Assessment':     'Nutrition drives up to 70% of body composition results. What you eat is not secondary.',
-  'What to Expect':         'Most people see visible changes within 4-6 weeks. The first 2 weeks are about building the habit.',
+  'Space Recommendations': 'Adding just one or two pieces of equipment unlocks dozens of exercise variations.',
+  'Dietary Assessment': 'Nutrition drives up to 70% of body composition results. What you eat is not secondary.',
+  'What to Expect': 'Most people see visible changes within 4-6 weeks. The first 2 weeks are about building the habit.',
 }
 
 const TRAINING_MOTIVATION: Record<string, string> = {
@@ -71,24 +71,24 @@ const TRAINING_MOTIVATION: Record<string, string> = {
 }
 
 const NUTRITION_INSIGHT: Record<string, string> = {
-  'Weight Loss':          'Protein keeps you full while the deficit burns fat. Hit your target every day.',
-  'Muscle Gain':          'A calorie surplus fuels muscle synthesis. These targets give you the edge.',
-  'Body Recomposition':   'Near-maintenance intake with high protein is the recomp formula.',
-  'Strength':             'Strength requires fuel. Eat enough to train hard and recover completely.',
-  'Endurance':            'Carbs are your endurance engine. Do not fear them.',
+  'Weight Loss': 'Protein keeps you full while the deficit burns fat. Hit your target every day.',
+  'Muscle Gain': 'A calorie surplus fuels muscle synthesis. These targets give you the edge.',
+  'Body Recomposition': 'Near-maintenance intake with high protein is the recomp formula.',
+  'Strength': 'Strength requires fuel. Eat enough to train hard and recover completely.',
+  'Endurance': 'Carbs are your endurance engine. Do not fear them.',
   'Athletic Performance': 'Peak performance runs on consistent, precise nutrition. Every macro counts.',
 }
 
 const GOAL_TAGLINE: Record<string, string> = {
-  'Weight Loss':          'Every rep burns. Every session compounds. The results you want are built in the reps you do not skip.',
-  'Muscle Gain':          'Muscle is earned one rep at a time. Train hard, sleep harder, eat consistently.',
-  'Body Recomposition':   'Losing fat while building muscle takes patience and precision. Your plan delivers both.',
-  'Strength':             'Every lift makes you harder to stop. This is where real strength gets built.',
-  'Endurance':            'Your lungs and legs will adapt faster than you think. Keep moving.',
+  'Weight Loss': 'Every rep burns. Every session compounds. The results you want are built in the reps you do not skip.',
+  'Muscle Gain': 'Muscle is earned one rep at a time. Train hard, sleep harder, eat consistently.',
+  'Body Recomposition': 'Losing fat while building muscle takes patience and precision. Your plan delivers both.',
+  'Strength': 'Every lift makes you harder to stop. This is where real strength gets built.',
+  'Endurance': 'Your lungs and legs will adapt faster than you think. Keep moving.',
   'Athletic Performance': 'Great athletes are built in training sessions like these. This is where it starts.',
-  'Flexibility':          'Flexibility is freedom. Every session unlocks a little more range.',
-  'General Fitness':      'Consistent beats perfect. Every single time. Show up.',
-  'Stress Relief':        'Movement is the best medicine. Your plan is the prescription.',
+  'Flexibility': 'Flexibility is freedom. Every session unlocks a little more range.',
+  'General Fitness': 'Consistent beats perfect. Every single time. Show up.',
+  'Stress Relief': 'Movement is the best medicine. Your plan is the prescription.',
 }
 
 // ── Enhanced markdown components (richer than the shared analysisComponents) ─────
@@ -237,7 +237,7 @@ function CelebrationSlide({ formData, userName }: { formData: WorkoutFormData; u
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
         className="flex gap-5 items-center">
         {[
-          { label: 'Days/wk',  value: formData.daysPerWeek },
+          { label: 'Days/wk', value: formData.daysPerWeek },
           { label: 'Per session', value: `${formData.sessionDuration}m` },
           { label: 'Level', value: LEVEL_LABELS[formData.fitnessLevel] ?? formData.fitnessLevel },
         ].map(({ label, value }, i) => (
@@ -432,8 +432,8 @@ function NutritionPreviewSlide({ goals }: { goals: string[] }) {
 
   const macros = [
     { label: 'Protein', value: t.protein, color: '#22D3EE', pct: Math.round((t.protein * 4 / t.kcal) * 100) },
-    { label: 'Carbs',   value: t.carbs,   color: '#A855F7', pct: Math.round((t.carbs * 4 / t.kcal) * 100) },
-    { label: 'Fat',     value: t.fat,     color: '#f97316', pct: Math.round((t.fat * 9 / t.kcal) * 100) },
+    { label: 'Carbs', value: t.carbs, color: '#A855F7', pct: Math.round((t.carbs * 4 / t.kcal) * 100) },
+    { label: 'Fat', value: t.fat, color: '#f97316', pct: Math.round((t.fat * 9 / t.kcal) * 100) },
   ]
 
   return (
@@ -539,9 +539,9 @@ function ReadySlide({ formData }: { formData: WorkoutFormData }) {
         className="grid grid-cols-2 gap-2.5">
         {[
           { icon: '📋', label: 'Full Workout Plan', color: '#A855F7' },
-          { icon: '🤖', label: 'KAI AI Coach',      color: '#22D3EE' },
+          { icon: '🤖', label: 'KAI AI Coach', color: '#22D3EE' },
           { icon: '🥗', label: 'Nutrition Tracker', color: '#10b981' },
-          { icon: '📈', label: 'Progress History',  color: '#f59e0b' },
+          { icon: '📈', label: 'Progress History', color: '#f59e0b' },
         ].map(({ icon, label, color }) => (
           <div key={label}
             className="flex items-center gap-3 px-4 py-4 rounded-2xl text-left"
@@ -768,8 +768,8 @@ function PlanHero({ formData }: { formData: WorkoutFormData }) {
 
 const MACRO_COLORS = {
   Protein: '#22D3EE',
-  Carbs:   '#A855F7',
-  Fat:     '#ec4899',
+  Carbs: '#A855F7',
+  Fat: '#ec4899',
 }
 
 function NutritionTargets() {
@@ -778,13 +778,13 @@ function NutritionTargets() {
 
   const t = calculateTargets(profile)
   const isWeightLoss = profile.goals.some(g => /weight.?loss/i.test(g))
-  const isMuscleGain  = profile.goals.some(g => /muscle/i.test(g))
+  const isMuscleGain = profile.goals.some(g => /muscle/i.test(g))
   const adjustNote = isWeightLoss ? '400 kcal deficit' : isMuscleGain ? '200 kcal surplus' : 'Maintenance'
 
   const macros = [
     { label: 'Protein', value: t.protein, unit: 'g', pct: (t.protein * 4) / t.kcal, color: MACRO_COLORS.Protein, desc: 'muscle repair' },
-    { label: 'Carbs',   value: t.carbs,   unit: 'g', pct: (t.carbs * 4) / t.kcal,   color: MACRO_COLORS.Carbs,   desc: 'fuel energy' },
-    { label: 'Fat',     value: t.fat,     unit: 'g', pct: (t.fat * 9) / t.kcal,     color: MACRO_COLORS.Fat,     desc: 'hormones' },
+    { label: 'Carbs', value: t.carbs, unit: 'g', pct: (t.carbs * 4) / t.kcal, color: MACRO_COLORS.Carbs, desc: 'fuel energy' },
+    { label: 'Fat', value: t.fat, unit: 'g', pct: (t.fat * 9) / t.kcal, color: MACRO_COLORS.Fat, desc: 'hormones' },
   ]
 
   return (
@@ -872,9 +872,9 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
   const rawWeight = (kgStr: string) => unit === 'imperial' ? kgToLbs(parseFloat(kgStr)).toFixed(1) : kgStr
 
   const difficultyConfig = {
-    'Too easy':  { color: 'text-blue-300',  bg: 'bg-blue-500/15 border-blue-500/30',  icon: '😤' },
-    'Too hard':  { color: 'text-red-300',   bg: 'bg-red-500/15 border-red-500/30',    icon: '😰' },
-    'Just right':{ color: 'text-green-300', bg: 'bg-green-500/15 border-green-500/30', icon: '✅' },
+    'Too easy': { color: 'text-blue-300', bg: 'bg-blue-500/15 border-blue-500/30', icon: '😤' },
+    'Too hard': { color: 'text-red-300', bg: 'bg-red-500/15 border-red-500/30', icon: '😰' },
+    'Just right': { color: 'text-green-300', bg: 'bg-green-500/15 border-green-500/30', icon: '✅' },
   }[data.difficulty] ?? { color: 'text-white/60', bg: 'bg-white/8 border-white/10', icon: '💬' }
 
   return (
@@ -913,7 +913,7 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
                 <div>
                   <p className="text-white/35 text-[10px] uppercase tracking-wider mb-3">Body Stats</p>
                   <div className="grid grid-cols-3 gap-2">
-                    [
+                    {[
                       { label: 'Weight', prev: displayWeight(data.originalWeight), curr: displayWeight(data.currentWeight), rawPrev: rawWeight(data.originalWeight), rawCurr: rawWeight(data.currentWeight), unit: wLabel, invertColor: true },
                       { label: 'Height', prev: displayHeight(data.originalHeight), curr: displayHeight(data.currentHeight), rawPrev: '', rawCurr: '', unit: '' },
                       ...(prevBmi && currBmi ? [{ label: 'BMI', prev: prevBmi.value, curr: currBmi.value, rawPrev: prevBmi.value, rawCurr: currBmi.value, unit: '', invertColor: true }] : []),
@@ -1015,8 +1015,8 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
 // ── Reevaluation Analysis Card ────────────────────────────────────────────────
 
 const REEVAL_SLIDE_GRADIENTS: Record<string, string> = {
-  'Your Progress':              'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(99,102,241,0.18))',
-  'Training Assessment':        'linear-gradient(135deg, rgba(239,68,68,0.22), rgba(249,115,22,0.15))',
+  'Your Progress': 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(99,102,241,0.18))',
+  'Training Assessment': 'linear-gradient(135deg, rgba(239,68,68,0.22), rgba(249,115,22,0.15))',
   'What Changes in This Phase': 'linear-gradient(135deg, rgba(34,211,238,0.22), rgba(99,102,241,0.18))',
 }
 
@@ -1150,11 +1150,11 @@ export default function Results() {
   const location = useLocation()
   const userId = getUserId()
 
-  const plan         = location.state?.plan as string | undefined
-  const planId       = location.state?.planId as string | undefined
-  const analysis     = location.state?.analysis as string | undefined
-  const formData     = location.state?.formData as WorkoutFormData | undefined
-  const reevalData   = location.state?.reevalData as ReevaluationData | undefined
+  const plan = location.state?.plan as string | undefined
+  const planId = location.state?.planId as string | undefined
+  const analysis = location.state?.analysis as string | undefined
+  const formData = location.state?.formData as WorkoutFormData | undefined
+  const reevalData = location.state?.reevalData as ReevaluationData | undefined
   const reevalAnalysis = location.state?.reevalAnalysis as string | undefined
 
   // Fetch user name for personalization
