@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HiArrowNarrowLeft } from 'react-icons/hi'
-import { motion, AnimatePresence } from 'framer-motion'
 import { saveSession, formatDuration } from '@/lib/wellness'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -134,11 +133,11 @@ export default function WellnessBreathing() {
     setView('session')
   }
 
-  // ── SETUP VIEW ──────────────────────────────────────────────────────────────
+  // ── SETUP ───────────────────────────────────────────────────────────────────
 
   if (view === 'setup') {
     return (
-      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav">
 
         <div className="flex items-center gap-3 mb-7">
           <button
@@ -164,7 +163,7 @@ export default function WellnessBreathing() {
           </div>
         </div>
 
-        {/* Pattern selector (fix: setPattern now used) */}
+        {/* Patterns */}
         <div className="space-y-3 mb-6">
           {PATTERNS.map(p => (
             <button
@@ -182,9 +181,9 @@ export default function WellnessBreathing() {
           ))}
         </div>
 
-        {/* Duration selector (fix: setDurationSecs now used) */}
+        {/* Duration */}
         <div className="flex gap-2 mb-6">
-          {[60, 180, 300].map(sec => (
+          {[60, 180, 300, 600].map(sec => (
             <button
               key={sec}
               onClick={() => setDurationSecs(sec)}
@@ -201,7 +200,7 @@ export default function WellnessBreathing() {
 
         <button
           onClick={startSession}
-          className="w-full py-4 rounded-2xl text-white font-bold"
+          className="w-full py-4 rounded-2xl font-bold text-white"
           style={{
             background: 'linear-gradient(135deg, rgba(34,211,238,0.4), rgba(129,140,248,0.4))'
           }}
@@ -212,13 +211,13 @@ export default function WellnessBreathing() {
     )
   }
 
-  // ── DONE VIEW ───────────────────────────────────────────────────────────────
+  // ── DONE ─────────────────────────────────────────────────────────────────────
 
   if (view === 'done') {
     return (
       <main className="min-h-screen flex items-center justify-center text-center text-white">
         <div>
-          <h2 className="text-3xl font-black mb-2">Done</h2>
+          <h2 className="text-3xl font-black mb-2">Well done</h2>
           <p className="text-white/50">
             {formatDuration(durationSecs)} • {cycleCount} cycles
           </p>
@@ -227,14 +226,14 @@ export default function WellnessBreathing() {
             onClick={() => setView('setup')}
             className="mt-6 px-6 py-3 rounded-xl bg-white/10"
           >
-            Restart
+            Breathe again
           </button>
         </div>
       </main>
     )
   }
 
-  // ── SESSION VIEW ────────────────────────────────────────────────────────────
+  // ── SESSION ─────────────────────────────────────────────────────────────────
 
   const remainingSecs = durationSecs - totalElapsed
   const mm = String(Math.floor(remainingSecs / 60)).padStart(2, '0')
@@ -243,7 +242,7 @@ export default function WellnessBreathing() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center">
 
-      {/* FIX: progress is now used */}
+      {/* Progress */}
       <div className="w-64 h-1 bg-white/10 rounded-full mb-6 overflow-hidden">
         <div
           className="h-full bg-cyan-400"
@@ -251,8 +250,10 @@ export default function WellnessBreathing() {
         />
       </div>
 
+      {/* Timer */}
       <div className="text-white/60 mb-4">{mm}:{ss}</div>
 
+      {/* Circle */}
       <div
         className="w-40 h-40 rounded-full"
         style={{
@@ -262,6 +263,7 @@ export default function WellnessBreathing() {
         }}
       />
 
+      {/* Phase */}
       <div className="mt-6 text-center">
         <h2 className="text-2xl font-bold text-white">
           {currentPhase.label}
@@ -269,6 +271,7 @@ export default function WellnessBreathing() {
         <p className="text-white/40">{currentPhase.instruction}</p>
       </div>
 
+      {/* Pause */}
       <button
         onClick={() => setPaused(p => !p)}
         className="mt-6 text-white/60"
