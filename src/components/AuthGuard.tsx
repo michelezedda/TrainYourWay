@@ -1,7 +1,6 @@
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { db } from '@/lib/db'
 import Dashboard from '@/pages/Dashboard'
-import Questionnaire from '@/pages/Questionnaire'
 import ReevaluateQuestionnaire from '@/pages/ReevaluateQuestionnaire'
 import Results from '@/pages/Results'
 import History from '@/pages/History'
@@ -40,7 +39,6 @@ export default function AuthGuard() {
   return (
     <Routes>
       <Route path="/dashboard"     element={<Dashboard />} />
-      <Route path="/questionnaire" element={<Questionnaire />} />
       <Route path="/reevaluate"    element={<ReevaluateQuestionnaire />} />
       <Route path="/generating"    element={<Generating />} />
       <Route path="/results"       element={<Results />} />

@@ -48,7 +48,7 @@ export default function Home() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mt-auto space-y-3">
           <button
-            onClick={() => navigate('/auth', { state: { newSignup: true } })}
+            onClick={() => navigate('/questionnaire')}
             className="btn-primary w-full justify-center text-lg py-5"
           >
             Build My Plan

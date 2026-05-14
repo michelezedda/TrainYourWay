@@ -4,6 +4,7 @@ import BottomNav from '@/components/BottomNav'
 import AuthGuard from '@/components/AuthGuard'
 import Home from '@/pages/Home'
 import Auth from '@/pages/Auth'
+import Questionnaire from '@/pages/Questionnaire'
 import { db } from '@/lib/db'
 import { setAuthUserId } from '@/lib/userId'
 import { MoodProvider } from '@/context/MoodContext'
@@ -49,9 +50,10 @@ function AppLayout() {
     <div className="relative min-h-screen flex flex-col" style={{ zIndex: 1 }}>
       <div className={`flex-1 ${user ? 'md:pl-56' : ''}`}>
         <Routes>
-          <Route path="/"     element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/*"   element={<AuthGuard />} />
+          <Route path="/"              element={<Home />} />
+          <Route path="/auth"          element={<Auth />} />
+          <Route path="/questionnaire" element={<Questionnaire />} />
+          <Route path="/*"             element={<AuthGuard />} />
         </Routes>
       </div>
       <BottomNav />

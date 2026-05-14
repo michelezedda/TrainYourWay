@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
 import { hasSeenOnboarding } from '@/lib/onboarding'
+import { saveNutritionProfile } from '@/lib/nutrition'
 
 function Spinner() {
   return <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />
@@ -30,6 +31,17 @@ export default function Auth() {
 
   const goAfterAuth = () => {
     if (!user?.id) return
+    // If user filled the questionnaire before signing up, resume generating
+    const rawPending = sessionStorage.getItem('pendingPlan')
+    if (rawPending) {
+      sessionStorage.removeItem('pendingPlan')
+      try {
+        const { payload, nutritionData } = JSON.parse(rawPending) as { payload: unknown; nutritionData: Parameters<typeof saveNutritionProfile>[0] }
+        if (nutritionData) saveNutritionProfile(nutritionData)
+        navigate('/generating', { state: { payload, plansToDelete: [] }, replace: true })
+        return
+      } catch { /* fall through to normal routing if parse fails */ }
+    }
     if (hasSeenOnboarding(user.id)) {
       navigate('/dashboard', { replace: true })
     } else {
