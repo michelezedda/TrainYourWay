@@ -66,11 +66,7 @@ const ALL_NAV = [
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
   { to: '/chat', label: 'Kai', Icon: ChatIcon },
-  { to: '/me', label: 'Settings', Icon: PersonIcon },
-]
-
-const SHORTCUT_NAV = [
-  { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
+  { to: '/me', label: 'Settings', Icon: PersonIcon }, { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
   { to: '/community', label: 'Community', Icon: CommunityIcon },
   { to: '/machine', label: 'Machine Guide', Icon: MachineIcon },
 ]
@@ -207,39 +203,9 @@ export default function BottomNav() {
               </Link>
             )
           })}
-
-          <div className="mx-3 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
-          <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Shortcuts
-          </p>
-
-          {SHORTCUT_NAV.map(({ to, label, Icon }) => {
-            const active = isActive(to)
-            return (
-              <Link
-                key={to}
-                to={to}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 active:scale-[0.97]"
-                style={active
-                  ? {
-                    background: 'rgba(168,85,247,0.12)',
-                    color: '#c084fc',
-                    border: '1px solid rgba(168,85,247,0.2)',
-                  }
-                  : {
-                    color: 'rgba(255,255,255,0.35)',
-                    border: '1px solid transparent',
-                  }
-                }
-              >
-                <Icon active={active} />
-                <span className="text-sm font-medium">{label}</span>
-              </Link>
-            )
-          })}
         </nav>
 
-        <p className="px-3 text-[10px] text-white/15">v1.0</p>
+        <p className="px-3 text-[10px] text-white/15">v0.1</p>
       </aside>
     </>
   )
