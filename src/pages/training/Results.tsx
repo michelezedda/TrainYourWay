@@ -15,6 +15,7 @@ import {
 } from '@/components/PlanView'
 import { buildPlanComponents, sanitizePlan } from '@/lib/planComponents'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
+import { getUnit, formatWeight, formatHeight, kgToLbs } from '@/lib/units'
 import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -860,9 +861,15 @@ function DiffBadge({ prev, curr, unit = 'kg', invertColor = false }: { prev: str
 
 function ReevalSummary({ data }: { data: ReevaluationData }) {
   const [open, setOpen] = useState(true)
+  const unit = getUnit()
   const prevBmi = computeBmi(data.originalWeight, data.originalHeight)
   const currBmi = computeBmi(data.currentWeight, data.currentHeight)
   const hasOriginal = !!(data.originalWeight && data.originalHeight)
+
+  const wLabel = unit === 'imperial' ? 'lbs' : 'kg'
+  const displayWeight = (kgStr: string) => formatWeight(parseFloat(kgStr), unit)
+  const displayHeight = (cmStr: string) => formatHeight(parseFloat(cmStr), unit)
+  const rawWeight = (kgStr: string) => unit === 'imperial' ? kgToLbs(parseFloat(kgStr)).toFixed(1) : kgStr
 
   const difficultyConfig = {
     'Too easy':  { color: 'text-blue-300',  bg: 'bg-blue-500/15 border-blue-500/30',  icon: '😤' },
@@ -906,9 +913,9 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
                 <div>
                   <p className="text-white/35 text-[10px] uppercase tracking-wider mb-3">Body Stats</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Weight', prev: `${data.originalWeight} kg`, curr: `${data.currentWeight} kg`, rawPrev: data.originalWeight, rawCurr: data.currentWeight, unit: 'kg', invertColor: true },
-                      { label: 'Height', prev: `${data.originalHeight} cm`, curr: `${data.currentHeight} cm`, rawPrev: '', rawCurr: '', unit: 'cm' },
+                    [
+                      { label: 'Weight', prev: displayWeight(data.originalWeight), curr: displayWeight(data.currentWeight), rawPrev: rawWeight(data.originalWeight), rawCurr: rawWeight(data.currentWeight), unit: wLabel, invertColor: true },
+                      { label: 'Height', prev: displayHeight(data.originalHeight), curr: displayHeight(data.currentHeight), rawPrev: '', rawCurr: '', unit: '' },
                       ...(prevBmi && currBmi ? [{ label: 'BMI', prev: prevBmi.value, curr: currBmi.value, rawPrev: prevBmi.value, rawCurr: currBmi.value, unit: '', invertColor: true }] : []),
                     ].map(({ label, prev, curr, rawPrev, rawCurr, unit, invertColor }) => (
                       <div key={label} className="rounded-2xl overflow-hidden border border-white/8">
@@ -934,7 +941,7 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {[['⚖️', 'Weight', `${data.currentWeight} kg`], ['📏', 'Height', `${data.currentHeight} cm`]].map(([icon, label, val]) => (
+                  {[['⚖️', 'Weight', displayWeight(data.currentWeight)], ['📏', 'Height', displayHeight(data.currentHeight)]].map(([icon, label, val]) => (
                     <div key={label} className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/8" style={{ background: 'rgba(255,255,255,0.03)' }}>
                       <span className="text-xl">{icon}</span>
                       <div>

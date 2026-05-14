@@ -4,6 +4,7 @@ import GlassCard from '@/components/GlassCard'
 import StepIndicator from '@/components/StepIndicator'
 import { type ReevaluationData } from '@/lib/gemini'
 import { HiArrowNarrowLeft, HiArrowNarrowRight } from 'react-icons/hi'
+import { getUnit, saveUnit, lbsToKg, kgToLbs, cmToFtIn, ftInToCm, type Unit } from '@/lib/units'
 
 const STEP_LABELS = ['Progress', 'Body', 'Adjustments']
 
@@ -23,16 +24,6 @@ const GOAL_OPTIONS = [
   { label: 'General Fitness', icon: '⚡' },
   { label: 'Stress Relief', icon: '🌿' },
 ]
-
-type Unit = 'metric' | 'imperial'
-
-function lbsToKg(lbs: number) { return lbs / 2.2046 }
-function kgToLbs(kg: number)  { return kg * 2.2046 }
-function cmToFtIn(cm: number) {
-  const totalIn = cm / 2.54
-  return { ft: Math.floor(totalIn / 12), inches: Math.round(totalIn % 12) }
-}
-function ftInToCm(ft: number, inches: number) { return (ft * 12 + inches) * 2.54 }
 
 function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
@@ -89,7 +80,7 @@ export default function ReevaluateQuestionnaire() {
   } | null
 
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState<RevalForm>(INITIAL)
+  const [form, setForm] = useState<RevalForm>(() => ({ ...INITIAL, unit: getUnit() }))
   const [dayBlockError, setDayBlockError] = useState('')
 
   if (!original) {
@@ -123,6 +114,7 @@ export default function ReevaluateQuestionnaire() {
       const inches = parseFloat(form.currentHeightIn || '0')
       if (!isNaN(ft)) height = ftInToCm(ft, isNaN(inches) ? 0 : inches).toFixed(0)
     }
+    saveUnit(next)
     setForm((p) => ({ ...p, unit: next, currentWeight: weight, currentHeight: height, currentHeightIn: heightIn }))
   }
 

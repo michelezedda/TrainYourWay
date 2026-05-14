@@ -12,8 +12,7 @@ import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { requestNotificationPermission } from '@/lib/notifications'
 import { hasSeenOnboarding } from '@/lib/onboarding'
-
-type Unit = 'metric' | 'imperial'
+import { getUnit, saveUnit, lbsToKg, kgToLbs, cmToFtIn, ftInToCm, toMetricWeight, toMetricHeight, type Unit } from '@/lib/units'
 
 interface FormData {
   unit: Unit
@@ -67,23 +66,6 @@ const INITIAL: FormData = {
   customRestrictions: '',
   mealsPerDay: '3',
   images: [],
-}
-
-// ── Unit helpers ───────────────────────────────────────────────────────────────
-function lbsToKg(lbs: number) { return lbs / 2.2046 }
-function kgToLbs(kg: number) { return kg * 2.2046 }
-function cmToFtIn(cm: number) {
-  const totalIn = cm / 2.54
-  return { ft: Math.floor(totalIn / 12), inches: Math.round(totalIn % 12) }
-}
-function ftInToCm(ft: number, inches: number) { return (ft * 12 + inches) * 2.54 }
-function toMetricWeight(value: string, unit: Unit): number {
-  const n = parseFloat(value)
-  return unit === 'metric' ? n : lbsToKg(n)
-}
-function toMetricHeight(height: string, heightIn: string, unit: Unit): number {
-  if (unit === 'metric') return parseFloat(height)
-  return ftInToCm(parseFloat(height) || 0, parseFloat(heightIn) || 0)
 }
 
 // ── Birthday helpers ───────────────────────────────────────────────────────────
@@ -253,7 +235,7 @@ function StepHeader({ tag, title, sub }: { tag?: string; title: string; sub?: st
 export default function Questionnaire() {
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
-  const [form, setForm] = useState<FormData>(INITIAL)
+  const [form, setForm] = useState<FormData>(() => ({ ...INITIAL, unit: getUnit() }))
   const [error, setError] = useState('')
   const [goalConflictMsg, setGoalConflictMsg] = useState('')
   const [dayBlockError, setDayBlockError] = useState('')
@@ -303,6 +285,7 @@ export default function Questionnaire() {
       const ft = parseFloat(form.height), inches = parseFloat(form.heightIn || '0')
       if (!isNaN(ft)) height = ftInToCm(ft, isNaN(inches) ? 0 : inches).toFixed(0)
     }
+    saveUnit(next)
     setForm((p) => ({ ...p, unit: next, weight, height, heightIn }))
   }
 

@@ -6,6 +6,7 @@ import { getUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
+import { getUnit, saveUnit, type Unit } from '@/lib/units'
 
 const AVATAR_KEY = 'tyw_avatar'
 
@@ -61,6 +62,7 @@ export default function Personal() {
   const [editingField, setEditingField] = useState<null | 'name'>(null)
   const [editValue, setEditValue] = useState('')
   const [notifPermission, setNotifPermission] = useState(() => getNotificationPermission())
+  const [unit, setUnit] = useState<Unit>(() => getUnit())
   const [avatarUrl, setAvatarUrl] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY))
   const [avatarUploading, setAvatarUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -115,7 +117,7 @@ export default function Personal() {
         ...(profileData?.userProfiles ?? []).map((r: { id: string }) => db.tx.userProfiles[r.id].delete()),
       ]
       if (txns.length > 0) await db.transact(txns)
-      const KEYS = ['tyw_user_id', 'uplift_nutrition_profile', 'tyw_scan_history', 'tyw_notif_seen', 'tyw_lb_ts', 'tyw_notif_ts']
+      const KEYS = ['tyw_user_id', 'uplift_nutrition_profile', 'tyw_scan_history', 'tyw_notif_seen', 'tyw_lb_ts', 'tyw_notif_ts', 'uplift_unit']
       KEYS.forEach(k => localStorage.removeItem(k))
       await db.auth.signOut()
       navigate('/', { replace: true })
@@ -312,6 +314,28 @@ export default function Personal() {
                 <HiChevronRight className="w-5 h-5 text-white/25" />
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Preferences */}
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Preferences</p>
+          <div className="glass-card px-5 py-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-white/80">Measurement Units</p>
+              <p className="text-xs text-white/35 mt-0.5">Weight, height, and body metrics</p>
+            </div>
+            <div className="flex rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+              {(['metric', 'imperial'] as const).map((u, i) => (
+                <button
+                  key={u}
+                  onClick={() => { saveUnit(u); setUnit(u) }}
+                  className={`px-3.5 py-2 text-xs font-medium transition-colors ${unit === u ? 'bg-purple-500/20 text-purple-300' : 'bg-white/5 text-white/40 hover:text-white/70'} ${i === 0 ? 'border-r border-white/10' : ''}`}
+                >
+                  {u === 'metric' ? 'Metric' : 'Imperial'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
