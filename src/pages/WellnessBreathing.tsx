@@ -134,7 +134,6 @@ export default function WellnessBreathing() {
     setView('session')
   }
 
-  const phaseProgress = phaseElapsed / currentPhase.duration
   const transitionDuration = currentPhase.duration
   const accent = pattern.accent
 

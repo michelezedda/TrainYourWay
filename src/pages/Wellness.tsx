@@ -125,7 +125,6 @@ function MoodDot({ mood }: { mood: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Wellness() {
-  const navigate = useNavigate()
   const { user } = db.useAuth()
   const { data: profileData } = db.useQuery({
     userProfiles: { $: { where: { userId: user?.id ?? '' } } },
