@@ -10,7 +10,6 @@ import {
 import {
   parseAnalysisSections,
   SECTION_ICONS,
-  analysisComponents,
   WorkoutDayView,
 } from '@/components/PlanView'
 import { buildPlanComponents, sanitizePlan } from '@/lib/planComponents'
@@ -542,7 +541,7 @@ function ReadySlide({ formData }: { formData: WorkoutFormData }) {
           { icon: '🤖', label: 'KAI AI Coach', color: '#22D3EE' },
           { icon: '🥗', label: 'Nutrition Tracker', color: '#10b981' },
           { icon: '📈', label: 'Progress History', color: '#f59e0b' },
-        ].map(({ icon, label, color }) => (
+        ].map(({ icon, label }) => (
           <div key={label}
             className="flex items-center gap-3 px-4 py-4 rounded-2xl text-left"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>

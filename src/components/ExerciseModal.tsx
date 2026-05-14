@@ -219,16 +219,6 @@ function LoadingState() {
   )
 }
 
-// ── Loading skeleton for muscle map placeholder ───────────────────────────────
-
-function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div
-      className={`rounded-2xl animate-pulse ${className ?? ''}`}
-      style={{ background: 'rgba(255,255,255,0.06)', ...style }}
-    />
-  )
-}
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 
