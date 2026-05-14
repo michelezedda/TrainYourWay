@@ -49,7 +49,7 @@ export default function WellnessFocus() {
   const [mode, setMode] = useState(MODES[0])
   const [phase, setPhase] = useState<Phase>('work')
   const [remaining, setRemaining] = useState(0)
-  const [elapsed, setElapsed] = useState(0)
+  const [_elapsed, setElapsed] = useState(0)
   const [cycleCount, setCycleCount] = useState(0)
   const [paused, setPaused] = useState(false)
   const [totalWorkSecs, setTotalWorkSecs] = useState(0)
