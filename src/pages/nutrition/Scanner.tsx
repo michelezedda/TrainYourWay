@@ -1086,7 +1086,7 @@ export default function Scanner() {
                   </div>
                 )}
                 {product.ingredients_text && (
-                  <div className="glass-card p-4">
+                  <div className="glass-card p-4 pb-10">
                     <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2.5">Ingredients</p>
                     <p className="text-white/55 text-xs leading-relaxed">{product.ingredients_text}</p>
                   </div>
@@ -1103,7 +1103,7 @@ export default function Scanner() {
           </motion.div>
         </AnimatePresence>
 
-        <div className="mt-4">
+        <div className="mt-4 pb-10">
           <button onClick={reset}
             className="w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
             style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}>
