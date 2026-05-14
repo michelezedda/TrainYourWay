@@ -8,7 +8,7 @@ import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { sendChatMessage, type ChatMessage } from '@/lib/gemini'
 
 type WorkoutPlan = { id: string; plan: string; createdAt: number }
-type MealEntry   = { id: string; meal: string; description: string; kcal: number }
+type MealEntry = { id: string; meal: string; description: string; kcal: number }
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -17,11 +17,11 @@ function toDateStr(d: Date) {
 // ── Suggestion data ────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { id: 'all',       label: 'Top picks', icon: '✨' },
-  { id: 'training',  label: 'Training',  icon: '🏋️' },
+  { id: 'all', label: 'Top picks', icon: '✨' },
+  { id: 'training', label: 'Training', icon: '🏋️' },
   { id: 'nutrition', label: 'Nutrition', icon: '🥗' },
-  { id: 'recovery',  label: 'Recovery',  icon: '😴' },
-  { id: 'progress',  label: 'Progress',  icon: '📈' },
+  { id: 'recovery', label: 'Recovery', icon: '😴' },
+  { id: 'progress', label: 'Progress', icon: '📈' },
 ]
 
 const SUGGESTIONS: Record<string, { icon: string; text: string }[]> = {
@@ -122,30 +122,34 @@ function TypingIndicator() {
 }
 
 const mdComponents = {
-  p:      ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-  ul:     ({ children }: { children?: React.ReactNode }) => <ul className="space-y-1.5 mb-2 pl-0">{children}</ul>,
-  ol:     ({ children }: { children?: React.ReactNode }) => <ol className="space-y-1.5 mb-2 pl-0">{children}</ol>,
-  li:     ({ children }: { children?: React.ReactNode }) => (
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="space-y-1.5 mb-2 pl-0">{children}</ul>,
+  ol: ({ children }: { children?: React.ReactNode }) => <ol className="space-y-1.5 mb-2 pl-0">{children}</ol>,
+  li: ({ children }: { children?: React.ReactNode }) => (
     <li className="flex gap-2 items-start">
       <span className="text-purple-400/70 mt-0.5 flex-shrink-0 text-[10px]">▸</span>
       <span>{children}</span>
     </li>
   ),
   strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-white font-semibold">{children}</strong>,
-  em:     ({ children }: { children?: React.ReactNode }) => <em className="text-cyan-300/80 not-italic font-medium">{children}</em>,
-  code:   ({ children }: { children?: React.ReactNode }) => (
+  em: ({ children }: { children?: React.ReactNode }) => <em className="text-cyan-300/80 not-italic font-medium">{children}</em>,
+  code: ({ children }: { children?: React.ReactNode }) => (
     <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs font-mono text-purple-300">{children}</code>
   ),
-  h2:     ({ children }: { children?: React.ReactNode }) => <h2 className="text-white font-bold text-sm mt-3 mb-1.5 first:mt-0">{children}</h2>,
-  h3:     ({ children }: { children?: React.ReactNode }) => <h3 className="text-white/80 font-semibold text-sm mt-2 mb-1">{children}</h3>,
+  h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-white font-bold text-sm mt-3 mb-1.5 first:mt-0">{children}</h2>,
+  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-white/80 font-semibold text-sm mt-2 mb-1">{children}</h3>,
 }
 
 // ── Context badges ──────────────────────────────────────────────────────────────
 
 function ContextBadge({ icon, label }: { icon: string; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
-      style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', color: 'rgba(196,165,255,0.85)' }}>
+    <span className="inline-flex bg-green-500 items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+      style={{
+        background: 'rgba(34,197,94,0.1)',
+        border: '1px solid rgba(34,197,94,0.2)',
+        color: 'rgba(134,239,172,0.85)'
+      }}>
       <span>{icon}</span>
       {label}
     </span>
@@ -192,7 +196,7 @@ function EmptyState({
             transition={{ delay: 0.3 }}
             className="flex flex-wrap justify-center gap-2 mt-4"
           >
-            {hasplan      && <ContextBadge icon="📋" label="Plan linked" />}
+            {hasplan && <ContextBadge icon="📋" label="Plan linked" />}
             {hasNutrition && <ContextBadge icon="🥗" label="Nutrition synced" />}
             {todayKcal > 0 && <ContextBadge icon="🍽" label={`${todayKcal.toLocaleString()} kcal today`} />}
           </motion.div>
@@ -210,11 +214,10 @@ function EmptyState({
           <button
             key={c.id}
             onClick={() => setCat(c.id)}
-            className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${
-              cat === c.id
-                ? 'text-white'
-                : 'text-white/40 hover:text-white/65'
-            }`}
+            className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${cat === c.id
+              ? 'text-white'
+              : 'text-white/40 hover:text-white/65'
+              }`}
             style={cat === c.id ? {
               background: 'rgba(168,85,247,0.18)',
               border: '1px solid rgba(168,85,247,0.35)',
@@ -271,21 +274,21 @@ export default function Chat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(false)
-  const bottomRef  = useRef<HTMLDivElement>(null)
-  const inputRef   = useRef<HTMLInputElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
 
-  const userId  = getUserId()
+  const userId = getUserId()
   const profile = getNutritionProfile()
   const targets = profile ? calculateTargets(profile) : null
 
   const { data: plansData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
-  const { data: mealsData  } = db.useQuery({ mealEntries: { $: { where: { userId, date: toDateStr(new Date()) } } } })
+  const { data: mealsData } = db.useQuery({ mealEntries: { $: { where: { userId, date: toDateStr(new Date()) } } } })
 
-  const latestPlan  = ((plansData?.workoutPlans ?? []) as WorkoutPlan[])
+  const latestPlan = ((plansData?.workoutPlans ?? []) as WorkoutPlan[])
     .sort((a, b) => b.createdAt - a.createdAt)[0]?.plan ?? null
-  const todayMeals  = (mealsData?.mealEntries ?? []) as MealEntry[]
-  const todayKcal   = todayMeals.reduce((a, m) => a + (m.kcal || 0), 0)
+  const todayMeals = (mealsData?.mealEntries ?? []) as MealEntry[]
+  const todayKcal = todayMeals.reduce((a, m) => a + (m.kcal || 0), 0)
 
   const contextParts: string[] = []
   if (profile && targets) {
@@ -510,9 +513,9 @@ export default function Chat() {
         </motion.div>
 
         {/* Hint row */}
-        <div className="flex items-center justify-between px-1 mt-1.5">
-          <span className="text-[10px] text-white/18">KAI can make mistakes. Verify important info.</span>
-          <span className="text-[10px] text-white/18">Enter to send</span>
+        <div className="flex items-center justify-between px-1 mt-1.5 pb-2">
+          <span className="text-[10px] text-red-500/60">&#9888;
+            KAI can make mistakes.</span>
         </div>
       </div>
     </main>

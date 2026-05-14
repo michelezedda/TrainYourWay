@@ -1,15 +1,18 @@
-﻿import { useState, useRef, useEffect } from 'react'
-import { HiChevronLeft, HiChevronRight, HiPencil, HiCamera, HiInformationCircle } from 'react-icons/hi'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { HiChevronLeft, HiChevronRight, HiPencil, HiCamera, HiInformationCircle, HiArrowRight } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, saveNutritionProfile, calculateTargets, type DailyTargets, type NutritionProfile } from '@/lib/nutrition'
 import { estimateFoodMacros, type FoodMacros } from '@/lib/gemini'
+import { getUnit, type Unit } from '@/lib/units'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const
 type Meal = (typeof MEALS)[number]
 type Mode = 'manual' | 'photo'
+type LogStep = 'food' | 'quantity' | 'result'
+type FoodKind = 'unit' | 'weight' | 'liquid'
 
 const MEAL_EMOJI: Record<Meal, string> = {
   Breakfast: '🌅',
@@ -17,6 +20,80 @@ const MEAL_EMOJI: Record<Meal, string> = {
   Dinner: '🌙',
   Snacks: '🍎',
 }
+
+// ── Food classification ───────────────────────────────────────────────────────
+// Determines whether a food is counted by unit, weighed, or measured by volume.
+
+const UNIT_FOODS = new Set([
+  'egg','eggs','apple','apples','banana','bananas','orange','oranges',
+  'grape','grapes','strawberry','strawberries','cherry','cherries',
+  'blueberry','blueberries','raspberry','raspberries','plum','plums',
+  'peach','peaches','pear','pears','mango','mangoes','kiwi','kiwis',
+  'date','dates','fig','figs','prune','prunes','lemon','lemons','lime','limes',
+  'cookie','cookies','cracker','crackers','biscuit','biscuits',
+  'chip','chips','nugget','nuggets','shrimp','prawn','prawns',
+  'oyster','oysters','mussel','mussels','scallop','scallops',
+  'muffin','muffins','pancake','pancakes','waffle','waffles',
+  'slice','slices','piece','pieces','portion','portions',
+  'wrap','wraps','taco','tacos','burger','burgers','hotdog','hotdogs',
+  'bagel','bagels','roll','rolls','bun','buns','croissant','croissants',
+  'sandwich','sandwiches','tortilla','tortillas','pita','pitas',
+  'clementine','clementines','satsuma','satsumas','tangerine','tangerines',
+  'apricot','apricots','nectarine','nectarines',
+])
+
+const LIQUID_FOODS = new Set([
+  'milk','water','juice','coffee','tea','latte','cappuccino','americano','espresso',
+  'smoothie','shake','milkshake','kefir',
+  'soda','coke','pepsi','beer','wine','champagne','spirits','whiskey','whisky',
+  'vodka','rum','gin','tequila','kombucha',
+  'oil','sauce','ketchup','mayo','mayonnaise','dressing','vinaigrette',
+  'soup','broth','stock','cream','gravy',
+  'yogurt','yoghurt',
+  'syrup','honey','molasses','vinegar','soy sauce',
+  'coconut milk','almond milk','oat milk','soy milk','rice milk',
+])
+
+function classifyFood(name: string): FoodKind {
+  const words = name.toLowerCase().trim().split(/[\s,]+/)
+  for (const word of words) {
+    const stem = word.replace(/e?s$/, '')
+    if (UNIT_FOODS.has(word) || UNIT_FOODS.has(stem)) return 'unit'
+  }
+  for (const word of words) {
+    const stem = word.replace(/e?s$/, '')
+    if (LIQUID_FOODS.has(word) || LIQUID_FOODS.has(stem)) return 'liquid'
+  }
+  return 'weight'
+}
+
+function getUnitLabel(kind: FoodKind, unit: Unit): string {
+  if (kind === 'unit') return ''
+  if (kind === 'liquid') return unit === 'imperial' ? 'fl oz' : 'ml'
+  return unit === 'imperial' ? 'oz' : 'g'
+}
+
+function getPrompt(kind: FoodKind): string {
+  return kind === 'unit' ? 'How many?' : 'How much?'
+}
+
+function getPlaceholder(kind: FoodKind, unit: Unit): string {
+  if (kind === 'unit') return 'e.g. 3'
+  if (kind === 'liquid') return unit === 'imperial' ? 'e.g. 8' : 'e.g. 250'
+  return unit === 'imperial' ? 'e.g. 5' : 'e.g. 150'
+}
+
+function buildQuery(foodName: string, qty: string, kind: FoodKind, unit: Unit): string {
+  const q = qty.trim()
+  if (!q) return foodName.trim()
+  if (kind === 'unit') return `${q} ${foodName.trim()}`
+  // If user already typed a unit (e.g. "150g"), pass as-is
+  if (/[a-zA-Z]/.test(q)) return `${q} ${foodName.trim()}`
+  const label = getUnitLabel(kind, unit)
+  return `${q}${label} ${foodName.trim()}`
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -38,13 +115,38 @@ type MealEntry = {
   kcal: number; protein: number; carbs: number; fat: number; createdAt: number
 }
 
+// ── State ─────────────────────────────────────────────────────────────────────
+
 interface AddState {
-  mode: Mode; input: string; imageDataUrl: string | null
-  loading: boolean; estimate: FoodMacros | null; error: string
+  mode: Mode
+  // Manual two-step flow
+  step: LogStep
+  foodName: string
+  foodKind: FoodKind
+  quantityRaw: string
+  // Photo mode
+  imageDataUrl: string | null
+  // Shared
+  loading: boolean
+  estimate: FoodMacros | null
+  error: string
 }
 
-const EMPTY_ADD: AddState = { mode: 'manual', input: '', imageDataUrl: null, loading: false, estimate: null, error: '' }
+const EMPTY_ADD: AddState = {
+  mode: 'manual',
+  step: 'food',
+  foodName: '',
+  foodKind: 'weight',
+  quantityRaw: '',
+  imageDataUrl: null,
+  loading: false,
+  estimate: null,
+  error: '',
+}
+
 const ZERO_TOTALS = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function MacroBar({ label, unit, current, max, gradient, color }: {
   label: string; unit: string; current: number; max: number; gradient: string; color: string
@@ -77,7 +179,6 @@ function MacroSummary({ targets, totals }: { targets: DailyTargets | null; total
   const isOver = totals.kcal > targets.kcal
   return (
     <div className="glass-card p-5 mb-4">
-      {/* Calorie hero */}
       <div className="flex items-end justify-between mb-4">
         <div>
           <p className="text-[11px] font-semibold text-white/30 uppercase tracking-wider mb-1">Calories</p>
@@ -103,8 +204,8 @@ function MacroSummary({ targets, totals }: { targets: DailyTargets | null; total
       </div>
       <div className="space-y-4">
         <MacroBar label="Protein" unit="g" current={totals.protein} max={targets.protein} gradient="linear-gradient(90deg,#22D3EE,#34d399)" color="#34d399" />
-        <MacroBar label="Carbs" unit="g" current={totals.carbs} max={targets.carbs} gradient="linear-gradient(90deg,#f59e0b,#f97316)" color="#f97316" />
-        <MacroBar label="Fat" unit="g" current={totals.fat} max={targets.fat} gradient="linear-gradient(90deg,#ec4899,#f43f5e)" color="#ec4899" />
+        <MacroBar label="Carbs"   unit="g" current={totals.carbs}   max={targets.carbs}   gradient="linear-gradient(90deg,#f59e0b,#f97316)" color="#f97316" />
+        <MacroBar label="Fat"     unit="g" current={totals.fat}     max={targets.fat}     gradient="linear-gradient(90deg,#ec4899,#f43f5e)" color="#ec4899" />
       </div>
     </div>
   )
@@ -120,10 +221,10 @@ function EstimateResult({ estimate, onReenter, onConfirm }: {
       </div>
       <div className="grid grid-cols-4 divide-x divide-white/[0.07]">
         {[
-          { label: 'Kcal', val: String(estimate.kcal) },
+          { label: 'Kcal',    val: String(estimate.kcal) },
           { label: 'Protein', val: `${estimate.protein}g` },
-          { label: 'Carbs', val: `${estimate.carbs}g` },
-          { label: 'Fat', val: `${estimate.fat}g` },
+          { label: 'Carbs',   val: `${estimate.carbs}g` },
+          { label: 'Fat',     val: `${estimate.fat}g` },
         ].map(({ label, val }) => (
           <div key={label} className="px-2 py-3 text-center">
             <p className="text-white/30 text-[9px] uppercase tracking-wider mb-1">{label}</p>
@@ -151,14 +252,138 @@ function EstimateResult({ estimate, onReenter, onConfirm }: {
   )
 }
 
+// ── Manual input steps ────────────────────────────────────────────────────────
+
+interface ManualInputProps {
+  st: AddState
+  unit: Unit
+  onFoodSubmit: (name: string) => void
+  onQuantitySubmit: () => void
+  onBack: () => void
+  onChange: (patch: Partial<AddState>) => void
+}
+
+function ManualInput({ st, unit, onFoodSubmit, onQuantitySubmit, onBack, onChange }: ManualInputProps) {
+  const foodRef   = useRef<HTMLInputElement>(null)
+  const qtyRef    = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (st.step === 'food')     foodRef.current?.focus()
+    if (st.step === 'quantity') qtyRef.current?.focus()
+  }, [st.step])
+
+  const unitLabel   = getUnitLabel(st.foodKind, unit)
+  const prompt      = getPrompt(st.foodKind)
+  const placeholder = getPlaceholder(st.foodKind, unit)
+
+  // ── Step: food name ──
+  if (st.step === 'food') {
+    return (
+      <div className="flex gap-2">
+        <input
+          ref={foodRef}
+          className="flex-1 px-4 py-3.5 rounded-2xl outline-none text-white placeholder-white/30"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 16 }}
+          placeholder="What did you eat?"
+          value={st.foodName}
+          onChange={e => onChange({ foodName: e.target.value, error: '' })}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && st.foodName.trim()) onFoodSubmit(st.foodName)
+          }}
+        />
+        <button
+          onClick={() => { if (st.foodName.trim()) onFoodSubmit(st.foodName) }}
+          disabled={!st.foodName.trim()}
+          className="w-13 h-13 px-4 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-35"
+          style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)' }}
+          aria-label="Next"
+        >
+          <HiArrowRight className="w-5 h-5 text-white" />
+        </button>
+      </div>
+    )
+  }
+
+  // ── Step: quantity (loading or input) ──
+  if (st.step === 'quantity') {
+    return (
+      <div className="space-y-3">
+        {/* Food name chip + back */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95 max-w-[70%]"
+            style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', color: '#c084fc' }}
+          >
+            <span className="truncate">{st.foodName}</span>
+            <span className="flex-shrink-0 text-purple-400/60 text-xs leading-none">×</span>
+          </button>
+        </div>
+
+        {/* Quantity row */}
+        <div className="flex items-center gap-2">
+          <span className="text-white/40 text-sm font-medium w-24 flex-shrink-0">{prompt}</span>
+          <div className="flex-1 flex items-center gap-2">
+            <div
+              className="flex-1 flex items-center rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}
+            >
+              <input
+                ref={qtyRef}
+                type="text"
+                inputMode="decimal"
+                className="flex-1 px-4 py-3.5 bg-transparent outline-none text-white placeholder-white/30 min-w-0"
+                style={{ fontSize: 16 }}
+                placeholder={placeholder}
+                value={st.quantityRaw}
+                disabled={st.loading}
+                onChange={e => onChange({ quantityRaw: e.target.value, error: '' })}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && st.quantityRaw.trim()) onQuantitySubmit()
+                }}
+              />
+              {unitLabel && (
+                <span
+                  className="px-3 text-sm font-semibold flex-shrink-0"
+                  style={{ color: 'rgba(168,85,247,0.7)' }}
+                >
+                  {unitLabel}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onQuantitySubmit}
+              disabled={!st.quantityRaw.trim() || st.loading}
+              className="px-5 py-3.5 rounded-2xl text-sm font-semibold flex-shrink-0 transition-all active:scale-[0.97] disabled:opacity-35 flex items-center justify-center min-w-[72px]"
+              style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
+            >
+              {st.loading
+                ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block" />
+                : 'Log'}
+            </button>
+          </div>
+        </div>
+
+        {st.error && <p className="text-red-400 text-xs px-1">{st.error}</p>}
+      </div>
+    )
+  }
+
+  return null
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function Diet() {
   const today = toDateStr(new Date())
   const [selectedDate, setSelectedDate] = useState(today)
-  const [activeMeal, setActiveMeal] = useState<Meal | null>(null)
-  const [addState, setAddState] = useState<Partial<Record<Meal, AddState>>>({})
+  const [activeMeal, setActiveMeal]     = useState<Meal | null>(null)
+  const [addState, setAddState]         = useState<Partial<Record<Meal, AddState>>>({})
   const fileInputRefs = useRef<Partial<Record<Meal, HTMLInputElement | null>>>({})
 
   const userId = getUserId()
+  const unit   = getUnit()
+
   const [profile, setProfile] = useState<NutritionProfile | null>(() => getNutritionProfile())
   const targets = profile ? calculateTargets(profile) : null
 
@@ -183,29 +408,43 @@ export default function Diet() {
     { ...ZERO_TOTALS },
   )
 
-  const get = (meal: Meal): AddState => addState[meal] ?? EMPTY_ADD
-  const patch = (meal: Meal, update: Partial<AddState>) =>
-    setAddState(prev => ({ ...prev, [meal]: { ...(prev[meal] ?? EMPTY_ADD), ...update } }))
+  const get   = (meal: Meal): AddState => addState[meal] ?? EMPTY_ADD
+  const patch = useCallback((meal: Meal, update: Partial<AddState>) =>
+    setAddState(prev => ({ ...prev, [meal]: { ...(prev[meal] ?? EMPTY_ADD), ...update } })), [])
 
-  const handleImageUpload = (meal: Meal, file: File) => {
-    if (!file.type.startsWith('image/')) return
-    const reader = new FileReader()
-    reader.onload = ev => patch(meal, { imageDataUrl: ev.target?.result as string, estimate: null, error: '' })
-    reader.readAsDataURL(file)
+  // ── Event handlers ────────────────────────────────────────────────────────
+
+  const handleFoodSubmit = (meal: Meal, name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const foodKind = classifyFood(trimmed)
+    patch(meal, { step: 'quantity', foodName: trimmed, foodKind, quantityRaw: '', error: '' })
   }
 
   const handleEstimate = async (meal: Meal) => {
     const st = get(meal)
-    const ready = st.mode === 'manual' ? st.input.trim() : st.imageDataUrl
-    if (!ready) return
-    patch(meal, { loading: true, error: '', estimate: null })
-    try {
-      const estimate = st.mode === 'manual'
-        ? await estimateFoodMacros(st.input.trim())
-        : await estimateFoodMacros('', st.imageDataUrl!)
-      patch(meal, { loading: false, estimate })
-    } catch {
-      patch(meal, { loading: false, error: "Couldn't estimate. Try again." })
+
+    if (st.mode === 'manual') {
+      const qty = st.quantityRaw.trim()
+      if (!qty) return
+      const query = buildQuery(st.foodName, qty, st.foodKind, unit)
+      patch(meal, { loading: true, error: '', estimate: null })
+      try {
+        const estimate = await estimateFoodMacros(query)
+        patch(meal, { loading: false, estimate, step: 'result' })
+      } catch {
+        patch(meal, { loading: false, error: "Couldn't estimate. Try again." })
+      }
+    } else {
+      // Photo mode - unchanged
+      if (!st.imageDataUrl) return
+      patch(meal, { loading: true, error: '', estimate: null })
+      try {
+        const estimate = await estimateFoodMacros('', st.imageDataUrl)
+        patch(meal, { loading: false, estimate })
+      } catch {
+        patch(meal, { loading: false, error: "Couldn't estimate. Try again." })
+      }
     }
   }
 
@@ -227,8 +466,15 @@ export default function Diet() {
     await db.transact(db.tx.mealEntries[entryId].delete())
   }
 
+  const handleImageUpload = (meal: Meal, file: File) => {
+    if (!file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = ev => patch(meal, { imageDataUrl: ev.target?.result as string, estimate: null, error: '' })
+    reader.readAsDataURL(file)
+  }
+
   const goToDate = (d: string) => { setSelectedDate(d); setActiveMeal(null) }
-  const isToday = selectedDate === today
+  const isToday  = selectedDate === today
 
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
@@ -289,10 +535,10 @@ export default function Diet() {
           <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-4">Today's Totals</p>
           <div className="grid grid-cols-4 gap-2 text-center">
             {[
-              { label: 'Kcal', val: Math.round(totals.kcal) },
+              { label: 'Kcal',    val: Math.round(totals.kcal) },
               { label: 'Protein', val: `${Math.round(totals.protein)}g` },
-              { label: 'Carbs', val: `${Math.round(totals.carbs)}g` },
-              { label: 'Fat', val: `${Math.round(totals.fat)}g` },
+              { label: 'Carbs',   val: `${Math.round(totals.carbs)}g` },
+              { label: 'Fat',     val: `${Math.round(totals.fat)}g` },
             ].map(({ label, val }) => (
               <div key={label} className="py-2.5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                 <p className="text-white font-bold text-sm tabular-nums">{val}</p>
@@ -307,9 +553,9 @@ export default function Diet() {
       <div className="space-y-3 pb-10">
         {MEALS.map(meal => {
           const mealEntries = entries.filter(e => e.meal.toLowerCase() === meal.toLowerCase())
-          const mealKcal = mealEntries.reduce((a, e) => a + (e.kcal || 0), 0)
-          const st = get(meal)
-          const isActive = activeMeal === meal
+          const mealKcal    = mealEntries.reduce((a, e) => a + (e.kcal || 0), 0)
+          const st          = get(meal)
+          const isActive    = activeMeal === meal
 
           return (
             <div key={meal} className="glass-card p-0 overflow-hidden">
@@ -373,49 +619,40 @@ export default function Diet() {
               {/* Add food panel */}
               {isActive && (
                 <div className="border-t border-white/[0.08] px-5 py-4 space-y-4" style={{ background: 'rgba(168,85,247,0.03)' }}>
-                  {/* Mode tabs */}
-                  <div className="flex gap-2">
-                    {(['manual', 'photo'] as const).map(mode => (
-                      <button
-                        key={mode}
-                        onClick={() => patch(meal, { mode, input: '', imageDataUrl: null, estimate: null, error: '' })}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                        style={st.mode === mode
-                          ? { background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
-                          : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.38)', border: '1px solid rgba(255,255,255,0.07)' }
-                        }
-                      >
-                        {mode === 'manual' ? <><HiPencil className="w-4 h-4" />Manual</> : <><HiCamera className="w-4 h-4" />Photo</>}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Manual input */}
-                  {st.mode === 'manual' && !st.estimate && (
+                  {/* Mode tabs — only show on food step */}
+                  {st.step === 'food' && (
                     <div className="flex gap-2">
-                      <input
-                        className="flex-1 px-4 py-3.5 rounded-2xl outline-none text-white placeholder-white/30"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 16 }}
-                        placeholder="e.g. 2 eggs with toast..."
-                        value={st.input}
-                        autoFocus
-                        onChange={e => patch(meal, { input: e.target.value, estimate: null, error: '' })}
-                        onKeyDown={e => { if (e.key === 'Enter') void handleEstimate(meal) }}
-                      />
-                      <button
-                        onClick={() => void handleEstimate(meal)}
-                        disabled={!st.input.trim() || st.loading}
-                        className="px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-40 flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
-                      >
-                        {st.loading
-                          ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block" />
-                          : 'Estimate'}
-                      </button>
+                      {(['manual', 'photo'] as const).map(mode => (
+                        <button
+                          key={mode}
+                          onClick={() => patch(meal, { ...EMPTY_ADD, mode })}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                          style={st.mode === mode
+                            ? { background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
+                            : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.38)', border: '1px solid rgba(255,255,255,0.07)' }
+                          }
+                        >
+                          {mode === 'manual'
+                            ? <><HiPencil className="w-4 h-4" />Manual</>
+                            : <><HiCamera className="w-4 h-4" />Photo</>}
+                        </button>
+                      ))}
                     </div>
                   )}
 
-                  {/* Photo input */}
+                  {/* ── Manual two-step flow ── */}
+                  {st.mode === 'manual' && st.step !== 'result' && (
+                    <ManualInput
+                      st={st}
+                      unit={unit}
+                      onFoodSubmit={name => handleFoodSubmit(meal, name)}
+                      onQuantitySubmit={() => void handleEstimate(meal)}
+                      onBack={() => patch(meal, { step: 'food', quantityRaw: '', error: '' })}
+                      onChange={update => patch(meal, update)}
+                    />
+                  )}
+
+                  {/* ── Photo flow ── */}
                   {st.mode === 'photo' && !st.estimate && (
                     <>
                       <input
@@ -464,12 +701,19 @@ export default function Diet() {
                     </>
                   )}
 
-                  {st.error && <p className="text-red-400 text-xs">{st.error}</p>}
+                  {st.error && st.mode === 'photo' && (
+                    <p className="text-red-400 text-xs">{st.error}</p>
+                  )}
 
+                  {/* ── Estimate result (both modes) ── */}
                   {st.estimate && (
                     <EstimateResult
                       estimate={st.estimate}
-                      onReenter={() => patch(meal, { estimate: null, ...(st.mode === 'manual' ? { input: '' } : { imageDataUrl: null }) })}
+                      onReenter={() => patch(meal, {
+                        estimate: null,
+                        step: st.mode === 'manual' ? 'quantity' : 'food',
+                        ...(st.mode === 'photo' ? { imageDataUrl: null } : {}),
+                      })}
                       onConfirm={() => void handleConfirm(meal)}
                     />
                   )}
