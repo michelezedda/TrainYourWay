@@ -503,20 +503,56 @@ function AnalysisSectionSlide({
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const DAY_FULL_RESULTS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-function TrainingWeekSlide({ formData }: { formData: WorkoutFormData }) {
+function parseTrainingDaysFromPlan(plan: string): Set<number> {
+  const result = new Set<number>()
+
+  // Primary: parse the "## Weekly Schedule" section which has **DayName:** activity
+  const scheduleSection = plan.match(/## Weekly Schedule([\s\S]*?)(?=\n## |$)/i)?.[1] ?? ''
+  if (scheduleSection) {
+    DAY_FULL_RESULTS.forEach((day, i) => {
+      const m = scheduleSection.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n]+)`, 'i'))
+      if (!m) return
+      const activity = m[1].replace(/·.*$/, '').trim()
+      if (!/\brest\b/i.test(activity)) result.add(i)
+    })
+    if (result.size > 0) return result
+  }
+
+  // Fallback: scan ### Day N: DayName lines (Day-by-Day section)
+  for (const line of plan.split('\n')) {
+    const trimmed = line.trimStart()
+    if (!/^#{2,3}\s/.test(trimmed)) continue
+    const dayIdx = DAY_FULL_RESULTS.findIndex(d => new RegExp(`\\b${d}\\b`, 'i').test(trimmed))
+    if (dayIdx === -1) continue
+    if (/\brest\b/i.test(trimmed)) continue
+    result.add(dayIdx)
+  }
+
+  return result
+}
+
+function TrainingWeekSlide({ formData, plan }: { formData: WorkoutFormData; plan?: string }) {
   const days = parseInt(formData.daysPerWeek, 10)
   const mins = parseInt(formData.sessionDuration, 10)
   const totalMins = days * mins
   const totalStr = totalMins >= 90 ? `${Math.round((totalMins / 60) * 10) / 10}h` : `${totalMins}m`
   const motivation = TRAINING_MOTIVATION[formData.daysPerWeek] ?? 'Your schedule is built for consistent forward progress.'
 
-  const unavailableIndices = new Set(
-    (formData.unavailableDays ?? []).map(d => DAY_FULL_RESULTS.indexOf(d)).filter(i => i >= 0)
-  )
-  const trainingIndices = new Set<number>()
-  for (let i = 0; i < 7 && trainingIndices.size < days; i++) {
-    if (!unavailableIndices.has(i)) trainingIndices.add(i)
-  }
+  const trainingIndices = useMemo<Set<number>>(() => {
+    if (plan) {
+      const parsed = parseTrainingDaysFromPlan(plan)
+      if (parsed.size > 0) return parsed
+    }
+    // Fallback: pick first N non-unavailable days
+    const unavail = new Set(
+      (formData.unavailableDays ?? []).map(d => DAY_FULL_RESULTS.indexOf(d)).filter(i => i >= 0)
+    )
+    const fallback = new Set<number>()
+    for (let i = 0; i < 7 && fallback.size < days; i++) {
+      if (!unavail.has(i)) fallback.add(i)
+    }
+    return fallback
+  }, [plan, formData.unavailableDays, days])
 
   return (
     <SlideWrap>
@@ -815,12 +851,14 @@ function ReadySlide({ formData }: { formData: WorkoutFormData }) {
 function ImmersiveReveal({
   analysis,
   formData,
+  plan,
   userName,
   onDone,
   planVisible,
 }: {
   analysis: string
   formData: WorkoutFormData
+  plan?: string
   userName: string
   onDone: () => void
   planVisible: boolean
@@ -933,7 +971,7 @@ function ImmersiveReveal({
               <AnalysisSectionSlide section={currentSection} formData={formData} />
             )}
             {slideIdx === SLIDE_TRAINING && (
-              <TrainingWeekSlide formData={formData} />
+              <TrainingWeekSlide formData={formData} plan={plan} />
             )}
             {hasNutrition && slideIdx === SLIDE_NUTRITION && (
               <NutritionPreviewSlide goals={formData.goals} />
@@ -1491,6 +1529,7 @@ export default function Results() {
           <ImmersiveReveal
             analysis={analysis}
             formData={formData}
+            plan={plan}
             userName={userName}
             onDone={handleViewPlan}
             planVisible={planVisible}
