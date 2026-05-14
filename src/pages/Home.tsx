@@ -4,6 +4,8 @@ import { HiArrowNarrowRight, HiArrowNarrowLeft, HiCheck } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db'
 import type { WorkoutFormData } from '@/lib/gemini'
+import { IoFemaleOutline } from "react-icons/io5";
+import { IoIosMale } from "react-icons/io";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -735,7 +737,7 @@ export default function Home() {
                 <div className="mb-4">
                   <p className="text-white/50 text-sm font-medium mb-2.5">Biological sex <span className="text-white/25 font-normal">(optional)</span></p>
                   <div className="flex gap-2.5">
-                    {[{ id: 'male' as const, label: 'Male', icon: '♂️' }, { id: 'female' as const, label: 'Female', icon: '♀️' }].map(g => (
+                    {[{ id: 'male' as const, label: 'Male', icon: <IoIosMale /> }, { id: 'female' as const, label: 'Female', icon: <IoFemaleOutline /> }].map(g => (
                       <button
                         key={g.id}
                         onClick={() => upd({ sex: s.sex === g.id ? '' : g.id })}
