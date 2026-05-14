@@ -5,9 +5,8 @@ import { db } from '@/lib/db'
 
 export default function Home() {
   const navigate = useNavigate()
-  const { isLoading, user } = db.useAuth()
+  const { user } = db.useAuth()
 
-  if (isLoading) return null
   if (user) return <Navigate to="/dashboard" replace />
 
   return (

@@ -49,6 +49,7 @@ export default function Auth() {
     }
   }
 
+  // Post-verification redirect: user just signed in via magic code
   useEffect(() => {
     if (!verified || !user || profileData === undefined) return
     setLoading(false)
@@ -60,6 +61,18 @@ export default function Auth() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified, user, profileData])
+
+  // Already-authenticated redirect: user lands on /auth while already logged in
+  useEffect(() => {
+    if (verified || !user || profileData === undefined) return
+    const hasProfile = (profileData.userProfiles?.length ?? 0) > 0
+    if (hasProfile) {
+      goAfterAuth()
+    } else {
+      setStep('name')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, profileData])
 
   useEffect(() => {
     if (countdown <= 0) return
