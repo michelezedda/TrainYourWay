@@ -24,38 +24,23 @@ function getGreeting(name: string | undefined): string {
 }
 
 function getWeeklyWorkoutDays(planText: string): number {
-  const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-  const lines = planText.split('\n')
-  let workoutDays = 0
-  let inSection = false
-  let sectionIsRest = false
+  const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-  const commitSection = () => {
-    if (inSection && !sectionIsRest) workoutDays++
-    inSection = false
-    sectionIsRest = false
-  }
-
-  for (const line of lines) {
-    const lower = line.toLowerCase()
-    const isHeading = line.startsWith('#') || /^\*\*Day \d+/i.test(line.trim())
-    const hasWeekday = weekdays.some(d => lower.includes(d))
-
-    if (isHeading && hasWeekday) {
-      commitSection()
-      inSection = true
-      sectionIsRest = /\brest\b/.test(lower) || lower.includes('recovery')
-    } else if (inSection) {
-      if (isHeading && !hasWeekday) {
-        commitSection()
-      } else if (lower.includes('rest day') || lower.includes('active recovery')) {
-        sectionIsRest = true
-      }
+  // Primary: parse the ## Weekly Schedule section (same logic as WorkoutDayView)
+  const section = planText.match(/## Weekly Schedule([\s\S]*?)(?=\n## )/)?.[1] ?? ''
+  if (section) {
+    let count = 0
+    for (const day of DAY_NAMES) {
+      const m = section.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n·]+)`, 'i'))
+      if (m && !/rest|recovery/i.test(m[1])) count++
     }
+    if (count > 0) return count
   }
-  commitSection()
 
-  return workoutDays > 0 ? workoutDays : 5
+  // Fallback: count ### Day N: headers that aren't rest days
+  const dayHeaders = planText.match(/### Day \d+:[^\n]*/gi) ?? []
+  const count = dayHeaders.filter(h => !/rest|recovery/i.test(h)).length
+  return count > 0 ? count : 5
 }
 
 function getTodayWorkout(planText: string): { dayName: string; exercises: string[] } | null {
@@ -307,15 +292,10 @@ export default function Dashboard() {
     return workoutDates.filter(d => d >= mondayStr && d <= today).length
   }, [workoutDates, today])
 
-  // Average macro completion (0-1) across protein, carbs, fat
-  const macroScore = useMemo(() => {
-    if (targets.protein <= 0) return 0
-    return (
-      Math.min(1, todayProtein / targets.protein) +
-      Math.min(1, todayCarbs / targets.carbs) +
-      Math.min(1, todayFat / targets.fat)
-    ) / 3
-  }, [todayProtein, todayCarbs, todayFat, targets])
+  const proteinScore = useMemo(
+    () => targets.protein > 0 ? Math.min(1, todayProtein / targets.protein) : 0,
+    [todayProtein, targets.protein],
+  )
 
   const todayWaterLog = waterLogs.find(w => w.date === today)
   const glasses = todayWaterLog?.glasses ?? 0
@@ -401,12 +381,12 @@ export default function Dashboard() {
             color2="#22D3EE"
           />
           <MiniRing
-            ringId="ring-macro"
-            pct={macroScore}
-            title="Macros"
-            subtitle="balance"
-            color1="#f97316"
-            color2="#facc15"
+            ringId="ring-protein"
+            pct={proteinScore}
+            title="Protein"
+            subtitle={`${todayProtein}g / ${targets.protein}g`}
+            color1="#4ade80"
+            color2="#86efac"
           />
         </div>
       </div>

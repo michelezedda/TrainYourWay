@@ -480,7 +480,7 @@ export default function Chat() {
           <input
             ref={inputRef}
             className="flex-1 bg-transparent outline-none text-white placeholder-white/28 py-4"
-            style={{ fontSize: 15 }}
+            style={{ fontSize: 16 }}
             placeholder="Ask KAI anything..."
             value={input}
             disabled={loading}
