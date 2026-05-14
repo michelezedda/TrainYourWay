@@ -326,7 +326,7 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 overscroll-contain">
+        <div className="overflow-y-auto flex-1 overscroll-contain pb-20">
           <div className="px-5 py-5 space-y-5 pb-8">
 
             {/* Loading state */}

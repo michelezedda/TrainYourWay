@@ -1,7 +1,17 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useContext, createContext } from 'react'
 import { HiInformationCircle, HiChevronDown } from 'react-icons/hi'
 import type { Components } from 'react-markdown'
 import type React from 'react'
+
+// ── Workout progress context ──────────────────────────────────────────────────
+// Allows ExerciseTableCard to report completion up to WorkoutDayView without
+// prop-drilling through the react-markdown component tree.
+
+export const WorkoutProgressContext = createContext<{
+  onExerciseDone?: (key: string, done: boolean) => void
+}>({})
+
+// ── Plan text utilities ───────────────────────────────────────────────────────
 
 export function sanitizePlan(text: string): string {
   return text
@@ -44,6 +54,8 @@ export function transformExercises(text: string): string {
   return result.join('\n')
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function extractText(node: unknown): string {
   if (typeof node === 'string') return node.trim()
   if (typeof node === 'number') return String(node)
@@ -55,8 +67,33 @@ function extractText(node: unknown): string {
   return ''
 }
 
+function parseSetsInfo(setsStr: string): { count: number; reps: string } {
+  const s = setsStr.trim()
+  // "3 x 12 reps", "3 sets x 8-12", "4x10", "3 x AMRAP"
+  const xMatch = s.match(/^(\d+)(?:-\d+)?\s*(?:sets?)?\s*[x×]\s*(.+?)(?:\s*reps?)?$/i)
+  if (xMatch) {
+    const count = parseInt(xMatch[1], 10)
+    const reps = xMatch[2].replace(/\s*reps?$/i, '').trim()
+    return { count: Math.max(1, Math.min(count, 10)), reps }
+  }
+  const numMatch = s.match(/^(\d+)/)
+  if (numMatch) {
+    return { count: Math.max(1, Math.min(parseInt(numMatch[1], 10), 10)), reps: '' }
+  }
+  return { count: 3, reps: '' }
+}
+
+function parseRestSeconds(restStr: string): number {
+  const minMatch = restStr.match(/(\d+)\s*min/i)
+  if (minMatch) return parseInt(minMatch[1], 10) * 60
+  const numMatch = restStr.match(/\d+/)
+  return numMatch ? parseInt(numMatch[0], 10) : 60
+}
+
 const SCHEDULE_DAY = /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i
 const META_LINE    = /^Sets:/i
+
+// ── Inline components ─────────────────────────────────────────────────────────
 
 function MetaChips({ text }: { text: string }) {
   const parts = text.split('|').map(s => s.trim()).filter(Boolean)
@@ -117,7 +154,55 @@ const scheduleCard = (
   </button>
 )
 
-// ── Exercise card ──────────────────────────────────────────────────────────────
+// ── SetRow ────────────────────────────────────────────────────────────────────
+
+interface SetRowProps {
+  idx: number
+  reps: string
+  done: boolean
+  onToggle: () => void
+}
+
+function SetRow({ idx, reps, done, onToggle }: SetRowProps) {
+  return (
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 active:scale-[0.97] text-left"
+      style={{
+        background: done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
+        border: done ? '1px solid rgba(34,197,94,0.28)' : '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
+      <div
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black flex-shrink-0 transition-all duration-200"
+        style={{
+          background: done ? 'rgba(34,197,94,0.22)' : 'rgba(168,85,247,0.18)',
+          color: done ? '#4ade80' : '#c084fc',
+        }}
+      >
+        {idx + 1}
+      </div>
+      <span
+        className="flex-1 text-sm font-medium transition-colors duration-200"
+        style={{ color: done ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.78)' }}
+      >
+        {reps ? `${reps} reps` : 'Complete set'}
+      </span>
+      <div
+        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200"
+        style={
+          done
+            ? { background: 'linear-gradient(135deg, #22C55E, #16A34A)', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }
+            : { border: '1.5px solid rgba(255,255,255,0.2)' }
+        }
+      >
+        {done && <span className="text-white text-[10px] font-bold leading-none">✓</span>}
+      </div>
+    </button>
+  )
+}
+
+// ── ExerciseTableCard ─────────────────────────────────────────────────────────
 
 interface ExerciseTableCardProps {
   name: string
@@ -129,21 +214,15 @@ interface ExerciseTableCardProps {
   onGuideClick: (name: string) => void
 }
 
-function parseRestSeconds(restStr: string): number {
-  const minMatch = restStr.match(/(\d+)\s*min/i)
-  if (minMatch) return parseInt(minMatch[1], 10) * 60
-  const numMatch = restStr.match(/\d+/)
-  return numMatch ? parseInt(numMatch[0], 10) : 60
-}
-
 function ExerciseTableCard({
   name, meta, tip, exerciseKey, weight, onWeightChange, onGuideClick,
 }: ExerciseTableCardProps) {
+  const { onExerciseDone } = useContext(WorkoutProgressContext)
+
   const [localWeight, setLocalWeight] = useState(weight)
-  const [isDone, setIsDone] = useState(false)
+  const [showTip, setShowTip] = useState(false)
   const [restActive, setRestActive] = useState(false)
   const [restSecsLeft, setRestSecsLeft] = useState(0)
-  const [showTip, setShowTip] = useState(false)
   const restTotalRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -159,7 +238,23 @@ function ExerciseTableCard({
     }
   }
 
+  const { count: setsCount, reps } = metaParts['sets']
+    ? parseSetsInfo(metaParts['sets'])
+    : { count: 0, reps: '' }
+
+  const [setsDone, setSetsDone] = useState<boolean[]>(() => Array(Math.max(setsCount, 0)).fill(false))
+  const [manualDone, setManualDone] = useState(false)
+
+  const allSetsDone = setsCount > 0 && setsDone.every(Boolean)
+  const isDone = manualDone || allSetsDone
+  const completedCount = setsDone.filter(Boolean).length
+
   const tipText = tip.replace(/^Form tip:\s*/i, '').trim()
+
+  // Report done state via context whenever it changes
+  useEffect(() => {
+    onExerciseDone?.(exerciseKey, isDone)
+  }, [isDone, exerciseKey, onExerciseDone])
 
   const startRestTimer = (totalSecs: number) => {
     if (timerRef.current) clearInterval(timerRef.current)
@@ -187,12 +282,34 @@ function ExerciseTableCard({
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current) }, [])
 
-  const handleDoneToggle = () => {
-    const next = !isDone
-    setIsDone(next)
-    if (next && metaParts['rest'] && !restActive) {
-      startRestTimer(parseRestSeconds(metaParts['rest']))
-    } else if (!next) {
+  const toggleSet = (idx: number) => {
+    const wasCompleted = setsDone[idx]
+    const next = setsDone.map((v, i) => i === idx ? !v : v)
+    const nowAllDone = next.every(Boolean)
+    setSetsDone(next)
+
+    if (!wasCompleted) {
+      if (nowAllDone) {
+        // Last set done: exercise complete, no rest needed
+        skipRest()
+      } else if (metaParts['rest']) {
+        // More sets remain: start inter-set rest timer
+        startRestTimer(parseRestSeconds(metaParts['rest']))
+      }
+    } else {
+      // Un-completing a set: stop any running timer
+      skipRest()
+    }
+  }
+
+  const toggleManualDone = () => {
+    if (isDone) {
+      setManualDone(false)
+      setSetsDone(Array(setsCount).fill(false))
+      skipRest()
+    } else {
+      setManualDone(true)
+      if (setsCount > 0) setSetsDone(Array(setsCount).fill(true))
       skipRest()
     }
   }
@@ -203,107 +320,166 @@ function ExerciseTableCard({
 
   return (
     <div
-      className={`my-4 rounded-2xl border overflow-hidden transition-all duration-300 ${
-        isDone ? 'border-green-500/25' : 'border-white/10'
-      }`}
-      style={{ background: isDone ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.025)' }}
+      className="my-3 rounded-3xl overflow-hidden transition-all duration-400"
+      style={{
+        background: isDone
+          ? 'linear-gradient(145deg, rgba(22,163,74,0.14) 0%, rgba(5,5,20,0.92) 100%)'
+          : 'linear-gradient(145deg, rgba(168,85,247,0.09) 0%, rgba(5,5,20,0.92) 100%)',
+        border: isDone
+          ? '1px solid rgba(34,197,94,0.28)'
+          : '1px solid rgba(168,85,247,0.22)',
+        boxShadow: isDone
+          ? '0 6px 28px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(34,197,94,0.15), inset 0 1px 0 rgba(34,197,94,0.1)'
+          : '0 6px 28px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(168,85,247,0.08), inset 0 1px 0 rgba(168,85,247,0.1)',
+      }}
     >
-      {/* Header */}
-      <div
-        className="flex items-center gap-3 px-4 py-4"
-        style={{ background: isDone ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.04)' }}
-      >
-        <button
-          onClick={handleDoneToggle}
-          className="flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200 active:scale-90"
-          style={isDone
-            ? { background: 'linear-gradient(135deg, #22C55E, #16A34A)', borderColor: '#22C55E' }
-            : { borderColor: 'rgba(255,255,255,0.20)' }}
-          aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 px-4 py-4">
+        {/* Exercise number badge */}
+        <div
+          className="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm flex-shrink-0 transition-all duration-300"
+          style={
+            isDone
+              ? {
+                background: 'linear-gradient(135deg, #22C55E, #16A34A)',
+                color: '#fff',
+                boxShadow: '0 0 20px rgba(34,197,94,0.4)',
+              }
+              : {
+                background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
+                color: '#fff',
+                boxShadow: '0 0 20px rgba(168,85,247,0.35)',
+              }
+          }
         >
-          {isDone && <span className="text-white text-xs font-bold leading-none">✓</span>}
-        </button>
+          {isDone ? '✓' : num}
+        </div>
 
+        {/* Name + meta badges */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className="text-base font-black flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              className="font-bold text-base leading-tight transition-all duration-300"
+              style={{ color: isDone ? 'rgba(255,255,255,0.42)' : '#fff' }}
             >
-              {num}.
-            </span>
-            <span className={`font-bold text-base leading-tight transition-all duration-200 ${isDone ? 'text-white/35 line-through decoration-white/20' : 'text-white'}`}>
               {displayName}
             </span>
             {isNew && (
-              <span className="flex-shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold uppercase tracking-wide">
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold uppercase tracking-wide flex-shrink-0">
                 new
+              </span>
+            )}
+          </div>
+          <div className="flex gap-1.5 mt-1.5 flex-wrap">
+            {metaParts['rest'] && (
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(34,211,238,0.1)',
+                  color: 'rgba(34,211,238,0.75)',
+                  border: '1px solid rgba(34,211,238,0.18)',
+                }}
+              >
+                {metaParts['rest']} rest
+              </span>
+            )}
+            {metaParts['weight'] && (
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(251,146,60,0.1)',
+                  color: 'rgba(251,146,60,0.75)',
+                  border: '1px solid rgba(251,146,60,0.18)',
+                }}
+              >
+                {metaParts['weight']}
               </span>
             )}
           </div>
         </div>
 
-        <button
-          onClick={() => onGuideClick(exerciseKey)}
-          className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95"
-          style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.22)' }}
-          aria-label="Exercise guide"
-        >
-          <HiInformationCircle className="w-4 h-4 text-purple-400" />
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => onGuideClick(exerciseKey)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-90"
+            style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.22)' }}
+            aria-label="Exercise guide"
+          >
+            <HiInformationCircle className="w-4 h-4 text-purple-400" />
+          </button>
+          <button
+            onClick={toggleManualDone}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 border-2"
+            style={
+              isDone
+                ? { background: 'linear-gradient(135deg, #22C55E, #16A34A)', borderColor: '#22C55E', boxShadow: '0 0 12px rgba(34,197,94,0.35)' }
+                : { borderColor: 'rgba(255,255,255,0.2)' }
+            }
+            aria-label={isDone ? 'Mark incomplete' : 'Mark complete'}
+          >
+            {isDone && <span className="text-white text-xs font-bold leading-none">✓</span>}
+          </button>
+        </div>
       </div>
 
-      {/* Stats chips */}
-      {(metaParts['sets'] || metaParts['rest'] || metaParts['weight']) && (
-        <div className="flex gap-2 px-4 pb-3 pt-1 flex-wrap">
-          {metaParts['sets'] && (
-            <div
-              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl"
-              style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.22)' }}
+      {/* ── Sets progress bar + rows ── */}
+      {setsCount > 0 && (
+        <div className="px-4 pb-4">
+          {/* Progress header */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.22)' }}>
+              Sets
+            </span>
+            <span
+              className="text-[11px] font-bold tabular-nums transition-colors duration-300"
+              style={{ color: completedCount === setsCount ? '#4ade80' : 'rgba(255,255,255,0.4)' }}
             >
-              <p className="text-purple-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Sets</p>
-              <p className="text-purple-100 text-sm font-bold">{metaParts['sets']}</p>
-            </div>
-          )}
-          {metaParts['rest'] && (
-            <button
-              onClick={() => startRestTimer(parseRestSeconds(metaParts['rest']))}
-              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-95"
+              {completedCount}/{setsCount}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
               style={{
-                background: restActive ? 'rgba(34,211,238,0.18)' : 'rgba(34,211,238,0.08)',
-                border: `1px solid ${restActive ? 'rgba(34,211,238,0.4)' : 'rgba(34,211,238,0.22)'}`,
+                width: `${setsCount > 0 ? (completedCount / setsCount) * 100 : 0}%`,
+                background: isDone
+                  ? 'linear-gradient(90deg, #22C55E, #4ade80)'
+                  : 'linear-gradient(90deg, #A855F7, #22D3EE)',
               }}
-            >
-              <p className="text-cyan-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Rest</p>
-              <p className="text-cyan-100 text-sm font-bold">
-                {restActive
-                  ? `${restMins > 0 ? `${restMins}:` : ''}${String(restSecs).padStart(2, '0')}s`
-                  : metaParts['rest']}
-              </p>
-            </button>
-          )}
-          {metaParts['weight'] && (
-            <div
-              className="flex-1 min-w-[80px] px-3 py-2.5 rounded-xl"
-              style={{ background: 'rgba(251,146,60,0.10)', border: '1px solid rgba(251,146,60,0.22)' }}
-            >
-              <p className="text-orange-300/70 text-[9px] uppercase tracking-wider font-semibold mb-0.5">Suggested</p>
-              <p className="text-orange-100 text-sm font-bold">{metaParts['weight']}</p>
-            </div>
-          )}
+            />
+          </div>
+
+          {/* Individual set rows */}
+          <div className="space-y-2">
+            {setsDone.map((done, idx) => (
+              <SetRow
+                key={idx}
+                idx={idx}
+                reps={reps}
+                done={done}
+                onToggle={() => toggleSet(idx)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Rest timer progress bar */}
+      {/* ── Rest timer ── */}
       {restActive && (
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-cyan-300 text-xs font-semibold">
-              Resting - {restMins > 0 ? `${restMins}m ` : ''}{String(restSecs).padStart(2, '0')}s left
+        <div
+          className="mx-4 mb-4 px-4 py-3 rounded-2xl"
+          style={{ background: 'rgba(34,211,238,0.07)', border: '1px solid rgba(34,211,238,0.18)' }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-cyan-300 text-xs font-bold">
+              Rest {restMins > 0 ? `${restMins}m ` : ''}{String(restSecs).padStart(2, '0')}s
             </span>
             <button
               onClick={skipRest}
-              className="text-white/35 text-xs hover:text-white/60 transition-colors"
+              className="text-white/35 text-xs hover:text-white/65 transition-colors font-medium"
             >
               Skip
             </button>
@@ -317,10 +493,10 @@ function ExerciseTableCard({
         </div>
       )}
 
-      {/* My weight input */}
+      {/* ── Weight input ── */}
       <div
-        className="flex items-center gap-3 px-4 py-3 border-t border-white/8"
-        style={{ background: 'rgba(168,85,247,0.03)' }}
+        className="flex items-center gap-3 px-4 py-3 border-t"
+        style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(168,85,247,0.03)' }}
       >
         <span className="text-purple-400/60 text-[9px] uppercase tracking-wider whitespace-nowrap font-semibold">
           My weight
@@ -342,12 +518,12 @@ function ExerciseTableCard({
         )}
       </div>
 
-      {/* Form tip collapsible */}
+      {/* ── Form tip ── */}
       {tipText && (
-        <div className="border-t border-white/8">
+        <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <button
             onClick={() => setShowTip(p => !p)}
-            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/3 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
           >
             <span className="text-white/40 text-xs font-medium">Form tip</span>
             <HiChevronDown
@@ -365,7 +541,7 @@ function ExerciseTableCard({
   )
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Public exports ────────────────────────────────────────────────────────────
 
 export function buildPlanComponents(
   setSelectedExercise: (name: string) => void,
