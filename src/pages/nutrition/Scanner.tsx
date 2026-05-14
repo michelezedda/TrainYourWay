@@ -75,9 +75,9 @@ const EXAMPLE_VERDICTS = [
 ]
 
 const VERDICT_CHIP_STYLES: Record<string, { bg: string; border: string; color: string }> = {
-  positive: { bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.3)',   color: '#86efac' },
-  warning:  { bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.3)',   color: '#fde68a' },
-  negative: { bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)',   color: '#fca5a5' },
+  positive: { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', color: '#86efac' },
+  warning: { bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.3)', color: '#fde68a' },
+  negative: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', color: '#fca5a5' },
 }
 
 // ── Intro screen ──────────────────────────────────────────────────────────────
@@ -303,7 +303,7 @@ function IntroScreen({
       <motion.div
         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
       >
-        <button onClick={onStart} className="btn-primary w-full justify-center py-4 text-base">
+        <button onClick={onStart} className="btn-primary w-full justify-center py-4 text-base mb-10">
           <HiCamera className="w-5 h-5" />
           {history.length > 0 ? 'Scan Another Product' : 'Scan Your First Product'}
         </button>
@@ -450,14 +450,14 @@ function macroBarColor(pct: number, dir: MacroDir): string {
 function VisualMacroBars({ product }: { product: OFFProduct }) {
   const n = product.nutriments ?? {}
   const items: { label: string; value: number | null; unit: 'kcal' | 'g' | 'mg'; max: number; dir: MacroDir; context: string }[] = [
-    { label: 'Calories',  value: n['energy-kcal_100g'] ?? null,                          unit: 'kcal', max: 500, dir: 'neutral',       context: 'Energy content' },
-    { label: 'Protein',   value: n.proteins_100g ?? null,                                 unit: 'g',    max: 30,  dir: 'more-is-better', context: 'Builds and repairs muscle' },
-    { label: 'Carbs',     value: n.carbohydrates_100g ?? null,                            unit: 'g',    max: 60,  dir: 'neutral',       context: 'Main fuel for your body' },
-    { label: 'Sugars',    value: n.sugars_100g ?? null,                                   unit: 'g',    max: 25,  dir: 'less-is-better', context: 'Limit for better health' },
-    { label: 'Fat',       value: n.fat_100g ?? null,                                      unit: 'g',    max: 20,  dir: 'neutral',       context: 'Essential for hormones and cells' },
-    { label: 'Sat. Fat',  value: n['saturated-fat_100g'] ?? null,                         unit: 'g',    max: 10,  dir: 'less-is-better', context: 'Keep low for heart health' },
-    { label: 'Fiber',     value: n.fiber_100g ?? null,                                    unit: 'g',    max: 8,   dir: 'more-is-better', context: 'Supports digestion' },
-    { label: 'Sodium',    value: n.sodium_100g != null ? n.sodium_100g * 1000 : null,     unit: 'mg',   max: 600, dir: 'less-is-better', context: 'Watch your salt intake' },
+    { label: 'Calories', value: n['energy-kcal_100g'] ?? null, unit: 'kcal', max: 500, dir: 'neutral', context: 'Energy content' },
+    { label: 'Protein', value: n.proteins_100g ?? null, unit: 'g', max: 30, dir: 'more-is-better', context: 'Builds and repairs muscle' },
+    { label: 'Carbs', value: n.carbohydrates_100g ?? null, unit: 'g', max: 60, dir: 'neutral', context: 'Main fuel for your body' },
+    { label: 'Sugars', value: n.sugars_100g ?? null, unit: 'g', max: 25, dir: 'less-is-better', context: 'Limit for better health' },
+    { label: 'Fat', value: n.fat_100g ?? null, unit: 'g', max: 20, dir: 'neutral', context: 'Essential for hormones and cells' },
+    { label: 'Sat. Fat', value: n['saturated-fat_100g'] ?? null, unit: 'g', max: 10, dir: 'less-is-better', context: 'Keep low for heart health' },
+    { label: 'Fiber', value: n.fiber_100g ?? null, unit: 'g', max: 8, dir: 'more-is-better', context: 'Supports digestion' },
+    { label: 'Sodium', value: n.sodium_100g != null ? n.sodium_100g * 1000 : null, unit: 'mg', max: 600, dir: 'less-is-better', context: 'Watch your salt intake' },
   ]
   const visible = items.filter(i => i.value !== null)
   if (!visible.length) return <p className="text-white/35 text-sm text-center py-10">No nutrition data available.</p>
@@ -568,9 +568,9 @@ function NovaCard({ group }: { group: number }) {
 function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   if (!verdicts.length) return null
   const styles = {
-    positive: { bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)',  color: '#86efac' },
-    negative: { bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  color: '#fca5a5' },
-    warning:  { bg: 'rgba(234,179,8,0.12)',  border: 'rgba(234,179,8,0.3)',  color: '#fde68a' },
+    positive: { bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)', color: '#86efac' },
+    negative: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', color: '#fca5a5' },
+    warning: { bg: 'rgba(234,179,8,0.12)', border: 'rgba(234,179,8,0.3)', color: '#fde68a' },
   }
   return (
     <div className="flex flex-wrap gap-2">
@@ -590,9 +590,9 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
 // ── Can I eat this? ───────────────────────────────────────────────────────────
 
 const CAN_I_EAT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  'Yes':         { bg: 'rgba(34,197,94,0.1)',  border: 'rgba(34,197,94,0.3)',  text: '#86efac', dot: '#22c55e' },
-  'Sometimes':   { bg: 'rgba(234,179,8,0.1)',  border: 'rgba(234,179,8,0.3)',  text: '#fde68a', dot: '#eab308' },
-  'Avoid often': { bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)',  text: '#fca5a5', dot: '#ef4444' },
+  'Yes': { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#86efac', dot: '#22c55e' },
+  'Sometimes': { bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.3)', text: '#fde68a', dot: '#eab308' },
+  'Avoid often': { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#fca5a5', dot: '#ef4444' },
 }
 
 function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
@@ -807,28 +807,28 @@ function AddToFindsButton({ product, scored, barcode, userId }: { product: OFFPr
 // ── Result tabs ───────────────────────────────────────────────────────────────
 
 const RESULT_TABS: { id: ResultTab; label: string }[] = [
-  { id: 'health',    label: 'Health'    },
+  { id: 'health', label: 'Health' },
   { id: 'nutrition', label: 'Nutrition' },
-  { id: 'details',   label: 'Details'   },
+  { id: 'details', label: 'Details' },
 ]
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Scanner() {
-  const videoRef    = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
-  const scanning    = useRef(false)
+  const scanning = useRef(false)
 
-  const [state, setState]       = useState<PageState>('intro')
-  const [barcode, setBarcode]   = useState('')
-  const [product, setProduct]   = useState<OFFProduct | null>(null)
-  const [scored, setScored]     = useState<ScoredProduct | null>(null)
-  const [history, setHistory]   = useState<ScanHistoryEntry[]>(() => getScanHistory())
-  const [errMsg, setErrMsg]     = useState('')
+  const [state, setState] = useState<PageState>('intro')
+  const [barcode, setBarcode] = useState('')
+  const [product, setProduct] = useState<OFFProduct | null>(null)
+  const [scored, setScored] = useState<ScoredProduct | null>(null)
+  const [history, setHistory] = useState<ScanHistoryEntry[]>(() => getScanHistory())
+  const [errMsg, setErrMsg] = useState('')
   const [resultTab, setResultTab] = useState<ResultTab>('health')
 
   const profile = getNutritionProfile()
-  const userId  = getUserId()
+  const userId = getUserId()
 
   const stopCamera = useCallback(() => {
     controlsRef.current?.stop()
