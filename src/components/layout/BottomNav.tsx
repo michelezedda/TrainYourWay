@@ -1,9 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
-import { PiForkKnifeDuotone, PiUserGearLight } from 'react-icons/pi'
+import { PiForkKnifeDuotone, PiUserGearLight, PiBrainLight, PiBarcodeLight, PiUsersThreeLight, PiBookOpenLight } from 'react-icons/pi'
 import { IoChatbubblesOutline } from 'react-icons/io5'
 import { GrHomeOption } from 'react-icons/gr'
 import { db } from '@/lib/db'
-import { PiBrainLight } from "react-icons/pi";
 
 const HIDE_ON = ['/questionnaire', '/generating', '/reevaluate', '/auth', '/onboarding-summary']
 
@@ -37,7 +36,18 @@ function PersonIcon({ active }: { active: boolean }) {
 
 function MindIcon({ active }: { active: boolean }) {
   return <PiBrainLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
+}
 
+function ScanIcon({ active }: { active: boolean }) {
+  return <PiBarcodeLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
+}
+
+function CommunityIcon({ active }: { active: boolean }) {
+  return <PiUsersThreeLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
+}
+
+function MachineIcon({ active }: { active: boolean }) {
+  return <PiBookOpenLight className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
 }
 
 const LEFT_NAV = [
@@ -57,6 +67,12 @@ const ALL_NAV = [
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
   { to: '/chat', label: 'Kai', Icon: ChatIcon },
   { to: '/me', label: 'Settings', Icon: PersonIcon },
+]
+
+const SHORTCUT_NAV = [
+  { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
+  { to: '/community', label: 'Community', Icon: CommunityIcon },
+  { to: '/machine', label: 'Machine Guide', Icon: MachineIcon },
 ]
 
 export default function BottomNav() {
@@ -182,6 +198,36 @@ export default function BottomNav() {
                     }
                   : {
                     color: 'rgba(255,255,255,0.42)',
+                    border: '1px solid transparent',
+                  }
+                }
+              >
+                <Icon active={active} />
+                <span className="text-sm font-medium">{label}</span>
+              </Link>
+            )
+          })}
+
+          <div className="mx-3 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+          <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            Shortcuts
+          </p>
+
+          {SHORTCUT_NAV.map(({ to, label, Icon }) => {
+            const active = isActive(to)
+            return (
+              <Link
+                key={to}
+                to={to}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 active:scale-[0.97]"
+                style={active
+                  ? {
+                    background: 'rgba(168,85,247,0.12)',
+                    color: '#c084fc',
+                    border: '1px solid rgba(168,85,247,0.2)',
+                  }
+                  : {
+                    color: 'rgba(255,255,255,0.35)',
                     border: '1px solid transparent',
                   }
                 }

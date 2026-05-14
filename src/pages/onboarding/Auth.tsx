@@ -11,10 +11,9 @@ function Spinner() {
 }
 
 export default function Auth() {
-  const [step, setStep] = useState<'email' | 'code' | 'name'>('email')
+  const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [countdown, setCountdown] = useState(0)
@@ -36,8 +35,15 @@ export default function Auth() {
     if (rawPending) {
       sessionStorage.removeItem('pendingPlan')
       try {
-        const { payload, nutritionData } = JSON.parse(rawPending) as { payload: unknown; nutritionData: Parameters<typeof saveNutritionProfile>[0] }
+        const { payload, nutritionData, name } = JSON.parse(rawPending) as { payload: unknown; nutritionData: Parameters<typeof saveNutritionProfile>[0]; name?: string }
         if (nutritionData) saveNutritionProfile(nutritionData)
+        if (name?.trim()) {
+          void db.transact(db.tx.userProfiles[id()].update({
+            userId: user.id,
+            name: name.trim(),
+            createdAt: Date.now(),
+          }))
+        }
         navigate('/generating', { state: { payload, plansToDelete: [] }, replace: true })
         return
       } catch { /* fall through to normal routing if parse fails */ }
@@ -53,24 +59,14 @@ export default function Auth() {
   useEffect(() => {
     if (!verified || !user || profileData === undefined) return
     setLoading(false)
-    const hasProfile = (profileData.userProfiles?.length ?? 0) > 0
-    if (hasProfile) {
-      goAfterAuth()
-    } else {
-      setStep('name')
-    }
+    goAfterAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified, user, profileData])
 
   // Already-authenticated redirect: user lands on /auth while already logged in
   useEffect(() => {
     if (verified || !user || profileData === undefined) return
-    const hasProfile = (profileData.userProfiles?.length ?? 0) > 0
-    if (hasProfile) {
-      goAfterAuth()
-    } else {
-      setStep('name')
-    }
+    goAfterAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, profileData])
 
@@ -104,23 +100,6 @@ export default function Auth() {
       setVerified(true)
     } catch {
       setError('Incorrect code or it has expired. Request a new one.')
-      setLoading(false)
-    }
-  }
-
-  const handleSubmitName = async () => {
-    if (!user?.id || !name.trim()) return
-    setLoading(true)
-    setError('')
-    try {
-      await db.transact(db.tx.userProfiles[id()].update({
-        userId: user.id,
-        name: name.trim(),
-        createdAt: Date.now(),
-      }))
-      goAfterAuth()
-    } catch {
-      setError('Could not save your name. Please try again.')
       setLoading(false)
     }
   }
@@ -257,54 +236,6 @@ export default function Auth() {
                   {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
                 </button>
               </div>
-            </div>
-          </>
-        )}
-
-        {/* ── Name step ────────────────────────────────────────────────── */}
-        {step === 'name' && (
-          <>
-            <div className="mb-8">
-              <div className="text-4xl mb-5">🙌</div>
-              <p className="text-purple-400/70 text-xs font-semibold uppercase tracking-widest mb-2">
-                {newSignup ? 'Almost there' : 'Welcome to UPLIFT'}
-              </p>
-              <h2 className="text-3xl font-black text-white tracking-tight leading-tight mb-2">
-                {newSignup && name ? `Is "${name}" right?` : "What should we call you?"}
-              </h2>
-              <p className="text-white/40 text-sm leading-relaxed">
-                {newSignup
-                  ? 'Confirm your name and your plan will start generating.'
-                  : 'Your name makes your experience feel personal.'}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                className="input-glass text-lg font-semibold"
-                type="text"
-                placeholder="Your first name"
-                autoFocus
-                autoComplete="given-name"
-                value={name}
-                disabled={loading}
-                style={{ fontSize: 18 }}
-                onChange={e => setName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && name.trim().length >= 2) void handleSubmitName() }}
-              />
-              {error && <p className="text-xs text-red-400">{error}</p>}
-              <button
-                onClick={() => void handleSubmitName()}
-                disabled={loading || name.trim().length < 2}
-                className="btn-primary w-full justify-center py-4 text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
-              >
-                {loading ? <Spinner /> : (
-                  <>
-                    {newSignup ? 'Generate My Plan' : 'Get started'}
-                    <HiArrowNarrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
             </div>
           </>
         )}

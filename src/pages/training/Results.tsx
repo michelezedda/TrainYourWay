@@ -324,6 +324,7 @@ function AnalysisSectionSlide({
 // ── Training Week Slide ───────────────────────────────────────────────────────
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const DAY_FULL_RESULTS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 function TrainingWeekSlide({ formData }: { formData: WorkoutFormData }) {
   const days = parseInt(formData.daysPerWeek, 10)
@@ -333,6 +334,14 @@ function TrainingWeekSlide({ formData }: { formData: WorkoutFormData }) {
     ? `${Math.round((totalMins / 60) * 10) / 10}h`
     : `${totalMins}m`
   const motivation = TRAINING_MOTIVATION[formData.daysPerWeek] ?? 'Your schedule is built for consistent forward progress.'
+
+  const unavailableIndices = new Set(
+    (formData.unavailableDays ?? []).map(d => DAY_FULL_RESULTS.indexOf(d)).filter(i => i >= 0)
+  )
+  const trainingIndices = new Set<number>()
+  for (let i = 0; i < 7 && trainingIndices.size < days; i++) {
+    if (!unavailableIndices.has(i)) trainingIndices.add(i)
+  }
 
   return (
     <div className="py-4 space-y-7">
@@ -358,7 +367,7 @@ function TrainingWeekSlide({ formData }: { formData: WorkoutFormData }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.18 + i * 0.07, type: 'spring', stiffness: 380, damping: 22 }}
             className="flex-1 h-12 rounded-xl flex items-center justify-center font-black text-sm"
-            style={i < days ? {
+            style={trainingIndices.has(i) ? {
               background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
               color: '#fff',
               boxShadow: '0 0 18px rgba(168,85,247,0.35)',
@@ -389,24 +398,28 @@ function TrainingWeekSlide({ formData }: { formData: WorkoutFormData }) {
       </motion.div>
 
       {/* Equipment tags */}
-      {formData.equipment.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.68 }}>
-          <p className="text-white/30 text-[10px] uppercase tracking-wider mb-2.5">Your equipment</p>
-          <div className="flex flex-wrap gap-2">
-            {formData.equipment.slice(0, 6).map(eq => (
-              <span key={eq}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-white/55">
-                {eq}
-              </span>
-            ))}
-            {formData.equipment.length > 6 && (
-              <span className="px-3 py-1.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-white/55">
-                +{formData.equipment.length - 6} more
-              </span>
-            )}
-          </div>
-        </motion.div>
-      )}
+      {formData.equipment.length > 0 && (() => {
+        const customEquip = formData.equipment.filter(eq => eq !== 'Full Gym Access')
+        if (!customEquip.length) return null
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.68 }}>
+            <p className="text-white/30 text-[10px] uppercase tracking-wider mb-2.5">Your equipment</p>
+            <div className="flex flex-wrap gap-2">
+              {customEquip.slice(0, 6).map(eq => (
+                <span key={eq}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-white/55">
+                  {eq}
+                </span>
+              ))}
+              {customEquip.length > 6 && (
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-white/55">
+                  +{customEquip.length - 6} more
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )
+      })()}
 
       {/* Motivation callout */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.78 }}
