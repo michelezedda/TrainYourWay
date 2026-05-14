@@ -26,7 +26,11 @@ const REEVALUATION_TIPS = [
 export default function Generating() {
   const navigate = useNavigate()
   const location = useLocation()
-  const payload = location.state?.payload as WorkoutFormData | undefined
+  const payload: WorkoutFormData | undefined = location.state?.payload ?? (() => {
+    const stored = sessionStorage.getItem('pendingPlan')
+    if (stored) { sessionStorage.removeItem('pendingPlan'); return JSON.parse(stored) as WorkoutFormData }
+    return undefined
+  })()
   const reevaluation = location.state?.reevaluation as ReevaluationData | undefined
   const plansToDelete = (location.state?.plansToDelete as string[] | undefined) ?? []
   const isReevaluation = !!reevaluation
@@ -50,7 +54,7 @@ export default function Generating() {
     started.current = true
 
     if (!payload && !reevaluation) {
-      navigate('/questionnaire', { replace: true })
+      navigate('/dashboard', { replace: true })
       return
     }
 

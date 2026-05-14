@@ -42,27 +42,33 @@ function AuthSync() {
   return null
 }
 
+function AppLayout() {
+  const { user } = db.useAuth()
+  return (
+    <div className="relative min-h-screen flex flex-col" style={{ zIndex: 1 }}>
+      <div className={`flex-1 ${user ? 'md:pl-56' : ''}`}>
+        <Routes>
+          <Route path="/"     element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/*"   element={<AuthGuard />} />
+        </Routes>
+      </div>
+      <BottomNav />
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <AuthSync />
-        {/* Global ambient background — only visible behind authenticated inner pages */}
         <div className="ambient-bg" aria-hidden>
           <div className="ambient-orb-1" />
           <div className="ambient-orb-2" />
           <div className="ambient-orb-3" />
         </div>
-        <div className="relative min-h-screen flex flex-col" style={{ zIndex: 1 }}>
-          <div className="flex-1 md:pl-56">
-            <Routes>
-              <Route path="/"     element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/*"   element={<AuthGuard />} />
-            </Routes>
-          </div>
-          <BottomNav />
-        </div>
+        <AppLayout />
       </BrowserRouter>
     </ErrorBoundary>
   )

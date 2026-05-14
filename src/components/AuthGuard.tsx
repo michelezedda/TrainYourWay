@@ -14,6 +14,12 @@ import Personal from '@/pages/Personal'
 import Scanner from '@/pages/Scanner'
 import Community from '@/pages/Community'
 import MachineGuide from '@/pages/MachineGuide'
+import Wellness from '@/pages/Wellness'
+import WellnessBreathing from '@/pages/WellnessBreathing'
+import WellnessFocus from '@/pages/WellnessFocus'
+import WellnessJournal from '@/pages/WellnessJournal'
+import WellnessSession from '@/pages/WellnessSession'
+import WellnessAffirmations from '@/pages/WellnessAffirmations'
 
 function Spinner() {
   return (
@@ -43,9 +49,17 @@ export default function AuthGuard() {
       <Route path="/import"        element={<ImportPlan />} />
       <Route path="/support"       element={<Support />} />
       <Route path="/me"            element={<Personal />} />
-      <Route path="/scanner"       element={<Scanner />} />
-      <Route path="/community"     element={<Community />} />
-      <Route path="/machine"       element={<MachineGuide />} />
+      <Route path="/scanner"              element={<Scanner />} />
+      <Route path="/community"            element={<Community />} />
+      <Route path="/machine"              element={<MachineGuide />} />
+      <Route path="/wellness"             element={<Wellness />} />
+      <Route path="/wellness/breathing"   element={<WellnessBreathing />} />
+      <Route path="/wellness/focus"       element={<WellnessFocus />} />
+      <Route path="/wellness/journal"     element={<WellnessJournal />} />
+      <Route path="/wellness/affirmations" element={<WellnessAffirmations />} />
+      <Route path="/wellness/meditate"    element={<WellnessSession />} />
+      <Route path="/wellness/sleep"       element={<WellnessSession />} />
+      <Route path="/wellness/session/:type" element={<WellnessSession />} />
     </Routes>
   )
 }

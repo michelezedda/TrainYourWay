@@ -1,5 +1,6 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { HiCheckCircle, HiQuestionMarkCircle, HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar } from 'react-icons/hi'
+import { motion, AnimatePresence } from 'framer-motion'
 import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { NotFoundException } from '@zxing/library'
@@ -14,27 +15,129 @@ import { getUserId } from '@/lib/userId'
 import { generateProductStory, shareOrDownload } from '@/lib/storyCanvas'
 
 type PageState = 'idle' | 'loading' | 'result' | 'not-found' | 'error'
+type ResultTab = 'health' | 'nutrition' | 'details'
 
 function todayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// ── Nutri-Score badge ─────────────────────────────────────────────────────────
+// ── Grade constants ───────────────────────────────────────────────────────────
+
+const GRADE_EXPLANATION: Record<string, string> = {
+  A: 'Excellent nutritional quality. A great choice.',
+  B: 'Good quality with minor concerns.',
+  C: 'Average quality - fine in moderation.',
+  D: 'Poor quality. Limit how often you eat this.',
+  E: 'Very low quality. Consider an alternative.',
+}
 
 const NS_COLORS: Record<string, string> = {
-  A: '#1e8a3c',
-  B: '#83b830',
-  C: '#f5c92e',
-  D: '#e87d1e',
-  E: '#e53a29',
+  A: '#1e8a3c', B: '#83b830', C: '#f5c92e', D: '#e87d1e', E: '#e53a29',
 }
 const GRADE_SEQUENCE = ['A', 'B', 'C', 'D', 'E']
+
+// ── NOVA explanation ──────────────────────────────────────────────────────────
+
+const NOVA_EXPLANATION: Record<number, string> = {
+  1: 'Unprocessed or minimally processed - fruits, vegetables, meats. Best choice.',
+  2: 'Processed culinary ingredients - oils, flour, sugar. Used in cooking, not eaten alone.',
+  3: 'Processed foods - canned goods, cured meats, fresh bread. OK in moderation.',
+  4: 'Ultra-processed - industrial formulas with many additives. Limit these.',
+}
+
+// ── Visual macro bars ─────────────────────────────────────────────────────────
+
+type MacroDir = 'more-is-better' | 'less-is-better' | 'neutral'
+
+function macroBarColor(pct: number, dir: MacroDir): string {
+  if (dir === 'more-is-better') {
+    if (pct >= 0.6) return '#22c55e'
+    if (pct >= 0.25) return '#eab308'
+    return 'rgba(255,255,255,0.25)'
+  }
+  if (dir === 'less-is-better') {
+    if (pct >= 0.75) return '#ef4444'
+    if (pct >= 0.4) return '#f97316'
+    return '#22c55e'
+  }
+  return '#A855F7'
+}
+
+function VisualMacroBars({ product }: { product: OFFProduct }) {
+  const n = product.nutriments ?? {}
+
+  const items: {
+    label: string
+    value: number | null
+    unit: 'kcal' | 'g' | 'mg'
+    max: number
+    dir: MacroDir
+    context: string
+  }[] = [
+    { label: 'Calories', value: n['energy-kcal_100g'] ?? null, unit: 'kcal', max: 500, dir: 'neutral', context: 'Energy content' },
+    { label: 'Protein', value: n.proteins_100g ?? null, unit: 'g', max: 30, dir: 'more-is-better', context: 'Builds and repairs muscle' },
+    { label: 'Carbs', value: n.carbohydrates_100g ?? null, unit: 'g', max: 60, dir: 'neutral', context: 'Main fuel for your body' },
+    { label: 'Sugars', value: n.sugars_100g ?? null, unit: 'g', max: 25, dir: 'less-is-better', context: 'Limit for better health' },
+    { label: 'Fat', value: n.fat_100g ?? null, unit: 'g', max: 20, dir: 'neutral', context: 'Essential for hormones and cells' },
+    { label: 'Sat. Fat', value: n['saturated-fat_100g'] ?? null, unit: 'g', max: 10, dir: 'less-is-better', context: 'Keep low for heart health' },
+    { label: 'Fiber', value: n.fiber_100g ?? null, unit: 'g', max: 8, dir: 'more-is-better', context: 'Supports digestion' },
+    { label: 'Sodium', value: n.sodium_100g != null ? n.sodium_100g * 1000 : null, unit: 'mg', max: 600, dir: 'less-is-better', context: 'Watch your salt intake' },
+  ]
+
+  const visible = items.filter(i => i.value !== null)
+  if (!visible.length) {
+    return <p className="text-white/35 text-sm text-center py-10">No nutrition data available for this product.</p>
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-white/35">Per 100g</p>
+      {visible.map(item => {
+        const val = item.value as number
+        const pct = Math.min(val / item.max, 1)
+        const color = macroBarColor(pct, item.dir)
+        const valStr = item.unit === 'kcal'
+          ? `${Math.round(val)} kcal`
+          : item.unit === 'mg'
+          ? `${Math.round(val)} mg`
+          : `${val.toFixed(1)} g`
+        return (
+          <div key={item.label}>
+            <div className="flex items-baseline justify-between mb-1.5 gap-2">
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="text-sm font-semibold text-white flex-shrink-0">{item.label}</span>
+                <span className="text-xs text-white/30 truncate">{item.context}</span>
+              </div>
+              <span className="text-sm font-bold flex-shrink-0" style={{ color }}>{valStr}</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+              <motion.div
+                className="h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct * 100}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                style={{ background: color }}
+              />
+            </div>
+          </div>
+        )
+      })}
+      <div className="pt-1 flex flex-wrap gap-3 text-[10px] text-white/25">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: '#22c55e' }} /> More is better</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: '#ef4444' }} /> Less is better</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: '#A855F7' }} /> Context-dependent</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Nutri-Score badge ─────────────────────────────────────────────────────────
 
 function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: string }) {
   return (
     <div
-      className="rounded-2xl px-3 pt-2.5 pb-3 animate-fade-in"
+      className="rounded-2xl px-3 pt-2.5 pb-3"
       style={{ background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.1)' }}
     >
       <p className="text-center font-black tracking-[0.2em] mb-2.5 text-[10px] uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -65,7 +168,7 @@ function NutriScoreBadge({ grade, gradeLabel }: { grade: string; gradeLabel: str
   )
 }
 
-// ── NOVA dots ─────────────────────────────────────────────────────────────────
+// ── NOVA display ──────────────────────────────────────────────────────────────
 
 function NovaDots({ group }: { group: number }) {
   const labels = ['', 'Unprocessed', 'Processed', 'Processed', 'Ultra-processed']
@@ -79,6 +182,24 @@ function NovaDots({ group }: { group: number }) {
         ))}
       </div>
       <span className="text-white/40 text-[10px]">{labels[group] ?? ''}</span>
+    </div>
+  )
+}
+
+function NovaCard({ group }: { group: number }) {
+  const color = novaColor(group)
+  return (
+    <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="flex gap-1 flex-shrink-0 mt-1">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="w-2 h-2 rounded-full" style={{ background: i <= group ? color : 'rgba(255,255,255,0.12)' }} />
+        ))}
+      </div>
+      <div>
+        <p className="text-xs font-semibold mb-0.5" style={{ color }}>NOVA group {group}</p>
+        <p className="text-xs text-white/50 leading-relaxed">{NOVA_EXPLANATION[group] ?? ''}</p>
+      </div>
     </div>
   )
 }
@@ -103,77 +224,6 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
           </span>
         )
       })}
-    </div>
-  )
-}
-
-// ── Macro row ─────────────────────────────────────────────────────────────────
-
-function MacroRow({ product }: { product: OFFProduct }) {
-  const n = product.nutriments ?? {}
-  const items = [
-    { label: 'Calories', value: n['energy-kcal_100g'] != null ? `${Math.round(n['energy-kcal_100g'])} kcal` : '--' },
-    { label: 'Protein', value: n.proteins_100g != null ? `${n.proteins_100g.toFixed(1)}g` : '--' },
-    { label: 'Carbs', value: n.carbohydrates_100g != null ? `${n.carbohydrates_100g.toFixed(1)}g` : '--' },
-    { label: 'Fat', value: n.fat_100g != null ? `${n.fat_100g.toFixed(1)}g` : '--' },
-    { label: 'Sugars', value: n.sugars_100g != null ? `${n.sugars_100g.toFixed(1)}g` : '--' },
-    { label: 'Fiber', value: n.fiber_100g != null ? `${n.fiber_100g.toFixed(1)}g` : '--' },
-  ]
-  return (
-    <div>
-      <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-3">Per 100g</p>
-      <div className="grid grid-cols-3 gap-3">
-        {items.map(({ label, value }) => (
-          <div key={label} className="text-center p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
-            <p className="text-white font-semibold text-sm">{value}</p>
-            <p className="text-white/35 text-[10px] mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Alternative suggestion ────────────────────────────────────────────────────
-
-function AlternativeCard({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
-  const [alt, setAlt] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const profile = getNutritionProfile()
-    const issues = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text).join(', ')
-    const prompt =
-      `You are a strict nutrition coach. ` +
-      `Product scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
-      `Grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
-      (profile ? `User goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}. ` : '') +
-      `Name ONE better alternative with a short reason. ` +
-      `Reply format: "Product name - reason." Under 15 words. No emojis, no filler, no marketing language.`
-
-    sendChatMessage([{ role: 'user', content: prompt }], '')
-      .then(reply => setAlt(reply))
-      .catch(() => setAlt(null))
-      .finally(() => setLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <LoadingSpinner size="sm" />
-        <span className="text-white/40 text-xs">Finding a better alternative...</span>
-      </div>
-    )
-  }
-  if (!alt) return null
-  return (
-    <div className="flex items-start gap-3 p-4 rounded-2xl border animate-fade-in"
-      style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}>
-      <HiCheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-green-300 text-xs font-semibold mb-0.5">Better alternative</p>
-        <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
-      </div>
     </div>
   )
 }
@@ -246,9 +296,9 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
       disabled={status === 'loading'}
       className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        color: 'rgba(255,255,255,0.6)',
+        background: 'rgba(168,85,247,0.08)',
+        border: '1px solid rgba(168,85,247,0.25)',
+        color: '#c084fc',
         opacity: status === 'loading' ? 0.7 : 1,
       }}
     >
@@ -258,6 +308,50 @@ function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredP
         <><HiQuestionMarkCircle className="w-4 h-4" /><span>Can I eat this?</span></>
       )}
     </button>
+  )
+}
+
+// ── Alternative suggestion ────────────────────────────────────────────────────
+
+function AlternativeCard({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
+  const [alt, setAlt] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const profile = getNutritionProfile()
+    const issues = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text).join(', ')
+    const prompt =
+      `You are a strict nutrition coach. ` +
+      `Product scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
+      `Grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
+      (profile ? `User goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}. ` : '') +
+      `Name ONE better alternative with a short reason. ` +
+      `Reply format: "Product name - reason." Under 15 words. No emojis, no filler, no marketing language.`
+
+    sendChatMessage([{ role: 'user', content: prompt }], '')
+      .then(reply => setAlt(reply))
+      .catch(() => setAlt(null))
+      .finally(() => setLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <LoadingSpinner size="sm" />
+        <span className="text-white/40 text-xs">Finding a better alternative...</span>
+      </div>
+    )
+  }
+  if (!alt) return null
+  return (
+    <div className="flex items-start gap-3 p-4 rounded-2xl border animate-fade-in"
+      style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}>
+      <HiCheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-green-300 text-xs font-semibold mb-0.5">Better alternative</p>
+        <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
+      </div>
+    </div>
   )
 }
 
@@ -278,9 +372,9 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
   }
 
   return (
-    <div className="glass-card p-4">
+    <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Gym Score</p>
+        <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Community rating</p>
         {avg !== null && (
           <span className="text-white/40 text-xs">
             {avg.toFixed(1)} avg · {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
@@ -324,9 +418,8 @@ function ShareButton({ product, scored, userId }: { product: OFFProduct; scored:
       await db.transact(
         db.tx.workoutCompletions[id()].update({ userId, date: todayStr(), createdAt: Date.now() })
       )
-    } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError')) setStatus('idle')
-      else setStatus('idle')
+    } catch {
+      setStatus('idle')
     }
   }
 
@@ -440,6 +533,14 @@ function AimOverlay() {
   )
 }
 
+// ── Result tabs ───────────────────────────────────────────────────────────────
+
+const RESULT_TABS: { id: ResultTab; label: string }[] = [
+  { id: 'health', label: 'Health' },
+  { id: 'nutrition', label: 'Nutrition' },
+  { id: 'details', label: 'Details' },
+]
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Scanner() {
@@ -453,6 +554,7 @@ export default function Scanner() {
   const [scored, setScored] = useState<ScoredProduct | null>(null)
   const [history, setHistory] = useState<ScanHistoryEntry[]>(() => getScanHistory())
   const [errMsg, setErrMsg] = useState('')
+  const [resultTab, setResultTab] = useState<ResultTab>('health')
 
   const profile = getNutritionProfile()
   const userId = getUserId()
@@ -517,6 +619,7 @@ export default function Scanner() {
       const score = scoreProduct(data, profile)
       setProduct(data)
       setScored(score)
+      setResultTab('health')
       setState('result')
 
       const entry: ScanHistoryEntry = {
@@ -540,6 +643,7 @@ export default function Scanner() {
     setScored(null)
     setBarcode('')
     setErrMsg('')
+    setResultTab('health')
     setState('idle')
   }
 
@@ -610,9 +714,9 @@ export default function Scanner() {
   // ── Result ─────────────────────────────────────────────────────────────────
 
   if (state === 'result' && product && scored) {
-    const n = product.nutriments ?? {}
     return (
       <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
+
         {/* Product header */}
         <div className="flex gap-4 mb-5">
           {product.image_url ? (
@@ -628,7 +732,7 @@ export default function Scanner() {
               <span className="text-3xl">🛒</span>
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             {product.brands && (
               <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-0.5 truncate">
                 {product.brands.split(',')[0].trim()}
@@ -640,75 +744,150 @@ export default function Scanner() {
           </div>
         </div>
 
-        {/* Grade + NOVA */}
-        <div className="glass-card p-4 mb-4">
-          <NutriScoreBadge grade={scored.grade} gradeLabel={scored.gradeLabel} />
-          {product.nova_group && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-              <NovaDots group={product.nova_group} />
-            </div>
-          )}
-        </div>
-
-        {/* Verdict chips */}
-        {scored.verdicts.length > 0 && (
-          <div className="mb-4">
-            <VerdictChips verdicts={scored.verdicts} />
-          </div>
-        )}
-
-        {/* Can I eat this? */}
-        <div className="mb-4">
-          <CanIEatThis product={product} scored={scored} />
-        </div>
-
-        {/* Macros */}
-        {n['energy-kcal_100g'] != null && (
-          <div className="glass-card p-4 mb-4">
-            <MacroRow product={product} />
-          </div>
-        )}
-
-        {/* Better alternative */}
-        {scored.needsAlternative && (
-          <div className="mb-4">
-            <AlternativeCard product={product} scored={scored} />
-          </div>
-        )}
-
-        {/* Gym rating */}
-        <div className="mb-3">
-          <GymRatingWidget barcode={barcode} userId={userId} />
-        </div>
-
-        {/* Share story */}
-        <div className="mb-3">
-          <ShareButton product={product} scored={scored} userId={userId} />
-        </div>
-
-        {/* Add to healthy finds (A/B only) */}
-        {(scored.grade === 'A' || scored.grade === 'B') && (
-          <div className="mb-4">
-            <AddToFindsButton product={product} scored={scored} barcode={barcode} userId={userId} />
-          </div>
-        )}
-
-        {/* Ingredients */}
-        {product.ingredients_text && (
-          <div className="glass-card p-4 mb-4">
-            <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2">Ingredients</p>
-            <p className="text-white/50 text-xs leading-relaxed line-clamp-4">{product.ingredients_text}</p>
-          </div>
-        )}
-
-        <button
-          onClick={reset}
-          className="w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
-          style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
+        {/* Grade hero */}
+        <div
+          className="rounded-3xl p-5 mb-4 relative overflow-hidden"
+          style={{ background: scored.gradeBg, border: `1.5px solid ${scored.gradeColor}55` }}
         >
-          <HiCamera className="w-4 h-4" />
-          Scan another
-        </button>
+          <div className="absolute inset-0 flex items-center justify-end opacity-[0.07] pointer-events-none select-none">
+            <span className="text-[160px] font-black leading-none pr-4" style={{ color: scored.gradeColor }}>
+              {scored.grade}
+            </span>
+          </div>
+          <div className="relative z-10">
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: scored.gradeColor, opacity: 0.75 }}>
+              Nutri-Score
+            </p>
+            <div className="flex items-end gap-3 mb-2">
+              <span className="text-6xl font-black leading-none" style={{ color: scored.gradeColor }}>
+                {scored.grade}
+              </span>
+              <div>
+                <p className="text-white font-bold text-xl leading-tight">{scored.gradeLabel}</p>
+                <p className="text-white/50 text-sm">{GRADE_EXPLANATION[scored.grade]}</p>
+              </div>
+            </div>
+            {product.nova_group && (
+              <div className="pt-2.5 mt-2.5" style={{ borderTop: `1px solid ${scored.gradeColor}33` }}>
+                <NovaDots group={product.nova_group} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 rounded-2xl mb-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          {RESULT_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setResultTab(tab.id)}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+              style={resultTab === tab.id
+                ? { background: 'rgba(168,85,247,0.2)', color: '#c084fc' }
+                : { color: 'rgba(255,255,255,0.38)' }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={resultTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            className="space-y-4"
+          >
+            {/* Health tab */}
+            {resultTab === 'health' && (
+              <>
+                {/* Nutri-Score breakdown */}
+                <NutriScoreBadge grade={scored.grade} gradeLabel={scored.gradeLabel} />
+
+                {/* NOVA explanation */}
+                {product.nova_group && <NovaCard group={product.nova_group} />}
+
+                {/* Verdicts */}
+                {scored.verdicts.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2.5 px-1">Key highlights</p>
+                    <VerdictChips verdicts={scored.verdicts} />
+                  </div>
+                )}
+
+                {/* Can I eat this */}
+                <CanIEatThis product={product} scored={scored} />
+
+                {/* Alternative */}
+                {scored.needsAlternative && (
+                  <AlternativeCard product={product} scored={scored} />
+                )}
+              </>
+            )}
+
+            {/* Nutrition tab */}
+            {resultTab === 'nutrition' && (
+              <div className="glass-card p-4">
+                <VisualMacroBars product={product} />
+              </div>
+            )}
+
+            {/* Details tab */}
+            {resultTab === 'details' && (
+              <>
+                {/* Allergen warnings */}
+                {scored.allergenWarnings.length > 0 && (
+                  <div className="px-4 py-3.5 rounded-2xl"
+                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-red-400/70 mb-2">Allergen alert</p>
+                    <div className="flex flex-wrap gap-2">
+                      {scored.allergenWarnings.map((w, i) => (
+                        <span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full"
+                          style={{ background: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}>
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ingredients */}
+                {product.ingredients_text && (
+                  <div className="glass-card p-4">
+                    <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2.5">Ingredients</p>
+                    <p className="text-white/55 text-xs leading-relaxed">{product.ingredients_text}</p>
+                  </div>
+                )}
+
+                {/* Community rating */}
+                <div className="glass-card p-4">
+                  <GymRatingWidget barcode={barcode} userId={userId} />
+                </div>
+
+                {/* Share */}
+                <ShareButton product={product} scored={scored} userId={userId} />
+
+                {/* Add to healthy finds */}
+                {(scored.grade === 'A' || scored.grade === 'B') && (
+                  <AddToFindsButton product={product} scored={scored} barcode={barcode} userId={userId} />
+                )}
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="mt-4">
+          <button
+            onClick={reset}
+            className="w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+            style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }}
+          >
+            <HiCamera className="w-4 h-4" />
+            Scan another
+          </button>
+        </div>
       </main>
     )
   }
@@ -719,7 +898,7 @@ export default function Scanner() {
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-5">
         <h1 className="text-3xl font-black tracking-tight gradient-text">Food Scanner</h1>
-        <p className="text-white/40 text-sm mt-1">Point at a barcode for a personalized health score.</p>
+        <p className="text-white/40 text-sm mt-1">Point at a barcode for a personalised health breakdown.</p>
       </div>
 
       {/* Camera viewfinder */}
@@ -745,7 +924,7 @@ export default function Scanner() {
         >
           <HiInformationCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
           <p className="text-purple-300/80 text-xs leading-relaxed">
-            Complete your nutrition profile to get personalized scores based on your goals and allergies.
+            Complete your nutrition profile to get personalised scores based on your goals and allergies.
           </p>
         </div>
       )}
