@@ -242,6 +242,7 @@ export default function Questionnaire() {
   const [customSport, setCustomSport] = useState('')
   const [customInput, setCustomInput] = useState('')
   const [showMoreDiets, setShowMoreDiets] = useState(false)
+  const [equipSubStep, setEquipSubStep] = useState(0)
   const navigate = useNavigate()
 
   const dayRef = useRef<HTMLInputElement>(null)
@@ -267,10 +268,15 @@ export default function Questionnaire() {
   const goToStep = (next: number) => {
     setDir(next > step ? 1 : -1)
     setStep(next)
+    setEquipSubStep(0)
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }
   const handleNext = () => { setError(''); goToStep(step + 1) }
-  const handleBack = () => { if (step === 0) navigate('/'); else goToStep(step - 1) }
+  const handleBack = () => {
+    if (step === 0) navigate('/')
+    else if (step === 7 && equipSubStep === 1) setEquipSubStep(0)
+    else goToStep(step - 1)
+  }
 
   // ── Unit switch ───────────────────────────────────────────────────────────────
   const switchUnit = (next: Unit) => {
@@ -594,7 +600,8 @@ export default function Questionnaire() {
                   <StepHeader tag="Birthday" title="When were you born?" sub="Helps us tailor training intensity and personalize your nutrition targets." />
                   <motion.div
                     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                    className="grid grid-cols-3 gap-3"
+                    className="grid gap-3"
+                    style={{ gridTemplateColumns: '1fr 1fr 1.5fr' }}
                   >
                     <div>
                       <label className="block text-xs font-bold text-white/40 uppercase tracking-wider mb-2">Day</label>
@@ -604,7 +611,7 @@ export default function Questionnaire() {
                         type="number"
                         inputMode="numeric"
                         placeholder="DD"
-                        style={{ fontSize: 22, appearance: 'textfield' } as React.CSSProperties}
+                        style={{ fontSize: 20, appearance: 'textfield' } as React.CSSProperties}
                         value={form.birthDay}
                         onChange={(e) => {
                           const val = e.target.value.replace(/\D/g, '').slice(0, 2)
@@ -621,7 +628,7 @@ export default function Questionnaire() {
                         type="number"
                         inputMode="numeric"
                         placeholder="MM"
-                        style={{ fontSize: 22, appearance: 'textfield' } as React.CSSProperties}
+                        style={{ fontSize: 20, appearance: 'textfield' } as React.CSSProperties}
                         value={form.birthMonth}
                         onChange={(e) => {
                           const val = e.target.value.replace(/\D/g, '').slice(0, 2)
@@ -638,7 +645,7 @@ export default function Questionnaire() {
                         type="number"
                         inputMode="numeric"
                         placeholder="YYYY"
-                        style={{ fontSize: 18, appearance: 'textfield' } as React.CSSProperties}
+                        style={{ fontSize: 20, appearance: 'textfield' } as React.CSSProperties}
                         value={form.birthYear}
                         onChange={(e) => update({ birthYear: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                       />
@@ -865,60 +872,114 @@ export default function Questionnaire() {
 
               {/* Step 7 - Equipment */}
               {step === 7 && (
-                <div className="space-y-6">
-                  <StepHeader tag="Equipment" title="Available Equipment" sub="Tell us where you train, then select what you have access to." />
-                  <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-                    <p className="text-sm font-medium text-white/60 mb-3">Where do you train?</p>
-                    <div className="flex gap-3">
-                      {([{ value: 'gym', label: 'Gym', icon: '🏢' }, { value: 'home', label: 'Home', icon: '🏠' }] as const).map(({ value, label, icon }) => (
-                        <button key={value}
-                          onClick={() => { if (form.gymAccess !== value) setForm(p => ({ ...p, gymAccess: value, equipment: value === 'gym' ? ['Full Gym Access'] : [] })) }}
-                          className={`chip p-5 ${form.gymAccess === value ? 'active' : ''}`}>
-                          <span>{icon}</span> {label}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                  {form.gymAccess && (
-                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
-                      {form.gymAccess === 'gym' && (
-                        <p className="text-sm text-white/60 bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
-                          Perfect. Your plan will be built for a fully equipped gym setup.
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-3">
-                        {(form.gymAccess === 'gym' ? GYM_EQUIPMENT_OPTIONS.filter(o => o.label !== 'Full Gym Access') : HOME_EQUIPMENT_OPTIONS).map(({ label, icon }) => (
-                          <button key={label} onClick={() => toggleArray('equipment', label)} className={`chip ${form.equipment.includes(label) ? 'active' : ''}`}>
-                            <span>{icon}</span> {label}
-                          </button>
-                        ))}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-white/60 mb-2">Add your own equipment</label>
-                        <div className="flex gap-2">
-                          <input className="input-glass flex-1" style={{ fontSize: 16 }}
-                            placeholder={form.gymAccess === 'gym' ? 'e.g. leg press, smith machine...' : 'e.g. chair, water bottles...'}
-                            value={customInput} onChange={(e) => setCustomInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomEquipment() } }} />
-                          <button onClick={addCustomEquipment} disabled={!customInput.trim() || form.equipment.includes(customInput.trim())} className="btn-ghost !px-4 disabled:opacity-30 flex-shrink-0">Add</button>
-                        </div>
-                      </div>
-                      {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e)) && (
-                        <div>
-                          <p className="text-xs text-white/40 mb-2">Your custom items</p>
-                          <div className="flex flex-wrap gap-2">
-                            {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e)).map((item) => (
-                              <span key={item} className="chip active flex items-center gap-1.5">
-                                {item}
-                                <button onClick={() => removeEquipment(item)} className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors">×</button>
-                              </span>
-                            ))}
+                <AnimatePresence mode="wait" custom={1}>
+                  <motion.div
+                    key={equipSubStep}
+                    custom={1}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={stepTransition}
+                    className="space-y-6"
+                  >
+                    {/* Sub-step 0: Location */}
+                    {equipSubStep === 0 && (
+                      <>
+                        <StepHeader tag="Equipment" title="Where do you train?" sub="We'll tailor your equipment list to your setup." />
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                          className="grid grid-cols-2 gap-4"
+                        >
+                          {([
+                            { value: 'gym', label: 'Gym', icon: '🏢', desc: 'Full equipment access' },
+                            { value: 'home', label: 'Home', icon: '🏠', desc: 'Your own setup' },
+                          ] as const).map(({ value, label, icon, desc }) => (
+                            <button
+                              key={value}
+                              onClick={() => {
+                                if (form.gymAccess !== value) {
+                                  setForm(p => ({ ...p, gymAccess: value, equipment: value === 'gym' ? ['Full Gym Access'] : [] }))
+                                }
+                                setTimeout(() => setEquipSubStep(1), 160)
+                              }}
+                              className={`py-10 rounded-3xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-3 active:scale-[0.97] ${form.gymAccess === value ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                            >
+                              <span className="text-4xl">{icon}</span>
+                              <div className="text-center">
+                                <span className="block text-base font-bold">{label}</span>
+                                <span className="block text-xs text-white/40 mt-0.5">{desc}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </motion.div>
+                      </>
+                    )}
+
+                    {/* Sub-step 1: Equipment selection */}
+                    {equipSubStep === 1 && (
+                      <>
+                        <StepHeader
+                          tag={form.gymAccess === 'gym' ? 'Gym Equipment' : 'Home Equipment'}
+                          title={form.gymAccess === 'gym' ? "What's available at your gym?" : "What do you have at home?"}
+                          sub="Select everything you have access to. Your plan will be built around it."
+                        />
+                        {form.gymAccess === 'gym' && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                            className="flex items-center gap-2.5 px-3.5 py-3 rounded-2xl"
+                            style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)' }}
+                          >
+                            <span className="text-base">🏢</span>
+                            <p className="text-sm text-white/70">Full gym access is included. Select any extras below.</p>
+                          </motion.div>
+                        )}
+                        <motion.div
+                          initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                          className="grid grid-cols-2 gap-2.5"
+                        >
+                          {(form.gymAccess === 'gym' ? GYM_EQUIPMENT_OPTIONS : HOME_EQUIPMENT_OPTIONS).map(({ label, icon }) => {
+                            const selected = form.equipment.includes(label)
+                            return (
+                              <button
+                                key={label}
+                                onClick={() => toggleArray('equipment', label)}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                              >
+                                <span className="text-xl flex-shrink-0">{icon}</span>
+                                <span className="text-sm font-medium leading-tight flex-1">{label}</span>
+                                {selected && <span className="text-purple-400 text-xs flex-shrink-0">✓</span>}
+                              </button>
+                            )
+                          })}
+                        </motion.div>
+                        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                          <label className="block text-sm font-medium text-white/60 mb-2">Add your own equipment</label>
+                          <div className="flex gap-2">
+                            <input className="input-glass flex-1" style={{ fontSize: 16 }}
+                              placeholder={form.gymAccess === 'gym' ? 'e.g. cable crossover, hack squat...' : 'e.g. chair, water bottles...'}
+                              value={customInput} onChange={(e) => setCustomInput(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomEquipment() } }} />
+                            <button onClick={addCustomEquipment} disabled={!customInput.trim() || form.equipment.includes(customInput.trim())} className="btn-ghost !px-4 disabled:opacity-30 flex-shrink-0">Add</button>
                           </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </div>
+                        </motion.div>
+                        {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e)) && (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <p className="text-xs text-white/40 mb-2">Your custom items</p>
+                            <div className="flex flex-wrap gap-2">
+                              {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e)).map((item) => (
+                                <span key={item} className="chip active flex items-center gap-1.5">
+                                  {item}
+                                  <button onClick={() => removeEquipment(item)} className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors">×</button>
+                                </span>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               )}
 
               {/* Step 8 - Schedule */}
@@ -1148,7 +1209,7 @@ export default function Questionnaire() {
               )}
 
               {/* Navigation footer for steps 1-10 */}
-              {step > 0 && step < 11 && (
+              {step > 0 && step < 11 && !(step === 7 && equipSubStep === 0) && (
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
                   <button onClick={handleBack} className="btn-ghost">
                     <HiArrowNarrowLeft className="w-4 h-4" /> Back
