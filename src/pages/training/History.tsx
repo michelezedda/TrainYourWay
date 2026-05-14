@@ -1,14 +1,17 @@
 ﻿import { useState, useMemo } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { HiPencil, HiUpload, HiRefresh, HiChevronDown } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ExerciseModal from '@/components/ExerciseModal'
+import InjuryTriage from '@/components/InjuryTriage'
 import { WorkoutDayView } from '@/components/PlanView'
 import { buildPlanComponents } from '@/lib/planComponents'
 import { generateDayWorkout } from '@/lib/gemini'
 import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
+import { type InjuryState, getInjuryState, saveInjuryState, clearInjuryState, getInjuryAdvice } from '@/lib/injuryStore'
 
 function PlanName({ planId, name }: { planId: string; name: string }) {
   const [editing, setEditing] = useState(false)
@@ -124,6 +127,8 @@ export default function History() {
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null)
   const [confirmStartOver, setConfirmStartOver] = useState(false)
   const [startingOver, setStartingOver] = useState(false)
+  const [injuryState, setInjuryState] = useState<InjuryState | null>(() => getInjuryState())
+  const [showTriage, setShowTriage] = useState(false)
 
   const { isLoading, error, data } = db.useQuery({
     workoutPlans: { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
@@ -229,9 +234,27 @@ export default function History() {
   const dayOverrides = (() => { try { return JSON.parse(latestPlan.dayOverrides ?? '{}') as Record<string, string> } catch { return {} } })()
   const lvl = levelColor[latestPlan.fitnessLevel] ?? null
 
+  const injuryAdvice = injuryState ? getInjuryAdvice(injuryState) : null
+
+  const handleActivateRecovery = (state: InjuryState) => {
+    saveInjuryState(state)
+    setInjuryState(state)
+    setShowTriage(false)
+  }
+
+  const handleRecovered = () => {
+    clearInjuryState()
+    setInjuryState(null)
+  }
+
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {selectedExercise && <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />}
+      <AnimatePresence>
+        {showTriage && (
+          <InjuryTriage onClose={() => setShowTriage(false)} onActivate={handleActivateRecovery} />
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
@@ -241,15 +264,80 @@ export default function History() {
             {chain.length > 1 ? `${chain.length - 1} evolution${chain.length > 2 ? 's' : ''} from original` : 'Original plan'}
           </p>
         </div>
-        <Link
-          to="/import"
-          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all active:scale-[0.97]"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.6)' }}
-        >
-          <HiUpload className="w-3.5 h-3.5" />
-          Import
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTriage(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all active:scale-[0.97]"
+            style={injuryState?.active
+              ? { background: 'rgba(245,158,11,0.18)', border: '1px solid rgba(245,158,11,0.4)', color: '#fde68a' }
+              : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.6)' }
+            }
+          >
+            🩹 {injuryState?.active ? 'Injured' : 'Injured?'}
+          </button>
+          <Link
+            to="/import"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all active:scale-[0.97]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.6)' }}
+          >
+            <HiUpload className="w-3.5 h-3.5" />
+            Import
+          </Link>
+        </div>
       </div>
+
+      {/* Injury banner */}
+      {injuryState?.active && injuryAdvice && (
+        <div className="mb-4 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(245,158,11,0.3)' }}>
+          <div className="px-4 pt-4 pb-3" style={{ background: 'rgba(245,158,11,0.07)' }}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{injuryAdvice.intensity === 'rest' ? '🛑' : '⚠️'}</span>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#fde68a' }}>
+                    Recovery Mode Active
+                  </p>
+                  <p className="text-xs text-white/40 capitalize">
+                    {injuryState.location} injury - {injuryState.severity} severity
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleRecovered}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex-shrink-0"
+                style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', color: '#86efac' }}
+              >
+                I'm Recovered
+              </button>
+            </div>
+            <p className="text-xs text-white/45 leading-relaxed mb-3">{injuryAdvice.message}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl p-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                <p className="text-[10px] font-semibold text-red-400 mb-1.5 uppercase tracking-wider">Avoid</p>
+                <ul className="space-y-0.5">
+                  {injuryAdvice.avoid.slice(0, 3).map(item => (
+                    <li key={item} className="text-[11px] text-white/45 flex items-start gap-1">
+                      <span className="text-red-400/60 flex-shrink-0">✕</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-xl p-2.5" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)' }}>
+                <p className="text-[10px] font-semibold text-green-400 mb-1.5 uppercase tracking-wider">Focus</p>
+                <ul className="space-y-0.5">
+                  {injuryAdvice.focus.slice(0, 3).map(item => (
+                    <li key={item} className="text-[11px] text-white/45 flex items-start gap-1">
+                      <span className="text-green-400/60 flex-shrink-0">✦</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current plan card */}
       <div className="glass-card p-0 mb-4 overflow-hidden">

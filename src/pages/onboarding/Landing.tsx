@@ -34,9 +34,9 @@ const FEATURES = [
 const GOALS = ['Weight Loss', 'Muscle Gain', 'Athletic Performance', 'Strength', 'Flexibility']
 
 const STATS = [
-  { value: '10K+', label: 'Active Users' },
-  { value: '4.9★', label: 'Rating' },
-  { value: 'Free', label: 'Forever' },
+  { value: 'Gym & Home', label: 'Flexible Training' },
+  { value: 'Beginner-Friendly', label: 'Easy To Start' },
+  { value: 'Focused', label: 'Goal-Based Training' },
 ]
 
 const floatVariants = [
@@ -178,7 +178,7 @@ export default function Home() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, y: -14 }}
                   transition={{ duration: 0.42, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute inset-0 rounded-3xl p-5 flex flex-col justify-between"
+                  className="min-h-[200px] absolute inset-0 rounded-3xl p-5 flex flex-col justify-between"
                   style={{
                     background: f.bg,
                     border: `1px solid ${f.border}`,
