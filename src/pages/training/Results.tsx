@@ -2,11 +2,10 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { motion, AnimatePresence } from 'framer-motion'
-import GlassCard from '@/components/GlassCard'
 import ExerciseModal from '@/components/ExerciseModal'
 import {
   HiChevronDown, HiArrowNarrowRight, HiChevronRight, HiChevronLeft,
-  HiLightningBolt, HiFire, HiStar, HiCheck,
+  HiLightningBolt,
 } from 'react-icons/hi'
 import {
   parseAnalysisSections,
@@ -107,9 +106,6 @@ function MacroRing({
 
 function PlanHero({ formData }: { formData: WorkoutFormData }) {
   const goals = formData.goals ?? []
-  const primaryGoal = goals[0]
-  const meta = GOAL_META[primaryGoal]
-
   const stats = [
     { icon: '📅', label: 'Days/week', value: formData.daysPerWeek },
     { icon: '⏱', label: 'Per session', value: `${formData.sessionDuration} min` },
@@ -206,7 +202,6 @@ function AnalysisSlides({
 
   const current = sections[idx]
   const isLast = idx === sections.length - 1
-  const progress = (idx + 1) / sections.length
 
   function go(next: number) {
     setDir(next > idx ? 1 : -1)

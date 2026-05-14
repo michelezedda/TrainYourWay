@@ -147,7 +147,6 @@ export default function OnboardingSummary() {
     return [...plans].sort((a, b) => b.createdAt - a.createdAt)[0]
   }, [data?.workoutPlans])
 
-  const planText = statePlan ?? latestPlan?.plan ?? ''
   const rawGoal = stateFormData?.goals?.[0] ?? (() => {
     try { return JSON.parse(latestPlan?.goals ?? '[]')[0] ?? 'General Fitness' }
     catch { return 'General Fitness' }
