@@ -1,7 +1,8 @@
-﻿import { useState, useMemo } from 'react'
+﻿import { useState, useMemo, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { HiPencil, HiUpload, HiRefresh, HiChevronDown } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
+import { id } from '@instantdb/react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ExerciseModal from '@/components/ExerciseModal'
 import InjuryTriage from '@/components/InjuryTriage'
@@ -13,6 +14,7 @@ import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { type InjuryState, getInjuryState, saveInjuryState, clearInjuryState, getInjuryAdvice } from '@/lib/injuryStore'
 import { useLocale } from '@/context/LocaleContext'
+import { calcWeeklyStreak } from '@/lib/streaks'
 
 function PlanName({ planId, name }: { planId: string; name: string }) {
   const [editing, setEditing] = useState(false)
@@ -69,9 +71,11 @@ const levelColor: Record<string, { bg: string; color: string; border: string }> 
 
 const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 
-function InteractivePlan({ planId, planText, blockedDays, dayOverrides, onExerciseClick, onUnblockDay, onGenerateDayWorkout }: {
+function InteractivePlan({ planId, planText, blockedDays, dayOverrides, onExerciseClick, onUnblockDay, onGenerateDayWorkout, onWorkoutComplete, weekStreak, weekWorkouts, weeklyTarget }: {
   planId: string; planText: string; blockedDays: string[]; dayOverrides: Record<string, string>
   onExerciseClick: (name: string) => void; onUnblockDay: (day: string) => void; onGenerateDayWorkout: (day: string) => Promise<void>
+  onWorkoutComplete?: (dayName: string, exerciseCount: number, setsCount: number) => void
+  weekStreak?: number; weekWorkouts?: number; weeklyTarget?: number
 }) {
   const [weights, setWeightsState] = useState<Record<string, string>>(() => getWeights(planId))
   const handleWeightChange = useMemo(() => (exercise: string, value: string) => {
@@ -90,7 +94,8 @@ function InteractivePlan({ planId, planText, blockedDays, dayOverrides, onExerci
         Tap any exercise for a guide. Log weights below.
       </p>
       <WorkoutDayView plan={planText} planComponents={components} blockedDays={blockedDays}
-        dayWorkoutOverrides={dayOverrides} onUnblockDay={onUnblockDay} onGenerateDayWorkout={onGenerateDayWorkout} />
+        dayWorkoutOverrides={dayOverrides} onUnblockDay={onUnblockDay} onGenerateDayWorkout={onGenerateDayWorkout}
+        onWorkoutComplete={onWorkoutComplete} weekStreak={weekStreak} weekWorkouts={weekWorkouts} weeklyTarget={weeklyTarget} />
     </div>
   )
 }
@@ -126,10 +131,12 @@ export default function Workout() {
   const [startingOver, setStartingOver] = useState(false)
   const [injuryState, setInjuryState] = useState<InjuryState | null>(() => getInjuryState())
   const [showTriage, setShowTriage] = useState(false)
-  const { formatDateShort } = useLocale()
+  const { formatDateShort, weekStart } = useLocale()
 
   const { isLoading, error, data } = db.useQuery({
     workoutPlans: { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
+    workoutCompletions: { $: { where: { userId } } },
+    leaderboardEntries: { $: { where: { userId } } },
   })
 
   const plans = (data?.workoutPlans ?? []) as Array<{
@@ -137,6 +144,9 @@ export default function Workout() {
     goals: string; equipment: string; constraints: string; createdAt: number
     parentPlanId?: string; workoutDays?: string; dayOverrides?: string
   }>
+
+  const completions = (data?.workoutCompletions ?? []) as Array<{ id: string; date: string; createdAt: number }>
+  const leaderboardEntry = ((data?.leaderboardEntries ?? []) as Array<{ id: string; workoutStreak: number; mealStreak: number; nickname: string; updatedAt: number }>)[0] ?? null
 
   const chain = useMemo(() => {
     const roots = plans.filter(p => !p.parentPlanId || p.parentPlanId === '')
@@ -159,6 +169,45 @@ export default function Workout() {
   const daysUntilEvolve = latestPlan && !canEvolve
     ? Math.ceil((FOUR_WEEKS_MS - (Date.now() - latestPlan.createdAt)) / (24 * 60 * 60 * 1000))
     : 0
+
+  const today = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
+
+  const weekWorkouts = useMemo(() => {
+    const d = new Date()
+    const diff = (d.getDay() - weekStart + 7) % 7
+    d.setDate(d.getDate() - diff)
+    const weekStartStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return completions.filter(c => c.date >= weekStartStr && c.date <= today).length
+  }, [completions, weekStart, today])
+
+  const weeklyTarget = useMemo(() => {
+    if (!latestPlan) return 5
+    const days = parseList(latestPlan.workoutDays ?? '[]')
+    return days.length > 0 ? days.length : 5
+  }, [latestPlan])
+
+  const weekStreak = useMemo(
+    () => calcWeeklyStreak(completions.map(c => c.date), weekStart, today),
+    [completions, weekStart, today],
+  )
+
+  const handleWorkoutComplete = useCallback(async (_dayName: string, _exerciseCount: number, _setsCount: number) => {
+    const alreadyDone = completions.some(c => c.date === today)
+    if (alreadyDone) return
+
+    const completionTx = db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() })
+    const newDates = [...completions.map(c => c.date), today]
+    const newStreak = calcWeeklyStreak(newDates, weekStart, today)
+
+    const txns = leaderboardEntry
+      ? [completionTx, db.tx.leaderboardEntries[leaderboardEntry.id].update({ workoutStreak: newStreak, updatedAt: Date.now() })]
+      : [completionTx]
+
+    await db.transact(txns)
+  }, [completions, today, userId, weekStart, leaderboardEntry])
 
   const handleEvolve = () => {
     if (!latestPlan || !canEvolve) return
@@ -422,6 +471,10 @@ export default function Workout() {
                   workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
                 }))
               }}
+              onWorkoutComplete={(dayName, exCount, sc) => void handleWorkoutComplete(dayName, exCount, sc)}
+              weekStreak={weekStreak}
+              weekWorkouts={weekWorkouts}
+              weeklyTarget={weeklyTarget}
             />
           </div>
         )}

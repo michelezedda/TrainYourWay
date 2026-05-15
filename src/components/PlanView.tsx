@@ -148,35 +148,43 @@ export function CollapsibleSection({ title, icon, content }: { title: string; ic
   )
 }
 
+function countTotalSets(dayBody: string): number {
+  let total = 0
+  for (const line of dayBody.split('\n')) {
+    const m = line.match(/Sets:\s*(\d+)/i)
+    if (m) total += parseInt(m[1], 10)
+  }
+  return total
+}
+
 // ── WorkoutCelebration ────────────────────────────────────────────────────────
+
+const RECOVERY_TIPS = [
+  'Stretch for 5-10 min to reduce next-day soreness.',
+  'A protein-rich meal in the next hour supports muscle repair.',
+  'Stay hydrated today - aim for at least 2L of water.',
+  'Sleep is when muscles grow - prioritise 8 hours tonight.',
+  'Light mobility work tomorrow will speed up recovery.',
+]
 
 interface CelebrationProps {
   exerciseCount: number
-  startTime: number | null
+  setsCount: number
+  weekStreak: number
+  weekWorkouts: number
+  weeklyTarget: number
+  dayFocus?: string
   onDismiss: () => void
 }
 
-function WorkoutCelebration({ exerciseCount, startTime, onDismiss }: CelebrationProps) {
-  const [elapsed, setElapsed] = useState(() =>
-    startTime ? Math.floor((Date.now() - startTime) / 1000) : 0
-  )
-
-  useEffect(() => {
-    const t = setInterval(() =>
-      setElapsed(startTime ? Math.floor((Date.now() - startTime) / 1000) : 0), 1000
-    )
-    return () => clearInterval(t)
-  }, [startTime])
-
-  const mins = Math.floor(elapsed / 60)
-  const secs = elapsed % 60
-  const durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
-  const estKcal = Math.round((elapsed / 60) * 6)
+function WorkoutCelebration({ exerciseCount, setsCount, weekStreak, weekWorkouts, weeklyTarget, dayFocus, onDismiss }: CelebrationProps) {
+  const recoveryTip = RECOVERY_TIPS[(exerciseCount + setsCount) % RECOVERY_TIPS.length]
+  const weekProgress = weeklyTarget > 0 ? Math.min(weekWorkouts / weeklyTarget, 1) : 0
 
   const stats = [
     { value: String(exerciseCount), label: 'Exercises', color: 'rgba(168,85,247,', border: 'rgba(168,85,247,0.2)' },
-    { value: elapsed > 0 ? durationStr : '-', label: 'Duration', color: 'rgba(34,211,238,', border: 'rgba(34,211,238,0.18)' },
-    { value: estKcal > 0 ? `~${estKcal}` : '-', label: 'kcal', color: 'rgba(251,146,60,', border: 'rgba(251,146,60,0.18)' },
+    { value: setsCount > 0 ? String(setsCount) : '-', label: 'Sets', color: 'rgba(34,211,238,', border: 'rgba(34,211,238,0.18)' },
+    { value: weekStreak > 0 ? `${weekStreak}w` : '-', label: 'Streak', color: 'rgba(251,146,60,', border: 'rgba(251,146,60,0.18)' },
   ]
 
   return (
@@ -233,7 +241,7 @@ function WorkoutCelebration({ exerciseCount, startTime, onDismiss }: Celebration
           transition={{ delay: 0.24 }}
           className="text-white/52 text-sm mb-6"
         >
-          You crushed all {exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''} today
+          {dayFocus ? dayFocus : `${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} done`}
         </motion.p>
 
         {/* Stats row */}
@@ -241,7 +249,7 @@ function WorkoutCelebration({ exerciseCount, startTime, onDismiss }: Celebration
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.32 }}
-          className="grid grid-cols-3 gap-2.5 mb-6"
+          className="grid grid-cols-3 gap-2.5 mb-4"
         >
           {stats.map(({ value, label, color, border }) => (
             <div
@@ -255,11 +263,45 @@ function WorkoutCelebration({ exerciseCount, startTime, onDismiss }: Celebration
           ))}
         </motion.div>
 
+        {/* Week progress */}
+        {weeklyTarget > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.38 }}
+            className="mb-5"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-white/35 font-medium">This week</span>
+              <span className="text-[11px] text-white/50 tabular-nums">{weekWorkouts}/{weeklyTarget} sessions</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${weekProgress * 100}%` }}
+                transition={{ delay: 0.5, duration: 0.6, ease: 'easeOut' }}
+                className="h-full rounded-full"
+                style={{ background: 'linear-gradient(90deg, #A855F7, #22D3EE)' }}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Recovery tip */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.44 }}
+          className="text-[11px] text-white/28 leading-relaxed mb-5 italic"
+        >
+          {recoveryTip}
+        </motion.p>
+
         {/* Dismiss */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.42 }}
+          transition={{ delay: 0.52 }}
           onClick={onDismiss}
           className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
           style={{
@@ -284,6 +326,10 @@ export function WorkoutDayView({
   dayWorkoutOverrides,
   onUnblockDay,
   onGenerateDayWorkout,
+  onWorkoutComplete,
+  weekStreak,
+  weekWorkouts,
+  weeklyTarget,
 }: {
   plan: string
   planComponents: Components
@@ -291,6 +337,10 @@ export function WorkoutDayView({
   dayWorkoutOverrides?: Record<string, string>
   onUnblockDay?: (day: string) => void
   onGenerateDayWorkout?: (day: string) => Promise<void>
+  onWorkoutComplete?: (dayName: string, exerciseCount: number, setsCount: number) => void
+  weekStreak?: number
+  weekWorkouts?: number
+  weeklyTarget?: number
 }) {
   const sanitized   = useMemo(() => sanitizePlan(plan), [plan])
   const schedule    = useMemo(() => parseWeeklySchedule(sanitized), [sanitized])
@@ -306,12 +356,9 @@ export function WorkoutDayView({
   // Workout completion tracking
   const [doneMap, setDoneMap]           = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
-  const startTimeRef = useRef<number | null>(null)
+  const completionFiredRef = useRef(false)
 
   const handleExerciseDone = useCallback((key: string, done: boolean) => {
-    if (done && !startTimeRef.current) {
-      startTimeRef.current = Date.now()
-    }
     setDoneMap(prev => {
       if (prev[key] === done) return prev
       return { ...prev, [key]: done }
@@ -354,21 +401,26 @@ export function WorkoutDayView({
 
   // Extract exercise keys from raw day body for completion tracking
   const exerciseKeys = useMemo(() => extractExerciseKeys(dayBody), [dayBody])
+  const setsCount = useMemo(() => countTotalSets(dayBody), [dayBody])
 
   const allDone = exerciseKeys.length > 0 && exerciseKeys.every(k => doneMap[k] === true)
 
-  // Show celebration when all exercises are done
+  // Show celebration once per day view when all exercises are done
   useEffect(() => {
-    if (allDone && !showCelebration) {
+    if (allDone && !completionFiredRef.current) {
+      completionFiredRef.current = true
       setShowCelebration(true)
+      onWorkoutComplete?.(currentDayName, exerciseKeys.length, setsCount)
     }
-  }, [allDone, showCelebration])
+  // completionFiredRef is a ref - intentionally omitted from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDone, currentDayName, exerciseKeys.length, setsCount, onWorkoutComplete])
 
   // Reset tracking when day content changes
   useEffect(() => {
     setDoneMap({})
     setShowCelebration(false)
-    startTimeRef.current = null
+    completionFiredRef.current = false
   }, [dayBody])
 
   const handleGenerateWorkout = async () => {
@@ -669,7 +721,11 @@ export function WorkoutDayView({
           {showCelebration && exerciseKeys.length > 0 && !isRest && !isBlocked && (
             <WorkoutCelebration
               exerciseCount={exerciseKeys.length}
-              startTime={startTimeRef.current}
+              setsCount={setsCount}
+              weekStreak={weekStreak ?? 0}
+              weekWorkouts={weekWorkouts ?? 0}
+              weeklyTarget={weeklyTarget ?? 0}
+              dayFocus={selectedLabel || undefined}
               onDismiss={() => setShowCelebration(false)}
             />
           )}
