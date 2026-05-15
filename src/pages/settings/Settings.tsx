@@ -2,11 +2,12 @@
 import { HiPencil, HiChevronRight, HiLogout, HiTrash, HiCamera } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
-import { getUserId } from '@/lib/userId'
+import { getUserId, setAuthUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { useLocale } from '@/context/LocaleContext'
+import { clearAllLocalData } from '@/lib/clearUserData'
 
 const AVATAR_KEY = 'tyw_avatar'
 
@@ -41,16 +42,17 @@ export default function Personal() {
 
   const { user } = db.useAuth()
 
-  // Queries — kept for delete-account logic even when not displayed
-  const { data: mealData } = db.useQuery({ mealEntries: { $: { where: { userId } } } })
+  // Queries — used for delete-account logic (must cover every entity in the schema)
+  const { data: mealData }    = db.useQuery({ mealEntries:        { $: { where: { userId } } } })
   const { data: workoutData } = db.useQuery({ workoutCompletions: { $: { where: { userId } } } })
-  const { data: lbData } = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
-  const { data: waterData } = db.useQuery({ waterLogs: { $: { where: { userId } } } })
-  const { data: planData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
-  const { data: ticketData } = db.useQuery({ supportTickets: { $: { where: { userId } } } })
-  const { data: ratingData } = db.useQuery({ gymRatings: { $: { where: { userId } } } })
-  const { data: findsData } = db.useQuery({ communityFinds: { $: { where: { sharedBy: userId } } } })
-  const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
+  const { data: lbData }      = db.useQuery({ leaderboardEntries: { $: { where: { userId } } } })
+  const { data: waterData }   = db.useQuery({ waterLogs:          { $: { where: { userId } } } })
+  const { data: planData }    = db.useQuery({ workoutPlans:        { $: { where: { userId } } } })
+  const { data: ticketData }  = db.useQuery({ supportTickets:      { $: { where: { userId } } } })
+  const { data: ratingData }  = db.useQuery({ gymRatings:          { $: { where: { userId } } } })
+  const { data: findsData }   = db.useQuery({ communityFinds:      { $: { where: { sharedBy: userId } } } })
+  const { data: profileData } = db.useQuery({ userProfiles:        { $: { where: { userId } } } })
+  const { data: healthData }  = db.useQuery({ healthLogs:          { $: { where: { userId } } } })
 
   const userProfile = (profileData?.userProfiles ?? [])[0] as { id: string; name?: string } | undefined
 
@@ -105,20 +107,25 @@ export default function Personal() {
   const handleDeleteAccount = async () => {
     setDeleteBusy(true)
     try {
+      // Delete every DB record tied to this user
       const txns = [
-        ...(mealData?.mealEntries ?? []).map((r: { id: string }) => db.tx.mealEntries[r.id].delete()),
+        ...(mealData?.mealEntries        ?? []).map((r: { id: string }) => db.tx.mealEntries[r.id].delete()),
         ...(workoutData?.workoutCompletions ?? []).map((r: { id: string }) => db.tx.workoutCompletions[r.id].delete()),
-        ...(lbData?.leaderboardEntries ?? []).map((r: { id: string }) => db.tx.leaderboardEntries[r.id].delete()),
-        ...(waterData?.waterLogs ?? []).map((r: { id: string }) => db.tx.waterLogs[r.id].delete()),
-        ...(planData?.workoutPlans ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete()),
-        ...(ticketData?.supportTickets ?? []).map((r: { id: string }) => db.tx.supportTickets[r.id].delete()),
-        ...(ratingData?.gymRatings ?? []).map((r: { id: string }) => db.tx.gymRatings[r.id].delete()),
-        ...(findsData?.communityFinds ?? []).map((r: { id: string }) => db.tx.communityFinds[r.id].delete()),
-        ...(profileData?.userProfiles ?? []).map((r: { id: string }) => db.tx.userProfiles[r.id].delete()),
+        ...(lbData?.leaderboardEntries   ?? []).map((r: { id: string }) => db.tx.leaderboardEntries[r.id].delete()),
+        ...(waterData?.waterLogs         ?? []).map((r: { id: string }) => db.tx.waterLogs[r.id].delete()),
+        ...(planData?.workoutPlans       ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete()),
+        ...(ticketData?.supportTickets   ?? []).map((r: { id: string }) => db.tx.supportTickets[r.id].delete()),
+        ...(ratingData?.gymRatings       ?? []).map((r: { id: string }) => db.tx.gymRatings[r.id].delete()),
+        ...(findsData?.communityFinds    ?? []).map((r: { id: string }) => db.tx.communityFinds[r.id].delete()),
+        ...(profileData?.userProfiles    ?? []).map((r: { id: string }) => db.tx.userProfiles[r.id].delete()),
+        ...(healthData?.healthLogs       ?? []).map((r: { id: string }) => db.tx.healthLogs[r.id].delete()),
       ]
       if (txns.length > 0) await db.transact(txns)
-      const KEYS = ['tyw_user_id', 'uplift_nutrition_profile', 'tyw_scan_history', 'tyw_notif_seen', 'tyw_lb_ts', 'tyw_notif_ts', 'uplift_unit']
-      KEYS.forEach(k => localStorage.removeItem(k))
+
+      // Wipe all local state — must happen before signOut so userId is still available
+      clearAllLocalData(userId)
+      setAuthUserId(null)
+
       await db.auth.signOut()
       navigate('/', { replace: true })
     } finally {

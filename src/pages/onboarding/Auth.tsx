@@ -3,7 +3,7 @@ import { HiArrowNarrowRight } from 'react-icons/hi'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import { db } from '@/lib/db'
-import { hasSeenOnboarding } from '@/lib/onboarding'
+import { markOnboardingSeen } from '@/lib/onboarding'
 import { saveNutritionProfile } from '@/lib/nutrition'
 
 function Spinner() {
@@ -26,6 +26,7 @@ export default function Auth() {
   const { user } = db.useAuth()
   const { data: profileData } = db.useQuery({
     userProfiles: { $: { where: { userId: user?.id ?? '' } } },
+    workoutPlans: { $: { where: { userId: user?.id ?? '' } } },
   })
 
   const goAfterAuth = () => {
@@ -48,7 +49,10 @@ export default function Auth() {
         return
       } catch { /* fall through to normal routing if parse fails */ }
     }
-    if (hasSeenOnboarding(user.id)) {
+    // Use DB as source of truth — works cross-device, survives localStorage wipes.
+    const hasPlans = (profileData?.workoutPlans ?? []).length > 0
+    if (hasPlans) {
+      markOnboardingSeen(user.id) // keep localStorage in sync for fast future reads
       navigate('/dashboard', { replace: true })
     } else {
       navigate('/questionnaire', { replace: true })
