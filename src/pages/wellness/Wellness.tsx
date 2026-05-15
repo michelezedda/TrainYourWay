@@ -8,6 +8,7 @@ import {
   formatDuration, type WellnessSession,
 } from '@/lib/wellness'
 import { useMood, MOODS } from '@/context/MoodContext'
+import { useLocale } from '@/context/LocaleContext'
 
 const SESSION_CARDS = [
   {
@@ -110,6 +111,7 @@ export default function Wellness() {
   const userName = (profileData?.userProfiles?.[0] as { name?: string } | undefined)?.name?.split(' ')[0] ?? ''
 
   const { mood, selectMood } = useMood()
+  const { formatDateWithWeekday } = useLocale()
   const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
   const [streak, setStreak] = useState(getStreak)
   const [weekSessions, setWeekSessions] = useState(getWeekSessions)
@@ -292,7 +294,7 @@ export default function Wellness() {
                   <span className="text-lg flex-shrink-0">{SESSION_TYPE_LABELS[s.type]?.split(' ')[0] ?? '🧘'}</span>
                   <div className="flex-1">
                     <p className="text-white/75 text-sm font-medium">{SESSION_TYPE_LABELS[s.type]?.slice(2) ?? s.type}</p>
-                    <p className="text-white/30 text-xs">{new Date(s.timestamp).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                    <p className="text-white/30 text-xs">{formatDateWithWeekday(new Date(s.timestamp))}</p>
                   </div>
                   <span className="text-white/35 text-xs font-medium">{formatDuration(s.duration)}</span>
                 </div>

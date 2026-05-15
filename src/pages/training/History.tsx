@@ -12,6 +12,7 @@ import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { type InjuryState, getInjuryState, saveInjuryState, clearInjuryState, getInjuryAdvice } from '@/lib/injuryStore'
+import { useLocale } from '@/context/LocaleContext'
 
 function PlanName({ planId, name }: { planId: string; name: string }) {
   const [editing, setEditing] = useState(false)
@@ -54,10 +55,6 @@ function PlanName({ planId, name }: { planId: string; name: string }) {
       <HiPencil className="w-3.5 h-3.5 text-white/20 group-hover:text-purple-400 transition-colors flex-shrink-0" />
     </button>
   )
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function parseList(json: string): string[] {
@@ -129,6 +126,7 @@ export default function History() {
   const [startingOver, setStartingOver] = useState(false)
   const [injuryState, setInjuryState] = useState<InjuryState | null>(() => getInjuryState())
   const [showTriage, setShowTriage] = useState(false)
+  const { formatDateShort } = useLocale()
 
   const { isLoading, error, data } = db.useQuery({
     workoutPlans: { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
@@ -348,7 +346,7 @@ export default function History() {
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex-1 min-w-0">
               <PlanName planId={latestPlan.id} name={latestPlan.userName} />
-              <p className="text-white/35 text-xs mt-1">{formatDate(latestPlan.createdAt)}</p>
+              <p className="text-white/35 text-xs mt-1">{formatDateShort(latestPlan.createdAt)}</p>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <button
@@ -439,7 +437,7 @@ export default function History() {
                   >
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOriginal ? 'bg-white/20' : 'bg-purple-400/50'}`} />
                     <span className="text-white/60 text-sm font-medium flex-1">{label}</span>
-                    <span className="text-white/25 text-xs mr-2">{formatDate(version.createdAt)}</span>
+                    <span className="text-white/25 text-xs mr-2">{formatDateShort(version.createdAt)}</span>
                     <HiChevronDown className={`w-4 h-4 text-white/25 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
                   </button>
                   {isExpanded && version.plan && (

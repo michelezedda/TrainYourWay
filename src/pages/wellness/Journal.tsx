@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { HiArrowNarrowLeft, HiChevronDown, HiChevronUp } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { saveJournalEntry, getJournalEntries, saveSession, type JournalEntry } from '@/lib/wellness'
+import { useLocale } from '@/context/LocaleContext'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -44,12 +45,13 @@ const MOOD_TAGS = [
 
 function EntryCard({ entry, onToggle, open }: { entry: JournalEntry; onToggle: () => void; open: boolean }) {
   const tag = MOOD_TAGS.find(t => t.id === entry.moodTag)
+  const { formatDate } = useLocale()
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <button onClick={onToggle} className="w-full flex items-start gap-3 px-4 py-4 text-left">
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <p className="text-white/70 text-sm font-medium">{new Date(entry.timestamp).toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+            <p className="text-white/70 text-sm font-medium">{formatDate(entry.timestamp, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
             {tag && (
               <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                 style={{ background: `${tag.color}15`, color: tag.color, border: `1px solid ${tag.color}30` }}>

@@ -8,6 +8,7 @@ import GlassCard from '@/components/GlassCard'
 import { draftSupportTicket } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
+import { useLocale } from '@/context/LocaleContext'
 
 type Step = 'category' | 'details' | 'drafting' | 'review' | 'sending' | 'done' | 'error'
 type View = 'new' | 'tickets'
@@ -61,12 +62,6 @@ const mdComponents: Components = {
   strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
 }
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString('en-US', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
-  })
-}
-
 // ── Ticket list view ──────────────────────────────────────────────────────────
 
 interface StoredTicket {
@@ -82,6 +77,7 @@ interface StoredTicket {
 function TicketCard({ ticket }: { ticket: StoredTicket }) {
   const [expanded, setExpanded] = useState(false)
   const isSolved = ticket.status === 'solved'
+  const { formatDate } = useLocale()
 
   const toggleStatus = () => {
     void db.transact(
@@ -99,7 +95,7 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
             <span className="text-xl flex-shrink-0">{categoryMeta?.icon ?? '💬'}</span>
             <div className="min-w-0">
               <p className="text-white font-medium text-sm truncate">{ticket.category}</p>
-              <p className="text-white/35 text-xs mt-0.5">{formatDate(ticket.createdAt)}</p>
+              <p className="text-white/35 text-xs mt-0.5">{formatDate(ticket.createdAt, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
             </div>
           </div>
 

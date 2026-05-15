@@ -6,7 +6,7 @@ import { getUserId } from '@/lib/userId'
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
-import { getUnit, saveUnit, type Unit } from '@/lib/units'
+import { useLocale } from '@/context/LocaleContext'
 
 const AVATAR_KEY = 'tyw_avatar'
 
@@ -62,7 +62,7 @@ export default function Personal() {
   const [editingField, setEditingField] = useState<null | 'name'>(null)
   const [editValue, setEditValue] = useState('')
   const [notifPermission, setNotifPermission] = useState(() => getNotificationPermission())
-  const [unit, setUnit] = useState<Unit>(() => getUnit())
+  const { unit, setUnit } = useLocale()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY))
   const [avatarUploading, setAvatarUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -329,7 +329,7 @@ export default function Personal() {
               {(['metric', 'imperial'] as const).map((u, i) => (
                 <button
                   key={u}
-                  onClick={() => { saveUnit(u); setUnit(u) }}
+                  onClick={() => setUnit(u)}
                   className={`px-3.5 py-2 text-xs font-medium transition-colors ${unit === u ? 'bg-purple-500/20 text-purple-300' : 'bg-white/5 text-white/40 hover:text-white/70'} ${i === 0 ? 'border-r border-white/10' : ''}`}
                 >
                   {u === 'metric' ? 'Metric' : 'Imperial'}

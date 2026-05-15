@@ -6,7 +6,8 @@ import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, saveNutritionProfile, calculateTargets, type DailyTargets, type NutritionProfile } from '@/lib/nutrition'
 import { estimateFoodMacros, type FoodMacros } from '@/lib/gemini'
-import { getUnit, type Unit } from '@/lib/units'
+import { type Unit } from '@/lib/units'
+import { useLocale } from '@/context/LocaleContext'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const
 type Meal = (typeof MEALS)[number]
@@ -105,10 +106,6 @@ function shiftDate(dateStr: string, n: number): string {
   return toDateStr(d)
 }
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
 
 type MealEntry = {
   id: string; meal: string; description: string
@@ -382,7 +379,7 @@ export default function Diet() {
   const fileInputRefs = useRef<Partial<Record<Meal, HTMLInputElement | null>>>({})
 
   const userId = getUserId()
-  const unit   = getUnit()
+  const { unit, formatDateWithWeekday } = useLocale()
 
   const [profile, setProfile] = useState<NutritionProfile | null>(() => getNutritionProfile())
   const targets = profile ? calculateTargets(profile) : null
@@ -496,7 +493,7 @@ export default function Diet() {
         </button>
         <div className="flex-1 text-center">
           <p className={`font-bold text-lg ${isToday ? 'gradient-text' : 'text-white/85'}`}>
-            {isToday ? 'Today' : formatDate(selectedDate)}
+            {isToday ? 'Today' : formatDateWithWeekday(new Date(selectedDate + 'T12:00:00'))}
           </p>
           {!isToday && (
             <button onClick={() => goToDate(today)} className="text-xs mt-0.5" style={{ color: '#c084fc' }}>

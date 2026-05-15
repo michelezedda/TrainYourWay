@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
+import { useLocale } from '@/context/LocaleContext'
 import { getNickname } from '@/lib/nickname'
 import { GRADE_COLOR } from '@/lib/healthScore'
 
@@ -9,6 +10,7 @@ type Tab = 'finds' | 'leaderboard'
 function FindsTab() {
   const userId = getUserId()
   const { data } = db.useQuery({ communityFinds: {} })
+  const { formatDate } = useLocale()
 
   const finds = ((data?.communityFinds ?? []) as Array<{
     id: string; barcode: string; productName: string; brand: string
@@ -45,7 +47,7 @@ function FindsTab() {
                 {f.brand && <p className="text-white/40 text-[10px] uppercase tracking-wider truncate">{f.brand}</p>}
                 <p className="text-white font-semibold text-sm truncate">{f.productName || 'Unknown'}</p>
                 <p className="text-white/30 text-[10px] mt-0.5">
-                  by {isMe ? 'you' : getNickname(f.sharedBy)} · {new Date(f.sharedAt).toLocaleDateString()}
+                  by {isMe ? 'you' : getNickname(f.sharedBy)} · {formatDate(new Date(f.sharedAt))}
                 </p>
               </div>
               <div

@@ -14,7 +14,8 @@ import {
 } from '@/components/PlanView'
 import { buildPlanComponents, sanitizePlan } from '@/lib/planComponents'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
-import { getUnit, formatWeight, formatHeight, kgToLbs } from '@/lib/units'
+import { formatWeight, formatHeight, kgToLbs } from '@/lib/units'
+import { useLocale } from '@/context/LocaleContext'
 import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -1149,7 +1150,7 @@ function DiffBadge({ prev, curr, unit = 'kg', invertColor = false }: { prev: str
 
 function ReevalSummary({ data }: { data: ReevaluationData }) {
   const [open, setOpen] = useState(true)
-  const unit = getUnit()
+  const { unit } = useLocale()
   const prevBmi = computeBmi(data.originalWeight, data.originalHeight)
   const currBmi = computeBmi(data.currentWeight, data.currentHeight)
   const hasOriginal = !!(data.originalWeight && data.originalHeight)

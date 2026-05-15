@@ -21,14 +21,15 @@ export interface HabitAlert {
   message: string
 }
 
-function getWeekDates(today: string): string[] {
+function getWeekDates(today: string, weekStart: 0 | 1 = 1): string[] {
   const d = new Date(today + 'T12:00:00')
   const day = d.getDay()
-  const monday = new Date(d)
-  monday.setDate(d.getDate() - ((day + 6) % 7))
+  const offset = weekStart === 1 ? (day + 6) % 7 : day
+  const start = new Date(d)
+  start.setDate(d.getDate() - offset)
   return Array.from({ length: 7 }, (_, i) => {
-    const dd = new Date(monday)
-    dd.setDate(monday.getDate() + i)
+    const dd = new Date(start)
+    dd.setDate(start.getDate() + i)
     return `${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, '0')}-${String(dd.getDate()).padStart(2, '0')}`
   })
 }
@@ -37,8 +38,9 @@ export function analyzeWeekNutrition(
   mealEntries: Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>,
   targets: { kcal: number; protein: number; carbs: number; fat: number },
   today: string,
+  weekStart: 0 | 1 = 1,
 ): WeekNutritionSummary {
-  const weekDates = new Set(getWeekDates(today))
+  const weekDates = new Set(getWeekDates(today, weekStart))
   const weekEntries = mealEntries.filter(e => weekDates.has(e.date))
 
   const byDate = new Map<string, { kcal: number; protein: number; carbs: number; fat: number }>()

@@ -7,6 +7,7 @@ import {
 } from '@/lib/habits'
 import { requestNotificationPermission, getNotificationPermission, fireNotification } from '@/lib/notifications'
 import type { ScanHistoryEntry } from '@/lib/openFoodFacts'
+import { useLocale } from '@/context/LocaleContext'
 
 interface Props {
   mealEntries: Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>
@@ -44,10 +45,11 @@ function MacroBar({
 
 export default function WeeklyInsights({ mealEntries, targets, scanHistory, todayProtein, today }: Props) {
   const [notifPerm, setNotifPerm] = useState<NotificationPermission>(getNotificationPermission)
+  const { weekStart } = useLocale()
 
   const nutrition = useMemo(
-    () => analyzeWeekNutrition(mealEntries, targets, today),
-    [mealEntries, targets, today],
+    () => analyzeWeekNutrition(mealEntries, targets, today, weekStart),
+    [mealEntries, targets, today, weekStart],
   )
   const scans = useMemo(
     () => analyzeWeekScans(scanHistory, today),

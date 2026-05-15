@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { db } from '@/lib/db'
 import { setAuthUserId } from '@/lib/userId'
 import { MoodProvider } from '@/context/MoodContext'
+import { LocaleProvider } from '@/context/LocaleContext'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -116,6 +117,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthSync />
+        <LocaleProvider>
         <MoodProvider>
         <div className="ambient-bg" aria-hidden>
           <div className="ambient-orb-1" />
@@ -124,6 +126,7 @@ export default function App() {
         </div>
         <AppLayout />
         </MoodProvider>
+        </LocaleProvider>
       </BrowserRouter>
     </ErrorBoundary>
   )
