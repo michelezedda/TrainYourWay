@@ -92,6 +92,27 @@ function dietLine(data: WorkoutFormData): string {
   return `- Diet: ${data.dietType}${extra} | ${data.mealsPerDay} meals/day`
 }
 
+function computeOptimalScheduleHint(daysPerWeek: string, unavailableDays?: string[]): string {
+  const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const n = Math.max(0, Math.min(7, parseInt(daysPerWeek) || 0))
+  if (n <= 0) return ''
+  const unavailable = unavailableDays ?? []
+  const available = ALL_DAYS.filter(d => !unavailable.includes(d))
+  if (available.length === 0 || n >= available.length) return ''
+
+  // Distribute n workouts at maximally spaced positions across available days
+  const chosen = new Set<number>()
+  for (let i = 0; i < n; i++) {
+    let idx = Math.round(i * available.length / n)
+    // Resolve rounding collisions by nudging forward
+    while (chosen.has(idx)) idx = (idx + 1) % available.length
+    chosen.add(idx)
+  }
+  const workoutDays = [...chosen].sort((a, b) => a - b).map(i => available[i])
+
+  return `RECOVERY-AWARE SCHEDULE GUIDANCE: For optimal recovery, assign the ${n} training sessions to: ${workoutDays.join(', ')}. Leave all other available days as Rest. Avoid 3 or more consecutive training days unless the user's unavailability makes it impossible.`
+}
+
 function buildPrompt(data: WorkoutFormData): string {
   return `You are an expert personal trainer and fitness coach. Create a detailed, personalized weekly workout plan based on the profile below.
 
@@ -116,6 +137,7 @@ Create a complete ${data.daysPerWeek}-day weekly workout plan formatted in Markd
 2-3 sentences summarizing the training approach and why it suits this person's profile.
 
 ## Weekly Schedule
+${computeOptimalScheduleHint(data.daysPerWeek, data.unavailableDays)}
 ${data.unavailableDays?.length ? `IMPORTANT: The user CANNOT train on ${data.unavailableDays.join(', ')}. Mark those days as Rest in the schedule.` : ''}
 - **Monday:** [Workout Focus or Rest] · [Duration]
 - **Tuesday:** [Workout Focus or Rest] · [Duration]
@@ -172,6 +194,7 @@ Include this section verbatim, substituting the actual values:
 
 Rules:
 - NEVER use markdown tables anywhere in the response. Use the bullet/block formats shown above.
+- Space workout days for recovery: follow the schedule guidance above. Avoid consecutive training days unless unavoidable.
 - Every exercise must be doable with the listed equipment only
 - Adapt intensity precisely to the ${data.fitnessLevel} level
 - Be specific: always include sets, reps (or time), and rest periods
@@ -340,7 +363,7 @@ ${data.newGoals.length > 0 ? `5. Shift emphasis toward: ${data.newGoals.join(', 
 8. Update rest periods where appropriate.
 9. Rewrite the Overview section to describe this evolved phase and how it differs from the previous one.
 10. Update the Progression Plan for the next 4-8 weeks beyond this phase.
-${data.daysPerWeek ? `11. Build the plan around exactly ${data.daysPerWeek} training days per week${data.unavailableDays?.length ? `. Mark ${data.unavailableDays.join(', ')} as Rest in the Weekly Schedule` : ''}.` : ''}
+${data.daysPerWeek ? `11. Build the plan around exactly ${data.daysPerWeek} training days per week${data.unavailableDays?.length ? `. Mark ${data.unavailableDays.join(', ')} as Rest in the Weekly Schedule` : ''}. ${computeOptimalScheduleHint(data.daysPerWeek, data.unavailableDays)}` : ''}
 
 THIS MUST BE A COMPLETE, FULLY WRITTEN PLAN — not a summary or a list of changes. Every training day must be written in full.
 

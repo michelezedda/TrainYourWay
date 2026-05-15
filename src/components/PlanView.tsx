@@ -400,8 +400,8 @@ export function WorkoutDayView({
   return (
     <WorkoutProgressContext.Provider value={{ onExerciseDone: handleExerciseDone }}>
       <div>
-        {/* ── Day selector ── */}
-        <div className="flex gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
+        {/* ── Day selector: mobile (horizontal scroll, unchanged) ── */}
+        <div className="flex md:hidden gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
           {DAY_NAMES.map((day, i) => {
             const label        = schedule[day] ?? ''
             const isRestDay    = !label || /rest/i.test(label)
@@ -413,7 +413,7 @@ export function WorkoutDayView({
               <button
                 key={day}
                 onClick={() => setSelectedDay(i)}
-                className={`flex-shrink-0 flex flex-col items-center gap-1 px-4 py-3.5 rounded-2xl border transition-all duration-200 min-w-[72px] active:scale-95 ${
+                className={`w-[76px] flex-shrink-0 flex flex-col items-center gap-1 py-4 rounded-2xl border transition-all duration-200 active:scale-95 ${
                   isSel && isDayBlocked
                     ? 'border-red-500/60 bg-red-500/20'
                     : isSel && isRestDay && !hasOvr
@@ -437,7 +437,7 @@ export function WorkoutDayView({
                 }`}>
                   {DAY_SHORT[i]}
                 </span>
-                <span className={`text-[10px] leading-tight text-center max-w-[64px] truncate ${
+                <span className={`text-[10px] leading-tight text-center w-full px-1.5 truncate ${
                   isSel && isDayBlocked  ? 'text-red-300/70'
                   : isSel && isRestDay   ? 'text-white/30'
                   : isSel                ? 'text-purple-300/80'
@@ -454,6 +454,73 @@ export function WorkoutDayView({
                   : isDayBlocked           ? 'bg-red-500/40'
                   : isRestDay && !hasOvr   ? 'bg-white/10'
                                            : 'bg-white/30'
+                }`} />
+              </button>
+            )
+          })}
+        </div>
+
+        {/* ── Day selector: desktop/tablet (2-row grid, 4 cols) ── */}
+        <div className="hidden md:grid md:grid-cols-4 gap-3 mb-5">
+          {DAY_NAMES.map((day, i) => {
+            const label        = schedule[day] ?? ''
+            const isRestDay    = !label || /rest/i.test(label)
+            const hasOvr       = !!(dayWorkoutOverrides?.[day])
+            const isDayBlocked = (blockedDays?.includes(day) ?? false) && !hasOvr
+            const isSel        = selectedDay === i
+            const shortLabel   = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 16)
+            return (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(i)}
+                className={`flex flex-col items-center gap-1.5 py-5 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${
+                  !isSel
+                    ? isDayBlocked
+                      ? 'border-red-500/30 bg-red-500/8'
+                      : isRestDay && !hasOvr
+                      ? 'border-white/6 bg-transparent hover:bg-white/[0.03]'
+                      : 'border-white/14 bg-white/5 hover:bg-white/10'
+                    : 'border-transparent'
+                }`}
+                style={isSel ? (
+                  isDayBlocked
+                    ? { background: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.55)', boxShadow: '0 0 14px rgba(239,68,68,0.12)' }
+                    : isRestDay && !hasOvr
+                    ? { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.18)' }
+                    : {
+                        background: 'linear-gradient(135deg,rgba(168,85,247,0.22),rgba(34,211,238,0.13))',
+                        borderColor: 'rgba(168,85,247,0.5)',
+                        boxShadow: '0 0 22px rgba(168,85,247,0.18)',
+                      }
+                ) : {}}
+              >
+                <span className={`text-sm font-black uppercase tracking-wider ${
+                  isSel && isDayBlocked      ? 'text-red-200'
+                  : isSel && isRestDay       ? 'text-white/55'
+                  : isSel                    ? 'text-purple-100'
+                  : isDayBlocked             ? 'text-red-400/70'
+                  : isRestDay && !hasOvr     ? 'text-white/25'
+                                             : 'text-white/80'
+                }`}>
+                  {DAY_SHORT[i]}
+                </span>
+                <span className={`text-xs leading-snug text-center px-2 truncate w-full ${
+                  isSel && isDayBlocked  ? 'text-red-300/70'
+                  : isSel && isRestDay   ? 'text-white/30'
+                  : isSel                ? 'text-purple-200/90'
+                  : isDayBlocked         ? 'text-red-400/50'
+                  : isRestDay && !hasOvr ? 'text-white/20'
+                                         : 'text-white/50'
+                }`}>
+                  {shortLabel}
+                </span>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isSel && isDayBlocked    ? 'bg-red-400'
+                  : isSel && isRestDay     ? 'bg-white/35'
+                  : isSel                  ? 'bg-purple-400'
+                  : isDayBlocked           ? 'bg-red-500/40'
+                  : isRestDay && !hasOvr   ? 'bg-white/10'
+                                           : 'bg-white/25'
                 }`} />
               </button>
             )
