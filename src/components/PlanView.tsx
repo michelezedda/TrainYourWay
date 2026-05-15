@@ -212,7 +212,17 @@ function WorkoutCelebration({ exerciseCount, setsCount, weekStreak, weekWorkouts
         style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.25) 0%, transparent 65%)', filter: 'blur(28px)' }}
       />
 
-      <div className="relative px-6 pt-8 pb-6 text-center">
+      <div className="relative px-6 pt-8 pb-7 text-center">
+        {/* Dismiss */}
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.35)' }}
+        >
+          <span className="text-base leading-none">×</span>
+        </button>
+
         {/* Trophy */}
         <motion.div
           initial={{ scale: 0.4, opacity: 0, rotate: -15 }}
@@ -294,26 +304,10 @@ function WorkoutCelebration({ exerciseCount, setsCount, weekStreak, weekWorkouts
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.44 }}
-          className="text-[11px] text-white/28 leading-relaxed mb-5 italic"
+          className="text-[11px] text-white/28 leading-relaxed italic"
         >
           {recoveryTip}
         </motion.p>
-
-        {/* Dismiss */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.52 }}
-          onClick={onDismiss}
-          className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
-          style={{
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: 'rgba(255,255,255,0.55)',
-          }}
-        >
-          Continue
-        </motion.button>
       </div>
     </motion.div>
   )
@@ -344,7 +338,7 @@ export function WorkoutDayView({
   weekWorkouts?: number
   weeklyTarget?: number
 }) {
-  const { unit } = useLocale()
+  const { unit, weekStart } = useLocale()
   const sanitized   = useMemo(() => convertPlanUnits(sanitizePlan(plan), unit), [plan, unit])
   const schedule    = useMemo(() => parseWeeklySchedule(sanitized), [sanitized])
   const dayChunks   = useMemo(() => parseDayChunks(sanitized), [sanitized])
@@ -356,15 +350,20 @@ export function WorkoutDayView({
   const [showingUnblockOptions, setShowingUnblockOptions]     = useState(false)
   const [isGeneratingWorkout, setIsGeneratingWorkout]         = useState(false)
 
-  // Workout completion tracking
-  const [doneMap, setDoneMap]           = useState<Record<string, boolean>>({})
+  // Workout completion tracking — doneMap keyed as "DayName:exerciseKey" to prevent
+  // cross-day contamination when exercises share the same name across days.
+  const [doneMap, setDoneMap]               = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
-  const completionFiredRef = useRef(false)
+  const completionFiredRef   = useRef<Record<string, boolean>>({})
+  const dayBodySnapshotRef   = useRef<Record<string, string>>({})
+  // Updated each render so handleExerciseDone can stay stable (empty useCallback deps).
+  const currentDayNameRef    = useRef('')
 
   const handleExerciseDone = useCallback((key: string, done: boolean) => {
+    const fullKey = `${currentDayNameRef.current}:${key}`
     setDoneMap(prev => {
-      if (prev[key] === done) return prev
-      return { ...prev, [key]: done }
+      if (prev[fullKey] === done) return prev
+      return { ...prev, [fullKey]: done }
     })
   }, [])
 
@@ -388,6 +387,7 @@ export function WorkoutDayView({
   }, [schedule])
 
   const currentDayName = DAY_NAMES[selectedDay]
+  currentDayNameRef.current = currentDayName  // keep ref in sync every render
   const selectedLabel  = schedule[currentDayName] ?? ''
   const hasOverride    = !!(dayWorkoutOverrides?.[currentDayName])
   const isRest         = !hasOverride && (!selectedLabel || /rest/i.test(selectedLabel))
@@ -404,27 +404,58 @@ export function WorkoutDayView({
 
   // Extract exercise keys from raw day body for completion tracking
   const exerciseKeys = useMemo(() => extractExerciseKeys(dayBody), [dayBody])
-  const setsCount = useMemo(() => countTotalSets(dayBody), [dayBody])
+  const setsCount    = useMemo(() => countTotalSets(dayBody), [dayBody])
 
-  const allDone = exerciseKeys.length > 0 && exerciseKeys.every(k => doneMap[k] === true)
+  // All exercises for the CURRENT day are done (day-scoped keys prevent false positives).
+  const allDone  = exerciseKeys.length > 0 && exerciseKeys.every(k => doneMap[`${currentDayName}:${k}`] === true)
+  const doneCount = Object.entries(doneMap).filter(([k, v]) => k.startsWith(`${currentDayName}:`) && v).length
 
-  // Show celebration once per day view when all exercises are done
+  // Fire celebration exactly once per day per plan session.
   useEffect(() => {
-    if (allDone && !completionFiredRef.current) {
-      completionFiredRef.current = true
+    if (allDone && !completionFiredRef.current[currentDayName]) {
+      completionFiredRef.current[currentDayName] = true
       setShowCelebration(true)
       onWorkoutComplete?.(currentDayName, exerciseKeys.length, setsCount)
     }
-  // completionFiredRef is a ref - intentionally omitted from deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allDone, currentDayName, exerciseKeys.length, setsCount, onWorkoutComplete])
 
-  // Reset tracking when day content changes
+  // When a day's body content changes (override generated), reset only that day's state.
+  // On a plain day-switch, snapshot shows the same body, so doneMap is preserved.
+  useEffect(() => {
+    const prev = dayBodySnapshotRef.current[currentDayName]
+    dayBodySnapshotRef.current[currentDayName] = dayBody
+    if (prev !== undefined && prev !== dayBody) {
+      const prefix = `${currentDayName}:`
+      setDoneMap(cur =>
+        Object.fromEntries(Object.entries(cur).filter(([k]) => !k.startsWith(prefix)))
+      )
+      delete completionFiredRef.current[currentDayName]
+    }
+    setShowCelebration(false)
+  }, [dayBody, currentDayName])
+
+  // Hard-reset everything when the plan text itself is replaced.
   useEffect(() => {
     setDoneMap({})
     setShowCelebration(false)
-    completionFiredRef.current = false
-  }, [dayBody])
+    completionFiredRef.current = {}
+    dayBodySnapshotRef.current = {}
+  }, [plan])
+
+  // Weekly reset: clear in-session completion marks when a new week starts.
+  useEffect(() => {
+    const d = new Date()
+    const diff = (d.getDay() - weekStart + 7) % 7
+    d.setDate(d.getDate() - diff)
+    const wk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (localStorage.getItem('tyw-workout-week') !== wk) {
+      localStorage.setItem('tyw-workout-week', wk)
+      setDoneMap({})
+      completionFiredRef.current = {}
+      dayBodySnapshotRef.current = {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // mount-only: next load after week boundary picks up fresh wk value
 
   const handleGenerateWorkout = async () => {
     if (!onGenerateDayWorkout) return
@@ -612,7 +643,7 @@ export function WorkoutDayView({
                       : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.25)' }
                   }
                 >
-                  {Object.values(doneMap).filter(Boolean).length}/{exerciseKeys.length}
+                  {doneCount}/{exerciseKeys.length}
                 </span>
               )}
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${
