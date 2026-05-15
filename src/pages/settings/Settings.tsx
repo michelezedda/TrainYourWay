@@ -56,8 +56,6 @@ export default function Personal() {
 
   const userProfile = (profileData?.userProfiles ?? [])[0] as { id: string; name?: string } | undefined
 
-  const allPlans = (planData?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
-  const latestPlan = [...allPlans].sort((a, b) => b.createdAt - a.createdAt)[0]
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
