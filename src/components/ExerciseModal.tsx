@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { FaYoutube } from 'react-icons/fa'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { getExerciseInstructions, type ExerciseInstructions } from '@/lib/gemini'
 import MuscleMap from './MuscleMap'
 
@@ -226,6 +226,7 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
   const [instructions, setInstructions] = useState<ExerciseInstructions | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const dragControls = useDragControls()
 
   const query = encodeURIComponent(`${name} exercise proper form tutorial`)
 
@@ -252,7 +253,17 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
+        exit={{ y: '100%', opacity: 0, transition: { duration: 0.22, ease: [0.25, 0.1, 0.25, 1] } }}
         transition={{ type: 'spring', stiffness: 420, damping: 42 }}
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0, bottom: 0.4 }}
+        dragTransition={{ bounceStiffness: 500, bounceDamping: 40 }}
+        onDragEnd={(_, info) => {
+          if (info.velocity.y > 450 || info.offset.y > 140) onClose()
+        }}
         className="w-full max-w-lg mx-auto overflow-hidden"
         style={{
           borderRadius: '28px 28px 0 0',
@@ -265,8 +276,11 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+        {/* Drag handle — touch-only drag initiation point */}
+        <div
+          className="flex justify-center pt-3 pb-1 flex-shrink-0 touch-none select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={e => { if (e.pointerType !== 'mouse') dragControls.start(e) }}
+        >
           <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }} />
         </div>
 

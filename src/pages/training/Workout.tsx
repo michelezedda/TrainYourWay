@@ -247,7 +247,9 @@ export default function Workout() {
 
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
-      {selectedExercise && <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />}
+      <AnimatePresence>
+        {selectedExercise && <ExerciseModal key={selectedExercise} name={selectedExercise} onClose={() => setSelectedExercise(null)} />}
+      </AnimatePresence>
       <AnimatePresence>
         {showTriage && (
           <InjuryTriage onClose={() => setShowTriage(false)} onActivate={handleActivateRecovery} />

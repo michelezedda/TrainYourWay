@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { type InjuryLocation, type InjurySeverity, type InjuryState, getInjuryAdvice } from '@/lib/injuryStore'
 
 const LOCATIONS: { key: InjuryLocation; label: string; icon: string }[] = [
@@ -35,6 +35,7 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
   const [location, setLocation] = useState<InjuryLocation | null>(null)
   const [severity, setSeverity] = useState<InjurySeverity | null>(null)
   const [worsens, setWorsens] = useState<boolean | null>(null)
+  const dragControls = useDragControls()
 
   const injuryState: InjuryState | null =
     location && severity && worsens !== null
@@ -73,7 +74,16 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-        className="w-full md:max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden pb-14"
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0, bottom: 0.4 }}
+        dragTransition={{ bounceStiffness: 500, bounceDamping: 40 }}
+        onDragEnd={(_, info) => {
+          if (info.velocity.y > 450 || info.offset.y > 140) onClose()
+        }}
+        className="w-full md:max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden pb-20"
         style={{
           background: 'linear-gradient(160deg, rgba(10,5,30,0.98) 0%, rgba(5,5,18,0.99) 100%)',
           border: '1px solid rgba(245,158,11,0.2)',
@@ -82,8 +92,11 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
           overflowY: 'auto',
         }}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        {/* Handle — touch-only drag initiation point */}
+        <div
+          className="flex justify-center pt-3 pb-1 touch-none select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={e => { if (e.pointerType !== 'mouse') dragControls.start(e) }}
+        >
           <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
         </div>
 
