@@ -3,6 +3,7 @@ import { FaYoutube } from 'react-icons/fa'
 import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { getExerciseInstructions, type ExerciseInstructions } from '@/lib/gemini'
 import MuscleMap from './MuscleMap'
+import ExerciseDemoPlayer from './ExerciseDemoPlayer'
 
 // ── Difficulty config ─────────────────────────────────────────────────────────
 
@@ -226,6 +227,7 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
   const [instructions, setInstructions] = useState<ExerciseInstructions | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [showDemo, setShowDemo] = useState(false)
   const dragControls = useDragControls()
 
   const query = encodeURIComponent(`${name} exercise proper form tutorial`)
@@ -383,6 +385,30 @@ export default function ExerciseModal({ name, onClose }: { name: string; onClose
                 <MistakesSection avoid={instructions.avoid} />
               </>
             )}
+
+            {/* Watch Demo toggle */}
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: loading ? 0 : 0.3 }}
+              onClick={() => setShowDemo(d => !d)}
+              className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98]"
+              style={{
+                background: showDemo
+                  ? 'linear-gradient(135deg, rgba(168,85,247,0.18), rgba(34,211,238,0.12))'
+                  : 'rgba(168,85,247,0.08)',
+                border: `1px solid ${showDemo ? 'rgba(168,85,247,0.45)' : 'rgba(168,85,247,0.25)'}`,
+                color: showDemo ? '#c084fc' : 'rgba(192,132,252,0.75)',
+              }}
+            >
+              <span style={{ fontSize: 13 }}>▶</span>
+              {showDemo ? 'Hide Demo' : 'Watch Demo'}
+            </motion.button>
+
+            {/* Demo player */}
+            <AnimatePresence>
+              {showDemo && <ExerciseDemoPlayer exerciseName={name} />}
+            </AnimatePresence>
 
             {/* YouTube link - always shown */}
             <motion.a
