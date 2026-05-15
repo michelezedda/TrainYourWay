@@ -1,25 +1,21 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { motion, AnimatePresence } from 'framer-motion'
-import ExerciseModal from '@/components/ExerciseModal'
 import {
   HiChevronDown, HiArrowNarrowRight, HiChevronRight, HiChevronLeft,
-  HiLightningBolt,
 } from 'react-icons/hi'
 import {
   parseAnalysisSections,
   SECTION_ICONS,
-  WorkoutDayView,
 } from '@/components/PlanView'
-import { buildPlanComponents, sanitizePlan } from '@/lib/planComponents'
+import { sanitizePlan } from '@/lib/planComponents'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { formatWeight, formatHeight, kgToLbs } from '@/lib/units'
 import { useLocale } from '@/context/LocaleContext'
-import { getWeights, setWeight } from '@/lib/exerciseWeights'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
-import { generateDayWorkout } from '@/lib/gemini'
+import { markOnboardingSeen } from '@/lib/onboarding'
 import type { Components } from 'react-markdown'
 import type { WorkoutFormData, ReevaluationData } from '@/lib/gemini'
 
@@ -177,15 +173,15 @@ function MacroRing({
 // ── Transformation timeline data ──────────────────────────────────────────────
 
 const TIMELINE: Record<string, { t1: string; t2: string; t3: string }> = {
-  'Weight Loss':          { t1: 'Energy improves, routine clicks', t2: 'First visible changes, clothes fit differently', t3: 'Significant body composition shift' },
-  'Muscle Gain':          { t1: 'Strength baselines set, soreness fades', t2: 'Noticeable strength jump, shape emerging', t3: 'Real muscle development, visible definition' },
-  'Body Recomposition':   { t1: 'Body starts prioritising protein, energy levels up', t2: 'Fat shifts, muscle firms up', t3: 'Leaner and stronger at the same weight' },
-  'Strength':             { t1: 'CNS adapts, lifts feel smoother', t2: 'Measurable PRs, form sharpens', t3: 'Baseline strength 20-30% higher than day one' },
-  'Endurance':            { t1: 'Cardiovascular efficiency building fast', t2: 'Pace improves, recovery speeds up', t3: 'Stamina transformation you will feel everywhere' },
+  'Weight Loss': { t1: 'Energy improves, routine clicks', t2: 'First visible changes, clothes fit differently', t3: 'Significant body composition shift' },
+  'Muscle Gain': { t1: 'Strength baselines set, soreness fades', t2: 'Noticeable strength jump, shape emerging', t3: 'Real muscle development, visible definition' },
+  'Body Recomposition': { t1: 'Body starts prioritising protein, energy levels up', t2: 'Fat shifts, muscle firms up', t3: 'Leaner and stronger at the same weight' },
+  'Strength': { t1: 'CNS adapts, lifts feel smoother', t2: 'Measurable PRs, form sharpens', t3: 'Baseline strength 20-30% higher than day one' },
+  'Endurance': { t1: 'Cardiovascular efficiency building fast', t2: 'Pace improves, recovery speeds up', t3: 'Stamina transformation you will feel everywhere' },
   'Athletic Performance': { t1: 'Movement patterns refined, power base builds', t2: 'Speed and agility measurably improved', t3: 'Peak performance window opening up' },
-  'Flexibility':          { t1: 'Joint mobility increases, tension releases', t2: 'Range of motion visibly improved', t3: 'Full movement freedom unlocked' },
-  'General Fitness':      { t1: 'Energy and mood lift within the first week', t2: 'Stamina improves, daily movement gets easier', t3: 'A fitter, stronger version of you' },
-  'Stress Relief':        { t1: 'Post-workout calm kicks in from session one', t2: 'Sleep improves, stress response softens', t3: 'Movement becomes your most reliable mood reset' },
+  'Flexibility': { t1: 'Joint mobility increases, tension releases', t2: 'Range of motion visibly improved', t3: 'Full movement freedom unlocked' },
+  'General Fitness': { t1: 'Energy and mood lift within the first week', t2: 'Stamina improves, daily movement gets easier', t3: 'A fitter, stronger version of you' },
+  'Stress Relief': { t1: 'Post-workout calm kicks in from session one', t2: 'Sleep improves, stress response softens', t3: 'Movement becomes your most reliable mood reset' },
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -232,8 +228,8 @@ function StickyNav({
                   background: i === slideIdx
                     ? 'linear-gradient(90deg, #A855F7, #22D3EE)'
                     : i < slideIdx
-                    ? 'rgba(168,85,247,0.42)'
-                    : 'rgba(255,255,255,0.1)',
+                      ? 'rgba(168,85,247,0.42)'
+                      : 'rgba(255,255,255,0.1)',
                 }}
               />
             ))}
@@ -311,7 +307,7 @@ function CelebrationSlide({ formData, userName }: { formData: WorkoutFormData; u
           <h1 className="font-black text-white tracking-tight leading-[1.06] mb-4"
             style={{ fontSize: 'clamp(2.8rem, 12vw, 4.8rem)' }}>
             {userName ? (
-              <>{userName},<br />you're set.</>
+              <>{userName},<br />you're all set.</>
             ) : (
               <>Your results<br />are in.</>
             )}
@@ -855,27 +851,25 @@ function ImmersiveReveal({
   plan,
   userName,
   onDone,
-  planVisible,
 }: {
   analysis: string
   formData: WorkoutFormData
   plan?: string
   userName: string
   onDone: () => void
-  planVisible: boolean
 }) {
   const sections = useMemo(() => parseAnalysisSections(sanitizePlan(analysis)), [analysis])
   const hasNutrition = !!getNutritionProfile()
 
   // Slide index map
-  const SLIDE_CELEBRATION  = 0
-  const SLIDE_PROFILE      = 1
-  const SLIDE_AI_START     = 2
-  const SLIDE_TRAINING     = SLIDE_AI_START + sections.length
-  const SLIDE_NUTRITION    = hasNutrition ? SLIDE_TRAINING + 1 : -1
-  const SLIDE_TRANSFORM    = SLIDE_TRAINING + (hasNutrition ? 2 : 1)
-  const SLIDE_READY        = SLIDE_TRANSFORM + 1
-  const TOTAL              = SLIDE_READY + 1
+  const SLIDE_CELEBRATION = 0
+  const SLIDE_PROFILE = 1
+  const SLIDE_AI_START = 2
+  const SLIDE_TRAINING = SLIDE_AI_START + sections.length
+  const SLIDE_NUTRITION = hasNutrition ? SLIDE_TRAINING + 1 : -1
+  const SLIDE_TRANSFORM = SLIDE_TRAINING + (hasNutrition ? 2 : 1)
+  const SLIDE_READY = SLIDE_TRANSFORM + 1
+  const TOTAL = SLIDE_READY + 1
 
   const [slideIdx, setSlideIdx] = useState(0)
   const [dir, setDir] = useState(1)
@@ -887,38 +881,18 @@ function ImmersiveReveal({
   }
 
   const isFirst = slideIdx === 0
-  const isLast  = slideIdx === SLIDE_READY
-  const isAI    = slideIdx >= SLIDE_AI_START && slideIdx < SLIDE_TRAINING
+  const isLast = slideIdx === SLIDE_READY
+  const isAI = slideIdx >= SLIDE_AI_START && slideIdx < SLIDE_TRAINING
   const currentSection = isAI ? sections[slideIdx - SLIDE_AI_START] : null
 
   const nextLabel = (() => {
-    if (isFirst)                          return 'See My Results'
-    if (slideIdx === SLIDE_PROFILE)       return sections.length ? 'View Analysis' : 'Training Split'
-    if (slideIdx === SLIDE_TRAINING)      return hasNutrition ? 'Check Nutrition' : 'What to Expect'
-    if (slideIdx === SLIDE_NUTRITION)     return 'What to Expect'
-    if (slideIdx === SLIDE_TRANSFORM)     return 'Ready'
+    if (isFirst) return 'See My Results'
+    if (slideIdx === SLIDE_PROFILE) return sections.length ? 'View Analysis' : 'Training Split'
+    if (slideIdx === SLIDE_TRAINING) return hasNutrition ? 'Check Nutrition' : 'What to Expect'
+    if (slideIdx === SLIDE_NUTRITION) return 'What to Expect'
+    if (slideIdx === SLIDE_TRANSFORM) return 'Ready'
     return 'Next'
   })()
-
-  if (planVisible) {
-    const primaryGoal = formData.goals[0] ?? ''
-    const goalMeta = GOAL_META[primaryGoal]
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mb-5 px-4 py-3.5 rounded-2xl flex items-center gap-3"
-        style={{ background: 'rgba(168,85,247,0.07)', border: '1px solid rgba(168,85,247,0.18)' }}
-      >
-        <span className="text-lg flex-shrink-0">{goalMeta?.icon ?? '🏋️'}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-white/75 text-sm font-semibold truncate">{formData.planName}</p>
-          <p className="text-white/35 text-xs">Analysis complete. Your plan is ready below.</p>
-        </div>
-        <span className="text-green-400 text-xs font-bold">Done</span>
-      </motion.div>
-    )
-  }
 
   return (
     <>
@@ -994,132 +968,6 @@ function ImmersiveReveal({
 // PLAN VIEW COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── Plan Hero ─────────────────────────────────────────────────────────────────
-
-function PlanHero({ formData }: { formData: WorkoutFormData }) {
-  const goals = formData.goals ?? []
-  const stats = [
-    { icon: '📅', label: 'Days/week', value: formData.daysPerWeek },
-    { icon: '⏱', label: 'Per session', value: `${formData.sessionDuration} min` },
-    { icon: '📊', label: 'Level', value: LEVEL_LABELS[formData.fitnessLevel] ?? formData.fitnessLevel },
-    { icon: '🛠', label: 'Equipment', value: formData.equipment.length > 0 ? `${formData.equipment.length} items` : 'Bodyweight' },
-  ]
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="mb-6 rounded-3xl overflow-hidden"
-      style={{
-        background: 'linear-gradient(145deg, rgba(168,85,247,0.18) 0%, rgba(34,211,238,0.09) 100%)',
-        border: '1px solid rgba(168,85,247,0.28)',
-        boxShadow: '0 0 60px rgba(168,85,247,0.12)',
-      }}
-    >
-      <div className="px-6 pt-6 pb-4">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-purple-400/70">Your plan is ready</span>
-          <span className="text-purple-400/40">·</span>
-          <span className="text-xs text-white/30 uppercase tracking-wider">{formData.planName || 'Custom Plan'}</span>
-        </div>
-        <h1 className="text-2xl font-black text-white tracking-tight leading-tight mb-4">
-          Built for your<br />
-          <span className="gradient-text">exact goals</span>
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          {goals.map(g => {
-            const m = GOAL_META[g]
-            return (
-              <span key={g}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${m?.bg ?? 'bg-white/8'} ${m?.color ?? 'text-white/70'} ${m?.border ?? 'border-white/15'}`}>
-                <span>{m?.icon ?? '🎯'}</span>
-                {g}
-              </span>
-            )
-          })}
-        </div>
-      </div>
-      <div className="grid grid-cols-4 divide-x divide-white/8 border-t border-white/8">
-        {stats.map(({ icon, label, value }) => (
-          <div key={label} className="flex flex-col items-center gap-1 px-2 py-4">
-            <span className="text-lg leading-none">{icon}</span>
-            <span className="text-white font-bold text-sm leading-none">{value}</span>
-            <span className="text-white/35 text-[10px] uppercase tracking-wider leading-none">{label}</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
-
-// ── Nutrition Targets ─────────────────────────────────────────────────────────
-
-const MACRO_COLORS = {
-  Protein: '#22D3EE',
-  Carbs: '#A855F7',
-  Fat: '#ec4899',
-}
-
-function NutritionTargets() {
-  const profile = getNutritionProfile()
-  if (!profile) return null
-
-  const t = calculateTargets(profile)
-  const isWeightLoss = profile.goals.some(g => /weight.?loss/i.test(g))
-  const isMuscleGain = profile.goals.some(g => /muscle/i.test(g))
-  const adjustNote = isWeightLoss ? '400 kcal deficit' : isMuscleGain ? '200 kcal surplus' : 'Maintenance'
-
-  const macros = [
-    { label: 'Protein', value: t.protein, unit: 'g', pct: (t.protein * 4) / t.kcal, color: MACRO_COLORS.Protein, desc: 'muscle repair' },
-    { label: 'Carbs', value: t.carbs, unit: 'g', pct: (t.carbs * 4) / t.kcal, color: MACRO_COLORS.Carbs, desc: 'fuel energy' },
-    { label: 'Fat', value: t.fat, unit: 'g', pct: (t.fat * 9) / t.kcal, color: MACRO_COLORS.Fat, desc: 'hormones' },
-  ]
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="mb-6 rounded-3xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
-      <div className="px-5 py-4 border-b border-white/6 flex items-center justify-between">
-        <div>
-          <p className="text-white font-bold text-sm">Daily Nutrition</p>
-          <p className="text-white/35 text-xs mt-0.5">{adjustNote} - track in Diet tab</p>
-        </div>
-        <div className="text-right">
-          <p className="text-white font-black text-xl tabular-nums"><AnimatedNumber value={t.kcal} /></p>
-          <p className="text-white/35 text-[10px] uppercase tracking-wider">kcal/day</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-3 divide-x divide-white/6 py-2">
-        {macros.map(({ label, value, unit, pct, color, desc }, i) => (
-          <div key={label} className="flex flex-col items-center py-4 gap-2">
-            <MacroRing pct={pct} color={color} size={68} stroke={6}>
-              <span className="text-white font-black text-sm tabular-nums leading-none">
-                <AnimatedNumber value={value} delay={0.2 + i * 0.1} />
-              </span>
-              <span className="text-white/40 text-[9px] leading-none">{unit}</span>
-            </MacroRing>
-            <div className="text-center">
-              <p className="text-white/80 font-semibold text-xs">{label}</p>
-              <p className="text-white/30 text-[10px]">{desc}</p>
-            </div>
-            <div className="w-12 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <motion.div className="h-full rounded-full" style={{ background: color }}
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.round(pct * 100)}%` }}
-                transition={{ duration: 1, delay: 0.4 + i * 0.1, ease: [0.4, 0, 0.2, 1] }} />
-            </div>
-            <span className="text-white/25 text-[10px]">{Math.round(pct * 100)}% of kcal</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // REEVALUATION COMPONENTS
@@ -1409,98 +1257,31 @@ function ReevalAnalysisCard({ analysis, onViewPlan }: { analysis: string; onView
   )
 }
 
-// ── Plan Section Header ───────────────────────────────────────────────────────
-
-function PlanSectionHeader() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="flex items-center justify-between mb-5"
-    >
-      <div>
-        <h2 className="text-xl font-black text-white tracking-tight">Your Workouts</h2>
-        <p className="text-white/35 text-xs mt-0.5">Tap any exercise for step-by-step instructions</p>
-      </div>
-      <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}>
-        <HiLightningBolt className="w-4 h-4 text-purple-300" />
-      </div>
-    </motion.div>
-  )
-}
-
 // ══════════════════════════════════════════════════════════════════════════════
 // MAIN RESULTS PAGE
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function Results() {
   const location = useLocation()
+  const navigate = useNavigate()
   const userId = getUserId()
 
   const plan = location.state?.plan as string | undefined
-  const planId = location.state?.planId as string | undefined
   const analysis = location.state?.analysis as string | undefined
   const formData = location.state?.formData as WorkoutFormData | undefined
   const reevalData = location.state?.reevalData as ReevaluationData | undefined
   const reevalAnalysis = location.state?.reevalAnalysis as string | undefined
 
-  // Fetch user name for personalization
   const { data: profileData } = db.useQuery({ userProfiles: { $: { where: { userId } } } })
   const userName = useMemo(() => {
     const profiles = (profileData?.userProfiles ?? []) as Array<{ name?: string }>
     return profiles[0]?.name?.split(' ')[0] ?? ''
   }, [profileData])
 
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
-  const [planVisible, setPlanVisible] = useState(!(analysis || reevalAnalysis))
-  const [weights, setWeights] = useState<Record<string, string>>(() =>
-    planId ? getWeights(planId) : {}
-  )
-  const [blockedDays, setBlockedDays] = useState<string[]>(formData?.unavailableDays ?? [])
-  const [dayOverrides, setDayOverrides] = useState<Record<string, string>>({})
-
-  const planRef = useRef<HTMLDivElement>(null)
-
-  const handleWeightChange = useCallback((exercise: string, value: string) => {
-    setWeights(prev => ({ ...prev, [exercise]: value }))
-    if (planId) setWeight(planId, exercise, value)
-  }, [planId])
-
-  const handleViewPlan = useCallback(() => {
-    setPlanVisible(true)
-    setTimeout(() => planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
-  }, [])
-
-  const handleUnblockDay = useCallback((day: string) => {
-    const newDays = blockedDays.filter(d => d !== day)
-    setBlockedDays(newDays)
-    if (planId) {
-      void db.transact(db.tx.workoutPlans[planId].update({ unavailableDays: JSON.stringify(newDays) }))
-    }
-  }, [blockedDays, planId])
-
-  const handleGenerateDayWorkout = useCallback(async (day: string) => {
-    if (!plan) return
-    const workoutText = await generateDayWorkout(plan, day)
-    const newOverrides = { ...dayOverrides, [day]: workoutText }
-    const newBlocked = blockedDays.filter(d => d !== day)
-    setDayOverrides(newOverrides)
-    setBlockedDays(newBlocked)
-    if (planId) {
-      void db.transact(db.tx.workoutPlans[planId].update({
-        dayOverrides: JSON.stringify(newOverrides),
-        unavailableDays: JSON.stringify(newBlocked),
-      }))
-    }
-  }, [plan, dayOverrides, blockedDays, planId])
-
-  const planComponents = useMemo(
-    () => buildPlanComponents(setSelectedExercise, planId, weights, handleWeightChange),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [planId, handleWeightChange],
-  )
+  const handleViewPlan = () => {
+    markOnboardingSeen(userId)
+    navigate('/dashboard', { replace: true })
+  }
 
   if (!plan) {
     return (
@@ -1520,48 +1301,21 @@ export default function Results() {
 
   return (
     <main className="w-full md:max-w-2xl lg:max-w-3xl md:mx-auto px-4 pt-6 pb-nav">
-      {selectedExercise && (
-        <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
-      )}
-
       {/* Initial assessment - immersive reveal */}
       {analysis && formData && !reevalData && (
-        <>
-          <ImmersiveReveal
-            analysis={analysis}
-            formData={formData}
-            plan={plan}
-            userName={userName}
-            onDone={handleViewPlan}
-            planVisible={planVisible}
-          />
-          {planVisible && <PlanHero formData={formData} />}
-        </>
+        <ImmersiveReveal
+          analysis={analysis}
+          formData={formData}
+          plan={plan}
+          userName={userName}
+          onDone={handleViewPlan}
+        />
       )}
 
       {/* Reevaluation flow */}
       {reevalData && <ReevalSummary data={reevalData} />}
       {reevalData && reevalAnalysis && (
         <ReevalAnalysisCard analysis={reevalAnalysis} onViewPlan={handleViewPlan} />
-      )}
-
-      {/* No analysis - show hero immediately */}
-      {!analysis && !reevalData && formData && <PlanHero formData={formData} />}
-
-      {/* Workout plan */}
-      {planVisible && (
-        <div ref={planRef}>
-          <NutritionTargets />
-          <PlanSectionHeader />
-          <WorkoutDayView
-            plan={plan}
-            planComponents={planComponents}
-            blockedDays={blockedDays}
-            dayWorkoutOverrides={dayOverrides}
-            onUnblockDay={handleUnblockDay}
-            onGenerateDayWorkout={handleGenerateDayWorkout}
-          />
-        </div>
       )}
     </main>
   )

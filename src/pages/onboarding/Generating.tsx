@@ -4,7 +4,7 @@ import { id } from '@instantdb/react'
 import { generateAnalysis, generateWorkoutPlan, generateReevaluationAnalysis, reevaluateWorkoutPlan, type WorkoutFormData, type ReevaluationData } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
-import { hasSeenOnboarding } from '@/lib/onboarding'
+
 
 const TIPS = [
   'Analyzing your equipment and space...',
@@ -107,11 +107,7 @@ export default function Generating() {
               otherSports: payload.otherSports ? JSON.stringify(payload.otherSports) : undefined,
             }),
           )
-          if (!hasSeenOnboarding(userId)) {
-              navigate('/onboarding-summary', { state: { plan, planId, formData: payload }, replace: true })
-            } else {
-              navigate('/results', { state: { plan, planId, analysis, formData: payload }, replace: true })
-            }
+          navigate('/results', { state: { plan, planId, analysis, formData: payload }, replace: true })
         }
       } catch (err) {
         console.error('[Generating] Error:', err)

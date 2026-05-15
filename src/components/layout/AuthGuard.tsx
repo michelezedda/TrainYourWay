@@ -14,7 +14,6 @@ import Scanner from '@/pages/nutrition/Scanner'
 import Community from '@/pages/community/Community'
 import MachineGuide from '@/pages/training/MachineGuide'
 import Wellness from '@/pages/wellness/Wellness'
-import Summary from '@/pages/onboarding/Summary'
 import Breathing from '@/pages/wellness/Breathing'
 import Focus from '@/pages/wellness/Focus'
 import Journal from '@/pages/wellness/Journal'
@@ -23,7 +22,7 @@ import Affirmations from '@/pages/wellness/Affirmations'
 
 // Routes that are part of the onboarding flow itself — must be accessible
 // even before a plan exists, so we don't redirect away mid-generation.
-const ONBOARDING_FLOW = ['/generating', '/results', '/onboarding-summary']
+const ONBOARDING_FLOW = ['/generating', '/results']
 
 function Spinner() {
   return (
@@ -75,7 +74,6 @@ export default function AuthGuard() {
       <Route path="/scanner"                element={<Scanner />} />
       <Route path="/community"              element={<Community />} />
       <Route path="/machine"                element={<MachineGuide />} />
-      <Route path="/onboarding-summary"     element={<Summary />} />
       <Route path="/wellness"               element={<Wellness />} />
       <Route path="/wellness/breathing"     element={<Breathing />} />
       <Route path="/wellness/focus"         element={<Focus />} />

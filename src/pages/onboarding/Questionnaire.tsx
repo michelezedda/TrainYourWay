@@ -12,7 +12,6 @@ import { saveNutritionProfile } from '@/lib/nutrition'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { requestNotificationPermission } from '@/lib/notifications'
-import { hasSeenOnboarding } from '@/lib/onboarding'
 import { getUnit, saveUnit, lbsToKg, kgToLbs, cmToFtIn, ftInToCm, toMetricWeight, toMetricHeight, type Unit } from '@/lib/units'
 
 interface FormData {
@@ -265,8 +264,8 @@ export default function Questionnaire() {
 
   useEffect(() => {
     if (plansData === undefined) return
-    if (!hasSeenOnboarding(userId) && existingPlanIds.length > 0) {
-      navigate('/onboarding-summary', { replace: true })
+    if (existingPlanIds.length > 0) {
+      navigate('/dashboard', { replace: true })
     }
   }, [plansData]) // eslint-disable-line react-hooks/exhaustive-deps
 
