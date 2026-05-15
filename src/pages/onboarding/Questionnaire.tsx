@@ -39,7 +39,6 @@ interface FormData {
   dietType: string
   foodAllergies: string[]
   customRestrictions: string
-  mealsPerDay: string
   images: string[]
 }
 
@@ -67,7 +66,6 @@ const INITIAL: FormData = {
   dietType: '',
   foodAllergies: [],
   customRestrictions: '',
-  mealsPerDay: '3',
   images: [],
 }
 
@@ -181,15 +179,15 @@ const PRESET_EQUIPMENT_LABELS = new Set(EQUIPMENT_OPTIONS.map((o) => o.label))
 
 // ── Goal plan previews ─────────────────────────────────────────────────────────
 const GOAL_PREVIEWS: Record<string, { emoji: string; headline: string; body: string; accent: string; badge: string }> = {
-  'Muscle Gain':          { emoji: '💪', headline: 'Time to get big.', body: 'A progressive overload program built to maximize hypertrophy and pack on real, lasting muscle.', accent: '#A855F7', badge: 'Hypertrophy Focus' },
-  'Weight Loss':          { emoji: '🔥', headline: 'Fat loss mode: on.', body: 'High-intensity circuits and cardio conditioning designed to torch calories while preserving muscle.', accent: '#f97316', badge: 'Fat Burning' },
-  'Strength':             { emoji: '🏋️', headline: 'Get brutally strong.', body: 'Compound lifts, progressive loading, and periodization to push your maxes to new heights.', accent: '#22D3EE', badge: 'Strength Protocol' },
-  'Body Recomposition':   { emoji: '⚖️', headline: 'Recomp in progress.', body: 'Simultaneous fat loss and muscle gain through precision training and smart nutritional strategy.', accent: '#A855F7', badge: 'Recomp Protocol' },
-  'Endurance':            { emoji: '🏃', headline: 'Build the engine.', body: 'Cardio and conditioning sessions to expand your aerobic base and push your limits further every week.', accent: '#22D3EE', badge: 'Endurance Training' },
+  'Muscle Gain': { emoji: '💪', headline: 'Time to get big.', body: 'A progressive overload program built to maximize hypertrophy and pack on real, lasting muscle.', accent: '#A855F7', badge: 'Hypertrophy Focus' },
+  'Weight Loss': { emoji: '🔥', headline: 'Fat loss mode: on.', body: 'High-intensity circuits and cardio conditioning designed to torch calories while preserving muscle.', accent: '#f97316', badge: 'Fat Burning' },
+  'Strength': { emoji: '🏋️', headline: 'Get brutally strong.', body: 'Compound lifts, progressive loading, and periodization to push your maxes to new heights.', accent: '#22D3EE', badge: 'Strength Protocol' },
+  'Body Recomposition': { emoji: '⚖️', headline: 'Recomp in progress.', body: 'Simultaneous fat loss and muscle gain through precision training and smart nutritional strategy.', accent: '#A855F7', badge: 'Recomp Protocol' },
+  'Endurance': { emoji: '🏃', headline: 'Build the engine.', body: 'Cardio and conditioning sessions to expand your aerobic base and push your limits further every week.', accent: '#22D3EE', badge: 'Endurance Training' },
   'Athletic Performance': { emoji: '🏆', headline: 'Sport-ready.', body: 'Speed, power, and agility training designed to sharpen every athletic edge you have.', accent: '#22D3EE', badge: 'Athletic Program' },
-  'Flexibility':          { emoji: '🧘', headline: 'Move freely.', body: 'Mobility work, stretching, and functional movement patterns for a body that feels strong and unrestricted.', accent: '#10b981', badge: 'Mobility Focus' },
-  'General Fitness':      { emoji: '⚡', headline: 'All-around athlete.', body: 'A balanced mix of strength, cardio, and mobility to make you fitter in every dimension.', accent: '#A855F7', badge: 'Balanced Program' },
-  'Stress Relief':        { emoji: '🌿', headline: 'Find your flow.', body: 'Mindful movement and low-intensity training to melt stress and improve your mental wellbeing.', accent: '#10b981', badge: 'Wellness Protocol' },
+  'Flexibility': { emoji: '🧘', headline: 'Move freely.', body: 'Mobility work, stretching, and functional movement patterns for a body that feels strong and unrestricted.', accent: '#10b981', badge: 'Mobility Focus' },
+  'General Fitness': { emoji: '⚡', headline: 'All-around athlete.', body: 'A balanced mix of strength, cardio, and mobility to make you fitter in every dimension.', accent: '#A855F7', badge: 'Balanced Program' },
+  'Stress Relief': { emoji: '🌿', headline: 'Find your flow.', body: 'Mindful movement and low-intensity training to melt stress and improve your mental wellbeing.', accent: '#10b981', badge: 'Wellness Protocol' },
 }
 
 // ── Animation ──────────────────────────────────────────────────────────────────
@@ -201,8 +199,8 @@ const stepVariants = {
 const stepTransition = { duration: 0.24, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
 
 // ── Step labels ────────────────────────────────────────────────────────────────
-const TOTAL_STEPS = 13
-const STEP_LABELS = ['Your Name', 'About You', 'Birthday', 'Metrics', 'Your Level', 'Goals', 'Your Plan', 'Equipment', 'Schedule', 'Diet', 'Space', 'Launch']
+const TOTAL_STEPS = 15
+const STEP_LABELS = ['Your Name', 'Welcome', 'About You', 'Birthday', 'Metrics', 'Your Level', 'Goals', 'Your Plan', 'Equipment', 'Schedule', 'Your Diet', 'Restrictions', 'Space', 'Launch']
 
 // ── StepHeader ────────────────────────────────────────────────────────────────
 function StepHeader({ tag, title, sub }: { tag?: string; title: string; sub?: string }) {
@@ -272,6 +270,12 @@ export default function Questionnaire() {
     }
   }, [plansData]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (step !== 2) return
+    const t = setTimeout(() => goToStep(3), 2800)
+    return () => clearTimeout(t)
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const update = (patch: Partial<FormData>) => setForm((p) => ({ ...p, ...patch }))
 
   const goToStep = (next: number) => {
@@ -284,7 +288,7 @@ export default function Questionnaire() {
   }
   const handleNext = () => {
     setError('')
-    if (step === 9 && schedSubStep === 0) {
+    if (step === 10 && schedSubStep === 0) {
       setSchedDir(1)
       setSchedSubStep(1)
       window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
@@ -294,8 +298,8 @@ export default function Questionnaire() {
   }
   const handleBack = () => {
     if (step === 0) navigate('/')
-    else if (step === 8 && equipSubStep === 1) setEquipSubStep(0)
-    else if (step === 9 && schedSubStep === 1) { setSchedDir(-1); setSchedSubStep(0); window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }
+    else if (step === 9 && equipSubStep === 1) setEquipSubStep(0)
+    else if (step === 10 && schedSubStep === 1) { setSchedDir(-1); setSchedSubStep(0); window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }
     else goToStep(step - 1)
   }
 
@@ -423,27 +427,29 @@ export default function Questionnaire() {
   const canAdvance = (): boolean => {
     if (step === 0) return true
     if (step === 1) return form.name.trim().length >= 2
-    if (step === 2) return !!form.sex
-    if (step === 3) return ageFromBirthdayValid
-    if (step === 4) return !!(form.weight.trim() && !weightInvalid && form.height.trim() && !heightInvalid)
-    if (step === 5) return !!(form.fitnessLevel && form.bodyType)
-    if (step === 6) return form.goals.length > 0
-    if (step === 7) return true
-    if (step === 8) return !!(form.gymAccess && form.equipment.length > 0)
-    if (step === 9) return !!(form.daysPerWeek && form.sessionDuration)
-    if (step === 10) return !!form.dietType
+    if (step === 2) return true
+    if (step === 3) return !!form.sex
+    if (step === 4) return ageFromBirthdayValid
+    if (step === 5) return !!(form.weight.trim() && !weightInvalid && form.height.trim() && !heightInvalid)
+    if (step === 6) return !!(form.fitnessLevel && form.bodyType)
+    if (step === 7) return form.goals.length > 0
+    if (step === 8) return true
+    if (step === 9) return !!(form.gymAccess && form.equipment.length > 0)
+    if (step === 10) return !!(form.daysPerWeek && form.sessionDuration)
+    if (step === 11) return !!form.dietType
     return true
   }
 
   const getContinueLabel = (): string => {
-    if (step === 2) return 'Next'
-    if (step === 5) return 'Set my goals'
-    if (step === 6) return 'See plan preview'
-    if (step === 7) return 'Set up training'
-    if (step === 9 && schedSubStep === 0) return 'Add activities'
-    if (step === 9) return 'Set my diet'
-    if (step === 10) return 'Almost done'
-    if (step === 11) return 'Final step'
+    if (step === 3) return 'Next'
+    if (step === 6) return 'Set my goals'
+    if (step === 7) return 'See plan preview'
+    if (step === 8) return 'Set up training'
+    if (step === 10 && schedSubStep === 0) return 'Add activities'
+    if (step === 10) return 'Set my diet'
+    if (step === 11) return 'Set restrictions'
+    if (step === 12) return 'Almost done'
+    if (step === 13) return 'Final step'
     return 'Continue'
   }
 
@@ -460,7 +466,7 @@ export default function Questionnaire() {
       daysPerWeek: parseInt(form.daysPerWeek, 10),
       dietType: form.dietType,
       allergies: form.foodAllergies,
-      mealsPerDay: parseInt(form.mealsPerDay, 10) || 3,
+      mealsPerDay: 3,
     }
     saveNutritionProfile(nutritionData)
 
@@ -484,7 +490,7 @@ export default function Questionnaire() {
       dietType: form.dietType,
       allergies: form.foodAllergies,
       customRestrictions: form.customRestrictions,
-      mealsPerDay: form.mealsPerDay,
+      mealsPerDay: '3',
     }
 
     if (!user) {
@@ -518,7 +524,7 @@ export default function Questionnaire() {
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav">
       {/* Progress bar */}
-      {step > 0 && (
+      {step > 0 && step !== 2 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{STEP_LABELS[step - 1]}</p>
@@ -597,14 +603,62 @@ export default function Questionnaire() {
                   </svg>
                 </button>
                 <div className="flex items-center gap-3 text-white/25 text-xs">
-                  <span>Free</span><span>·</span><span>AI-powered</span><span>·</span><span>Personalized</span>
+                  <span>Beginner-Friendly</span><span>·</span><span>AI-powered</span><span>·</span><span>Personalized</span>
                 </div>
               </motion.div>
             </div>
           )}
 
-          {/* ── Steps 1-12 inside GlassCard ────────────────────────────────── */}
-          {step > 0 && (
+          {/* ── Step 2: Greeting (auto-advances) ──────────────────────────── */}
+          {step === 2 && (
+            <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-10 space-y-8">
+              <motion.div
+                initial={{ scale: 0.3, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.05 }}
+                className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl"
+                style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.35)', boxShadow: '0 0 40px rgba(168,85,247,0.2)' }}
+              >
+                🏆
+              </motion.div>
+              <div className="space-y-3 max-w-xs">
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
+                  className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A855F7' }}
+                >
+                  Let&apos;s go
+                </motion.p>
+                <motion.h1
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                  className="text-4xl font-black text-white tracking-tight leading-tight"
+                >
+                  Hey, {form.name.trim().split(' ')[0]}!
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
+                  className="text-white/50 text-base leading-relaxed"
+                >
+                  Your plan is going to be built around you. A few quick questions and we&apos;ll have it ready.
+                </motion.p>
+              </div>
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
+                className="w-40 h-1 rounded-full overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.08)' }}
+              >
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 2.5, delay: 0.6, ease: 'linear' }}
+                  style={{ background: 'linear-gradient(90deg, #A855F7, #22D3EE)' }}
+                />
+              </motion.div>
+            </div>
+          )}
+
+          {/* ── Steps 1, 3-14 inside GlassCard ────────────────────────────── */}
+          {step > 0 && step !== 2 && (
             <GlassCard>
               {/* Step 1 - Name */}
               {step === 1 && (
@@ -623,23 +677,11 @@ export default function Questionnaire() {
                       onKeyDown={(e) => { if (e.key === 'Enter' && form.name.trim().length >= 2) handleNext() }}
                     />
                   </motion.div>
-                  <AnimatePresence>
-                    {form.name.trim().length >= 2 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
-                        className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
-                        style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)' }}
-                      >
-                        <span className="text-xl">👋</span>
-                        <p className="text-white/80 text-sm font-semibold">Nice to meet you, {form.name.trim().split(' ')[0]}!</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               )}
 
-              {/* Step 2 - Sex */}
-              {step === 2 && (
+              {/* Step 3 - Sex */}
+              {step === 3 && (
                 <div className="space-y-6">
                   <StepHeader tag="About You" title="What's your sex?" sub="Used to calculate accurate calorie and macro targets." />
                   <motion.div
@@ -660,8 +702,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 3 - Birthday */}
-              {step === 3 && (
+              {/* Step 4 - Birthday */}
+              {step === 4 && (
                 <div className="space-y-6">
                   <StepHeader tag="Birthday" title="When were you born?" sub="Helps us tailor training intensity and personalize your nutrition targets." />
                   <motion.div
@@ -737,8 +779,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 4 - Metrics */}
-              {step === 4 && (
+              {/* Step 5 - Metrics */}
+              {step === 5 && (
                 <div className="space-y-6">
                   <div className="flex items-start justify-between gap-4">
                     <StepHeader tag="Metrics" title="Body measurements" sub="Used for BMI analysis and calorie calculation." />
@@ -788,8 +830,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 5 - Fitness + Body Type */}
-              {step === 5 && (
+              {/* Step 6 - Fitness + Body Type */}
+              {step === 6 && (
                 <div className="space-y-6">
                   <StepHeader tag="Your Level" title="Fitness baseline" sub="Helps us calibrate exercise difficulty and volume." />
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
@@ -830,8 +872,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 6 - Goals */}
-              {step === 6 && (
+              {/* Step 7 - Goals */}
+              {step === 7 && (
                 <div className="space-y-6">
                   <StepHeader tag="Goals" title="What are you training for?" sub={`Choose up to ${MAX_GOALS} goals. Some combinations don't mix well.`} />
                   {bmiRec && (
@@ -884,8 +926,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 7 - Plan Preview */}
-              {step === 7 && (
+              {/* Step 8 - Plan Preview */}
+              {step === 8 && (
                 <div className="py-4 space-y-6 text-center">
                   <motion.div
                     initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -914,7 +956,7 @@ export default function Questionnaire() {
                     className="grid grid-cols-2 gap-3"
                   >
                     {[
-                      { icon: '🤖', label: 'AI-Generated', desc: 'Built by Gemini' },
+                      { icon: '🤖', label: 'AI-Powered', desc: 'Next-level fitness guidance' },
                       { icon: '🎯', label: 'Goal-Aligned', desc: 'Tailored to you' },
                       { icon: '📈', label: 'Progressive', desc: 'Gets harder weekly' },
                       { icon: '🔄', label: 'Adaptive', desc: 'Evolves with you' },
@@ -936,8 +978,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 8 - Equipment */}
-              {step === 8 && (
+              {/* Step 9 - Equipment */}
+              {step === 9 && (
                 <AnimatePresence mode="wait" custom={1}>
                   <motion.div
                     key={equipSubStep}
@@ -1048,8 +1090,8 @@ export default function Questionnaire() {
                 </AnimatePresence>
               )}
 
-              {/* Step 9 - Schedule (2 sub-steps) */}
-              {step === 9 && (
+              {/* Step 10 - Schedule (2 sub-steps) */}
+              {step === 10 && (
                 <AnimatePresence mode="wait" custom={schedDir}>
                   <motion.div
                     key={schedSubStep}
@@ -1234,8 +1276,8 @@ export default function Questionnaire() {
                 </AnimatePresence>
               )}
 
-              {/* Step 10 - Diet */}
-              {step === 10 && (
+              {/* Step 11 - Diet type */}
+              {step === 11 && (
                 <div className="space-y-6">
                   <StepHeader tag="Diet" title="Your diet" sub="Help us tailor your nutrition guidance to how you already eat." />
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
@@ -1265,7 +1307,14 @@ export default function Questionnaire() {
                       {showMoreDiets ? 'Show less' : 'More diet types (Halal, Kosher, Hindu, Jain...)'}
                     </button>
                   </motion.div>
-                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+                </div>
+              )}
+
+              {/* Step 12 - Allergies and restrictions */}
+              {step === 12 && (
+                <div className="space-y-6">
+                  <StepHeader tag="Diet" title="Any restrictions?" sub="Tell us about allergies, intolerances, or specific dietary rules." />
+                  <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
                     <label className="block text-sm font-medium text-white/60 mb-2">
                       Common allergies and intolerances <span className="text-white/25 text-xs font-normal">optional</span>
                     </label>
@@ -1275,7 +1324,7 @@ export default function Questionnaire() {
                       ))}
                     </div>
                   </motion.div>
-                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
+                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
                     <label className="block text-sm font-medium text-white/60 mb-2">
                       Any other restrictions <span className="text-white/25 text-xs font-normal">optional</span>
                     </label>
@@ -1283,22 +1332,11 @@ export default function Questionnaire() {
                       placeholder="e.g. no red meat, no MSG, no onion or garlic, specific cultural rules..."
                       style={{ fontSize: 16 }} value={form.customRestrictions} onChange={(e) => update({ customRestrictions: e.target.value })} />
                   </motion.div>
-                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.43 }}>
-                    <label className="block text-sm font-medium text-white/60 mb-3">Meals per day</label>
-                    <div className="flex gap-3">
-                      {['2', '3', '4', '5+'].map((n) => (
-                        <button key={n} onClick={() => update({ mealsPerDay: n })}
-                          className={`flex-1 py-4 rounded-2xl text-sm font-medium border transition-all duration-200 active:scale-[0.97] ${form.mealsPerDay === n ? 'text-white border-purple-500/60 bg-purple-500/15' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}>
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
                 </div>
               )}
 
-              {/* Step 11 - Space */}
-              {step === 11 && (
+              {/* Step 13 - Space */}
+              {step === 13 && (
                 <div className="space-y-6">
                   <StepHeader tag="Space" title="Your space" sub="Optionally upload photos of your home gym to help tailor your plan." />
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -1330,8 +1368,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Step 12 - Launch */}
-              {step === 12 && (
+              {/* Step 14 - Launch */}
+              {step === 14 && (
                 <div className="space-y-6">
                   {existingPlanIds.length > 0 && (
                     <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25">
@@ -1369,8 +1407,8 @@ export default function Questionnaire() {
                 </div>
               )}
 
-              {/* Navigation footer for steps 1-11 */}
-              {step > 0 && step < 12 && !(step === 8 && equipSubStep === 0) && (
+              {/* Navigation footer for steps 1, 3-13 */}
+              {step > 0 && step !== 2 && step < 14 && !(step === 9 && equipSubStep === 0) && (
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
                   <button onClick={handleBack} className="btn-ghost">
                     <HiArrowNarrowLeft className="w-4 h-4" /> Back
