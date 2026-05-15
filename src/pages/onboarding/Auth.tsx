@@ -135,7 +135,8 @@ export default function Auth() {
               </div>
             ) : (
               <div className="mb-10">
-                <h1 className="text-[2.8rem] font-black tracking-tight leading-none gradient-text mb-3">UPLIFT</h1>
+                <h1 className="text-[2.8rem] font-black tracking-tight leading-none gradient-text mb-1">UPLYFT</h1>
+                <p className="text-white/30 text-[11px] font-semibold uppercase tracking-widest mb-3">Train. Evolve. Repeat.</p>
                 <p className="text-white/40 text-sm leading-relaxed">Sign in or create your free account. No password needed.</p>
               </div>
             )}

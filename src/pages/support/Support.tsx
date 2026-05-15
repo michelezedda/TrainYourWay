@@ -227,7 +227,7 @@ export default function Support() {
   }
 
   const buildEmailBody = () =>
-    `UPLIFT SUPPORT TICKET\n` +
+    `UPLYFT SUPPORT TICKET\n` +
     `=====================\n` +
     `Category: ${category}\n` +
     `User ID: ${userId}\n\n` +
@@ -248,9 +248,9 @@ export default function Support() {
           screenshot_url: imageDataUrl ?? '',
         }, EMAILJS_KEY!)
       } else {
-        const subject = encodeURIComponent(`[Uplift Support] ${category}`)
+        const subject = encodeURIComponent(`[UPLYFT Support] ${category}`)
         const body = encodeURIComponent(buildEmailBody())
-        const dest = SUPPORT_EMAIL ?? 'support@uplift.app'
+        const dest = SUPPORT_EMAIL ?? 'support@uplyft.app'
         window.open(`mailto:${dest}?subject=${subject}&body=${body}`, '_blank')
       }
 

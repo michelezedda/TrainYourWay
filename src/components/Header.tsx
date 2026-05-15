@@ -18,8 +18,8 @@ export default function Header() {
         }}
       >
         <Link to="/" className="flex items-center gap-2.5">
-          <img src="/logo.png" alt="Uplift" className="w-8 h-8 rounded-xl object-cover" />
-          <span className="font-black text-lg tracking-tight gradient-text">UPLIFT</span>
+          <img src="/logo.png" alt="UPLYFT" className="w-8 h-8 rounded-xl object-cover" />
+          <span className="font-black text-lg tracking-tight gradient-text">UPLYFT</span>
         </Link>
       </div>
     </header>

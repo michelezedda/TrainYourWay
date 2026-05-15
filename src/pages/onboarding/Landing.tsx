@@ -126,8 +126,8 @@ export default function Home() {
           transition={{ duration: 0.55 }}
           className="mb-5"
         >
-          <h1 className="text-[3.2rem] font-black gradient-text leading-none tracking-tight">UPLIFT</h1>
-          <p className="text-white/35 text-xs font-semibold uppercase tracking-widest mt-1.5">Train Your Way</p>
+          <h1 className="text-[3.2rem] font-black gradient-text leading-none tracking-tight">UPLYFT</h1>
+          <p className="text-white/35 text-xs font-semibold uppercase tracking-widest mt-1.5">Train. Evolve. Repeat.</p>
         </motion.div>
 
         {/* Headline with cycling goal */}
@@ -294,7 +294,7 @@ export default function Home() {
               className="font-black leading-none tracking-tight mb-3"
               style={{ fontSize: 'clamp(3.2rem, 5vw, 5.2rem)', background: 'linear-gradient(135deg, #A855F7 0%, #22D3EE 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
             >
-              UPLIFT
+              UPLYFT
             </h1>
           </motion.div>
 

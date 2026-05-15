@@ -567,7 +567,7 @@ export default function Questionnaire() {
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A855F7' }}
                 >
-                  {userName || form.name ? `Welcome, ${(userName || form.name).split(' ')[0]}` : 'Welcome to UPLIFT'}
+                  {userName || form.name ? `Welcome, ${(userName || form.name).split(' ')[0]}` : 'Welcome to UPLYFT'}
                 </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }}

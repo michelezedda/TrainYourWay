@@ -167,8 +167,8 @@ export default function BottomNav() {
         }}
       >
         <div className="px-3 mb-8">
-          <h1 className="text-2xl font-black gradient-text leading-tight">UPLIFT</h1>
-          <p className="text-[11px] text-white/30 mt-0.5">Train Your Way</p>
+          <h1 className="text-2xl font-black gradient-text leading-tight">UPLYFT</h1>
+          <p className="text-[11px] text-white/30 mt-0.5">Train. Evolve. Repeat.</p>
         </div>
 
         <nav className="flex flex-col gap-1 flex-1">

@@ -44,7 +44,7 @@ function drawHeader(ctx: CanvasRenderingContext2D, subtitle: string) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillStyle = grad
-  ctx.fillText('UPLIFT', W / 2, 80)
+  ctx.fillText('UPLYFT', W / 2, 80)
 
   ctx.font = `400 42px ${FONT}`
   ctx.fillStyle = 'rgba(255,255,255,0.35)'
@@ -205,9 +205,9 @@ export async function generateProductStory(
     chipX += chipW + GAP
   }
 
-  footer(ctx, 'Scan your food on UPLIFT')
+  footer(ctx, 'Scan your food on UPLYFT')
 
-  return canvasToFile(canvas, 'uplift-scan.png')
+  return canvasToFile(canvas, 'uplyft-scan.png')
 }
 
 // ── Streak story ──────────────────────────────────────────────────────────────
@@ -357,9 +357,9 @@ export async function generateStreakStory(
   ctx.fillText('Every day counts.', W / 2, quoteY + 80)
   ctx.restore()
 
-  footer(ctx, 'Track your streaks on UPLIFT')
+  footer(ctx, 'Track your streaks on UPLYFT')
 
-  return canvasToFile(canvas, 'uplift-streak.png')
+  return canvasToFile(canvas, 'uplyft-streak.png')
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────

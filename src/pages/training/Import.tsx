@@ -319,7 +319,7 @@ export default function ImportPlan() {
           <BackButton onClick={() => setStep('upload')} />
           <div>
             <h1 className="text-3xl font-black tracking-tight gradient-text">Your Imported Plan</h1>
-            <p className="text-white/40 text-sm mt-1">We extracted and formatted it in Uplift style</p>
+            <p className="text-white/40 text-sm mt-1">We extracted and formatted it in UPLYFT style</p>
           </div>
         </div>
 
@@ -338,7 +338,7 @@ export default function ImportPlan() {
         <GlassCard>
           <p className="text-white font-semibold mb-1">What would you like to do?</p>
           <p className="text-white/40 text-sm mb-5">
-            You can keep this plan as-is, or let Uplift analyze it to see how well it fits your goals.
+            You can keep this plan as-is, or let UPLYFT analyze it to see how well it fits your goals.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -370,7 +370,7 @@ export default function ImportPlan() {
         <div>
           <h1 className="text-3xl font-black tracking-tight gradient-text">Import a Plan</h1>
           <p className="text-white/40 text-sm mt-1">
-            Upload a photo and we'll reformat it in Uplift style
+            Upload a photo and we'll reformat it in UPLYFT style
           </p>
         </div>
       </div>
@@ -443,7 +443,7 @@ export default function ImportPlan() {
       >
         {[
           { step: '1', icon: '📸', text: 'We read the photo and extract your full plan' },
-          { step: '2', icon: '✨', text: 'It gets reformatted in Uplift style — day selector, exercise cards, all of it' },
+          { step: '2', icon: '✨', text: 'It gets reformatted in UPLYFT style — day selector, exercise cards, all of it' },
           { step: '3', icon: '🔍', text: 'Optionally, we analyze how well the plan fits your goals' },
           { step: '4', icon: '🚀', text: 'Optionally, we improve it using everything we know about you' },
         ].map(({ step: s, icon, text }) => (

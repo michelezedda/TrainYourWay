@@ -26,7 +26,7 @@ export async function fetchProduct(barcode: string): Promise<OFFProduct | null> 
   try {
     const res = await fetch(
       `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-      { headers: { 'User-Agent': 'Uplift-App/1.0' } },
+      { headers: { 'User-Agent': 'UPLYFT-App/1.0' } },
     )
     if (!res.ok) return null
     const data = await res.json() as { status: number; product: OFFProduct }

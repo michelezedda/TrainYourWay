@@ -67,8 +67,8 @@ function AppLoadingScreen() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center text-center px-6">
-        <h1 className="text-5xl font-black tracking-tight gradient-text mb-2">UPLIFT</h1>
-        <p className="text-white/30 text-sm font-medium mb-10">Premium fitness, built for you.</p>
+        <h1 className="text-5xl font-black tracking-tight gradient-text mb-2">UPLYFT</h1>
+        <p className="text-white/30 text-sm font-medium mb-10">Train. Evolve. Repeat.</p>
 
         <LoadingSpinner size="md" />
 

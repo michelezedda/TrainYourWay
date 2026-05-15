@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="mt-16 px-4 py-6">
       <div className="max-w-5xl mx-auto flex items-center justify-between border-t border-white/6 pt-6">
         <p className="text-white/25 text-xs">
-          &copy; {new Date().getFullYear()} UPLIFT. All rights reserved.
+          &copy; {new Date().getFullYear()} UPLYFT. All rights reserved.
         </p>
         <Link
           to="/support"
