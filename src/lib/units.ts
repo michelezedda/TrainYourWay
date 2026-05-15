@@ -53,3 +53,25 @@ export function formatHeight(cm: number, unit: Unit): string {
 
 export function weightUnitLabel(unit: Unit): string { return unit === 'metric' ? 'kg' : 'lbs' }
 export function heightUnitLabel(unit: Unit): string { return unit === 'metric' ? 'cm' : 'ft' }
+
+// ── Plan text conversion (stored metric text → user-facing display) ────────────
+// Converts "X kg" / "X-Y kg" and "X cm" occurrences in AI-generated plan text.
+// Safe to call on already-converted text (idempotent).
+
+export function convertPlanUnits(text: string, unit: Unit): string {
+  if (unit !== 'imperial') return text
+  return text
+    // Weight ranges first: "8-12 kg" → "18-26 lbs"
+    .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*kg\b/gi, (_, a, b) =>
+      `${Math.round(kgToLbs(parseFloat(a)))}-${Math.round(kgToLbs(parseFloat(b)))} lbs`
+    )
+    // Single weights: "75 kg" → "165 lbs"
+    .replace(/(\d+(?:\.\d+)?)\s*kg\b/gi, (_, a) =>
+      `${Math.round(kgToLbs(parseFloat(a)))} lbs`
+    )
+    // Heights: "170 cm" → "5'7""
+    .replace(/(\d+(?:\.\d+)?)\s*cm\b/gi, (_, a) => {
+      const { ft, inches } = cmToFtIn(parseFloat(a))
+      return `${ft}'${inches}"`
+    })
+}

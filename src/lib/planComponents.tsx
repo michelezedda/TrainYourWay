@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext, createContext } from 'react'
 import { HiInformationCircle, HiChevronDown } from 'react-icons/hi'
 import type { Components } from 'react-markdown'
 import type React from 'react'
+import { useLocale } from '@/context/LocaleContext'
 
 // ── Workout progress context ──────────────────────────────────────────────────
 // Allows ExerciseTableCard to report completion up to WorkoutDayView without
@@ -218,6 +219,7 @@ function ExerciseTableCard({
   name, meta, tip, exerciseKey, weight, onWeightChange, onGuideClick,
 }: ExerciseTableCardProps) {
   const { onExerciseDone } = useContext(WorkoutProgressContext)
+  const { unit } = useLocale()
 
   const [localWeight, setLocalWeight] = useState(weight)
   const [showTip, setShowTip] = useState(false)
@@ -504,7 +506,7 @@ function ExerciseTableCard({
         <input
           className="flex-1 bg-transparent border-none outline-none placeholder-white/20 min-w-0"
           style={{ fontSize: 16, color: localWeight ? 'rgba(255,255,255,0.9)' : undefined }}
-          placeholder="e.g. 12 kg, bodyweight..."
+          placeholder={unit === 'imperial' ? 'e.g. 25 lbs, bodyweight...' : 'e.g. 12 kg, bodyweight...'}
           value={localWeight}
           onChange={e => { setLocalWeight(e.target.value); onWeightChange(e.target.value) }}
         />

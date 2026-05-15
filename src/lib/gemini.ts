@@ -41,8 +41,8 @@ export interface WorkoutFormData {
   age: string
   sex?: 'male' | 'female'
   bodyType?: 'ectomorph' | 'mesomorph' | 'endomorph'
-  weight: string   // kg
-  height: string   // cm
+  weight: string   // always kg (metric storage)
+  height: string   // always cm (metric storage)
   fitnessLevel: 'beginner' | 'intermediate' | 'advanced'
   goals: string[]
   equipment: string[]
@@ -56,6 +56,7 @@ export interface WorkoutFormData {
   allergies: string[]
   customRestrictions?: string
   mealsPerDay: string
+  unit?: 'metric' | 'imperial'  // display preference
 }
 
 function formatSports(sports: string[] | undefined): string {
@@ -92,12 +93,29 @@ function dietLine(data: WorkoutFormData): string {
 }
 
 
+function dispW(kg: string, unit: 'metric' | 'imperial'): string {
+  if (unit !== 'imperial') return `${kg} kg`
+  return `${Math.round(parseFloat(kg) * 2.2046)} lbs`
+}
+
+function dispH(cm: string, unit: 'metric' | 'imperial'): string {
+  if (unit !== 'imperial') return `${cm} cm`
+  const totalIn = parseFloat(cm) / 2.54
+  const ft = Math.floor(totalIn / 12)
+  const inches = Math.round(totalIn % 12)
+  return `${ft}'${inches}"`
+}
+
 function buildPrompt(data: WorkoutFormData): string {
+  const u = data.unit ?? 'metric'
+  const weightUnit = u === 'imperial' ? 'lbs' : 'kg'
+  const weightExample = u === 'imperial' ? '18-26 lbs' : '8-12 kg'
+
   return `You are an expert personal trainer and fitness coach. Create a detailed, personalized weekly workout plan based on the profile below.
 
 USER PROFILE:
 - Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
-- Weight: ${data.weight} kg | Height: ${data.height} cm | BMI: ${bmiLabel(data.weight, data.height)}
+- Weight: ${dispW(data.weight, u)} | Height: ${dispH(data.height, u)} | BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
 ${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Available Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? `, additional notes: ${data.equipmentNotes}` : ''}
@@ -163,7 +181,7 @@ ${data.dietType
 ## Your Stats
 Include this section verbatim, substituting the actual values:
 
-**Body Metrics:** Weight ${data.weight} kg | Height ${data.height} cm | BMI ${bmiLabel(data.weight, data.height)}
+**Body Metrics:** Weight ${dispW(data.weight, u)} | Height ${dispH(data.height, u)} | BMI ${bmiLabel(data.weight, data.height)}
 
 > **Note:** BMI is a general reference point. It does not account for muscle mass, body composition, age, or athletic background. Use it as context, not a verdict. Always listen to your body and consult a healthcare professional before starting any new exercise programme.
 
@@ -176,22 +194,24 @@ Rules:
 - Adapt intensity precisely to the ${data.fitnessLevel} level
 - Be specific: always include sets, reps (or time), and rest periods
 - Keep descriptions concise and actionable
+- All weights in the plan must use ${weightUnit} — never mix units
 - Weight field rules (required on every exercise):
   · Bodyweight exercises → "Bodyweight"
   · Resistance band exercises → "Light band" / "Medium band" / "Heavy band"
-  · Dumbbell / barbell / kettlebell → give a realistic kg range for a ${data.fitnessLevel} aged ${data.age}, e.g. "8-12 kg", based on the muscle group and movement difficulty
+  · Dumbbell / barbell / kettlebell → give a realistic ${weightUnit} range for a ${data.fitnessLevel} aged ${data.age}, e.g. "${weightExample}", based on the muscle group and movement difficulty
   · If unsure, err on the lighter side and add "(adjust to feel)" after the range`
 }
 
 function buildAnalysisPrompt(data: WorkoutFormData): string {
   const hasPhotos = data.images.length > 0
   const hasDiet = !!data.dietType
+  const u = data.unit ?? 'metric'
 
   return `You are an expert personal trainer and nutritionist doing an initial assessment before creating a workout plan.
 
 USER PROFILE:
 - Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
-- Weight: ${data.weight} kg, Height: ${data.height} cm, BMI: ${bmiLabel(data.weight, data.height)}
+- Weight: ${dispW(data.weight, u)}, Height: ${dispH(data.height, u)}, BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
 ${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? ` (${data.equipmentNotes})` : ''}
@@ -275,8 +295,8 @@ export interface ReevaluationData {
   equipment: string[] // JSON string e.g. '["Dumbbells"]'
   timeOnPlan: string
   adherence: string
-  originalWeight: string   // kg - from the plan being evolved
-  originalHeight: string   // cm - from the plan being evolved
+  originalWeight: string   // always kg (metric storage)
+  originalHeight: string   // always cm (metric storage)
   currentWeight: string    // kg
   currentHeight: string    // cm
   physicalFeel: string
@@ -285,6 +305,7 @@ export interface ReevaluationData {
   newInjuries: string
   newGoals: string[]
   workoutDays?: string[]
+  unit?: 'metric' | 'imperial'
 }
 
 export async function reevaluateWorkoutPlan(data: ReevaluationData): Promise<string> {
@@ -303,6 +324,10 @@ export async function reevaluateWorkoutPlan(data: ReevaluationData): Promise<str
       ? 'User has been consistent, apply full progression'
       : 'User has been inconsistent, consolidate and reinforce before progressing'
 
+  const u = data.unit ?? 'metric'
+  const weightUnit = u === 'imperial' ? 'lbs' : 'kg'
+  const weightExample = u === 'imperial' ? '18-26 lbs' : '8-12 kg'
+
   const prompt = `You are an expert personal trainer conducting a formal progress review and writing a FULLY EVOLVED workout plan.
 
 PROGRESS REPORT:
@@ -315,7 +340,7 @@ PROGRESS REPORT:
 ${data.newGoals.length > 0 ? `- New focus areas: ${data.newGoals.join(', ')}` : ''}
 
 UPDATED BODY STATS:
-- Weight: ${data.currentWeight} kg | Height: ${data.currentHeight} cm | BMI: ${bmiLabel(data.currentWeight, data.currentHeight)}
+- Weight: ${dispW(data.currentWeight, u)} | Height: ${dispH(data.currentHeight, u)} | BMI: ${bmiLabel(data.currentWeight, data.currentHeight)}
 
 ORIGINAL FITNESS PROFILE:
 - Level: ${data.fitnessLevel} | Goals: ${goals} | Equipment: ${equipment}
@@ -353,12 +378,13 @@ CRITICAL FORMAT — follow these exactly or the plan will not render:
 After the Nutrition Tips section, include:
 
 ## Your Stats
-**Body Metrics:** Weight ${data.currentWeight} kg | Height ${data.currentHeight} cm | BMI ${bmiLabel(data.currentWeight, data.currentHeight)}
+**Body Metrics:** Weight ${dispW(data.currentWeight, u)} | Height ${dispH(data.currentHeight, u)} | BMI ${bmiLabel(data.currentWeight, data.currentHeight)}
 
 > **Note:** BMI is a general reference point. It does not account for muscle mass, body composition, age, or athletic background. Use it as context, not a verdict. Always listen to your body and consult a healthcare professional before starting any new exercise programme.
 
 Rules:
-- Include Weight: field on every exercise (kg range, Bodyweight, or band level)
+- Include Weight: field on every exercise (${weightUnit} range or example such as "${weightExample}", Bodyweight, or band level)
+- All weights in the plan must use ${weightUnit} — never mix units
 - Every change must be explicit — no vague "adjust as needed"
 - Write the full plan, do not truncate or skip any day`
 
@@ -377,21 +403,26 @@ Rules:
 
 export async function generateReevaluationAnalysis(data: ReevaluationData): Promise<string> {
   const goals = (() => { try { return (JSON.parse(data.goals as unknown as string) as string[]).join(', ') } catch { return Array.isArray(data.goals) ? data.goals.join(', ') : data.goals } })()
+  const u = data.unit ?? 'metric'
 
   const weightDiff = (() => {
     const prev = parseFloat(data.originalWeight)
     const curr = parseFloat(data.currentWeight)
     if (!prev || !curr || isNaN(prev) || isNaN(curr)) return ''
-    const diff = curr - prev
-    if (Math.abs(diff) < 0.1) return ' (no change)'
-    return ` (${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg since last plan)`
+    const diffKg = curr - prev
+    if (Math.abs(diffKg) < 0.1) return ' (no change)'
+    if (u === 'imperial') {
+      const diffLbs = Math.abs(diffKg) * 2.2046
+      return ` (${diffKg > 0 ? '+' : '-'}${diffLbs.toFixed(1)} lbs since last plan)`
+    }
+    return ` (${diffKg > 0 ? '+' : ''}${diffKg.toFixed(1)} kg since last plan)`
   })()
 
   const prompt = `You are an expert personal trainer conducting a formal progress review.
 
 PHYSICAL PROGRESS:
-- Previous: Weight ${data.originalWeight} kg, Height ${data.originalHeight} cm, BMI ${bmiLabel(data.originalWeight, data.originalHeight)}
-- Current: Weight ${data.currentWeight} kg, Height ${data.currentHeight} cm, BMI ${bmiLabel(data.currentWeight, data.currentHeight)}${weightDiff ? `\n- Weight change: ${weightDiff}` : ''}
+- Previous: Weight ${dispW(data.originalWeight, u)}, Height ${dispH(data.originalHeight, u)}, BMI ${bmiLabel(data.originalWeight, data.originalHeight)}
+- Current: Weight ${dispW(data.currentWeight, u)}, Height ${dispH(data.currentHeight, u)}, BMI ${bmiLabel(data.currentWeight, data.currentHeight)}${weightDiff ? `\n- Weight change: ${weightDiff}` : ''}
 
 TRAINING REVIEW:
 - Time on plan: ${data.timeOnPlan}
