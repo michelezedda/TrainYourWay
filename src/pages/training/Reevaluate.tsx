@@ -84,7 +84,7 @@ export default function ReevaluateQuestionnaire() {
   const [dayBlockError, setDayBlockError] = useState('')
 
   if (!original) {
-    navigate('/history', { replace: true })
+    navigate('/workout', { replace: true })
     return null
   }
 
@@ -505,7 +505,7 @@ export default function ReevaluateQuestionnaire() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
           <button
-            onClick={() => step === 1 ? navigate('/history') : setStep((s) => s - 1)}
+            onClick={() => step === 1 ? navigate('/workout') : setStep((s) => s - 1)}
             className="btn-ghost"
           >
             <HiArrowNarrowLeft className="w-4 h-4" />

@@ -1280,7 +1280,7 @@ export default function Results() {
 
   const handleViewPlan = () => {
     markOnboardingSeen(userId)
-    navigate('/dashboard', { replace: true })
+    navigate('/workout', { replace: true })
   }
 
   if (!plan) {

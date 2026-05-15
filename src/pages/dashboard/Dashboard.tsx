@@ -446,7 +446,7 @@ export default function Dashboard() {
             </div>
           )}
           <div className="flex gap-2">
-            <Link to="/history">
+            <Link to="/workout">
               <button
                 onClick={() => {
                   if (!canEvolve || !latestPlan) return

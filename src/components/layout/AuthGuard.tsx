@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import Dashboard from '@/pages/dashboard/Dashboard'
 import Reevaluate from '@/pages/training/Reevaluate'
 import Results from '@/pages/training/Results'
-import History from '@/pages/training/History'
+import Workout from '@/pages/training/Workout'
 import Generating from '@/pages/onboarding/Generating'
 import Diet from '@/pages/nutrition/Diet'
 import Chat from '@/pages/coach/Chat'
@@ -65,7 +65,7 @@ export default function AuthGuard() {
       <Route path="/reevaluate"             element={<Reevaluate />} />
       <Route path="/generating"             element={<Generating />} />
       <Route path="/results"                element={<Results />} />
-      <Route path="/history"                element={<History />} />
+      <Route path="/workout"                 element={<Workout />} />
       <Route path="/diet"                   element={<Diet />} />
       <Route path="/chat"                   element={<Chat />} />
       <Route path="/import"                 element={<Import />} />

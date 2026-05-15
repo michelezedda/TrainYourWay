@@ -132,7 +132,7 @@ export default function Generating() {
             {error}
           </div>
           <div className="flex gap-3">
-            <Link to="/history" className="btn-ghost flex-1 !justify-center">
+            <Link to="/workout" className="btn-ghost flex-1 !justify-center">
               Go Back
             </Link>
             <button

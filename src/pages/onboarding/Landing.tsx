@@ -225,17 +225,21 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* Stats row */}
+        {/* Stats list */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex mb-5"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)', paddingTop: 14, paddingBottom: 14 }}
+          className="mb-5"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
         >
           {STATS.map(({ value, label }, i) => (
-            <div key={label} className="flex-1 text-center" style={{ borderRight: i < STATS.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-              <p className="text-white font-black text-lg leading-none">{value}</p>
-              <p className="text-white/35 text-[11px] mt-0.5 tracking-wide">{label}</p>
+            <div
+              key={label}
+              className="flex items-center justify-between px-1 py-4"
+              style={{ borderBottom: i < STATS.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+            >
+              <p className="text-white/40 text-xs uppercase tracking-widest font-medium">{label}</p>
+              <p className="text-white font-black text-sm">{value}</p>
             </div>
           ))}
         </motion.div>
@@ -341,7 +345,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="flex gap-8 mb-10"
+            className="flex gap-12 mb-10"
           >
             {STATS.map(({ value, label }, i) => (
               <motion.div
@@ -349,8 +353,8 @@ export default function Home() {
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + i * 0.08 }}
               >
-                <p className="text-white font-black text-2xl leading-none mb-1">{value}</p>
-                <p className="text-white/35 text-xs tracking-widest uppercase">{label}</p>
+                <p className="text-white font-black text-xl leading-none mb-1.5">{value}</p>
+                <p className="text-white/35 text-[11px] tracking-widest uppercase">{label}</p>
               </motion.div>
             ))}
           </motion.div>

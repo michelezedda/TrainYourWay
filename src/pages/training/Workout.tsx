@@ -115,7 +115,7 @@ function ReadOnlyPlan({ planId, planText, onExerciseClick }: {
   )
 }
 
-export default function History() {
+export default function Workout() {
   const userId = getUserId()
   const navigate = useNavigate()
 

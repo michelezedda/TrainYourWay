@@ -51,7 +51,7 @@ function MachineIcon({ active }: { active: boolean }) {
 }
 
 const LEFT_NAV = [
-  { to: '/history', label: 'Workout', Icon: DumbbellIcon },
+  { to: '/workout', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
 ]
 
@@ -62,7 +62,7 @@ const RIGHT_NAV = [
 
 const ALL_NAV = [
   { to: '/dashboard', label: 'Home', Icon: HomeIcon },
-  { to: '/history', label: 'Workout', Icon: DumbbellIcon },
+  { to: '/workout', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
   { to: '/chat', label: 'Kai', Icon: ChatIcon },
