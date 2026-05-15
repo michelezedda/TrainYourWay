@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { HiArrowNarrowLeft, HiChevronDown, HiLightningBolt, HiExclamation } from 'react-icons/hi'
+import { HiArrowNarrowLeft, HiLightningBolt, HiExclamation } from 'react-icons/hi'
 import { IoIosMale } from "react-icons/io"
 import { CgShapeTriangle, CgShapeSquare, CgShapeCircle } from "react-icons/cg"
 import { IoFemaleOutline } from "react-icons/io5"
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { id } from '@instantdb/react'
 import GlassCard from '@/components/GlassCard'
@@ -31,9 +31,8 @@ interface FormData {
   equipment: string[]
   equipmentNotes: string
   injuries: string
-  daysPerWeek: string
+  workoutDays: string[]
   sessionDuration: string
-  unavailableDays: string[]
   otherSports: string[]
   dietType: string
   foodAllergies: string[]
@@ -58,9 +57,8 @@ const INITIAL: FormData = {
   equipment: [],
   equipmentNotes: '',
   injuries: '',
-  daysPerWeek: '3',
+  workoutDays: [],
   sessionDuration: '45',
-  unavailableDays: [],
   otherSports: [],
   dietType: '',
   foodAllergies: [],
@@ -81,8 +79,8 @@ function computeAgeFromBirthday(day: number, month: number, year: number): numbe
 }
 
 // ── Plan name generator ────────────────────────────────────────────────────────
-function generatePlanName(goals: string[], fitnessLevel: string, equipment: string[], daysPerWeek: string): string {
-  const d = parseInt(daysPerWeek, 10)
+function generatePlanName(goals: string[], fitnessLevel: string, equipment: string[], workoutDays: string[]): string {
+  const d = workoutDays.length
   const bodyweightOnly = equipment.length === 1 && equipment[0] === 'Bodyweight Only'
   const hasHeavy = equipment.some(e => ['Barbell', 'Kettlebell'].includes(e))
 
@@ -238,14 +236,17 @@ export default function Questionnaire() {
   const [form, setForm] = useState<FormData>(() => ({ ...INITIAL, unit: getUnit() }))
   const [error, setError] = useState('')
   const [goalConflictMsg, setGoalConflictMsg] = useState('')
-  const [dayBlockError, setDayBlockError] = useState('')
   const [customSport, setCustomSport] = useState('')
   const [customInput, setCustomInput] = useState('')
   const [showMoreDiets, setShowMoreDiets] = useState(false)
+  const [showMoreEquipment, setShowMoreEquipment] = useState(false)
+  const [showMoreSports, setShowMoreSports] = useState(false)
   const [equipSubStep, setEquipSubStep] = useState(0)
   const [schedSubStep, setSchedSubStep] = useState(0)
   const [schedDir, setSchedDir] = useState(1)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isStartOver = !!(location.state as { startOver?: boolean } | null)?.startOver
 
   const dayRef = useRef<HTMLInputElement>(null)
   const monthRef = useRef<HTMLInputElement>(null)
@@ -263,6 +264,7 @@ export default function Questionnaire() {
   }, [userName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (isStartOver) return
     if (plansData === undefined) return
     if (existingPlanIds.length > 0) {
       navigate('/dashboard', { replace: true })
@@ -336,19 +338,13 @@ export default function Questionnaire() {
     setForm((p) => ({ ...p, [key]: p[key].includes(value) ? p[key].filter((v) => v !== value) : [...p[key], value] }))
   }
 
-  const toggleUnavailableDay = (day: string) => {
-    if (form.unavailableDays.includes(day)) {
-      setDayBlockError('')
-      setForm((p) => ({ ...p, unavailableDays: p.unavailableDays.filter(d => d !== day) }))
-      return
-    }
-    const maxBlocked = 7 - parseInt(form.daysPerWeek, 10)
-    if (form.unavailableDays.length >= maxBlocked) {
-      setDayBlockError(`You want to train ${form.daysPerWeek} day${parseInt(form.daysPerWeek) !== 1 ? 's' : ''} a week, so you can only block up to ${maxBlocked} day${maxBlocked !== 1 ? 's' : ''}.`)
-      return
-    }
-    setDayBlockError('')
-    setForm((p) => ({ ...p, unavailableDays: [...p.unavailableDays, day] }))
+  const toggleWorkoutDay = (day: string) => {
+    setForm((p) => ({
+      ...p,
+      workoutDays: p.workoutDays.includes(day)
+        ? p.workoutDays.filter(d => d !== day)
+        : [...p.workoutDays, day],
+    }))
   }
 
   const toggleSport = (name: string) => {
@@ -434,7 +430,7 @@ export default function Questionnaire() {
     if (step === 7) return form.goals.length > 0
     if (step === 8) return true
     if (step === 9) return !!(form.gymAccess && form.equipment.length > 0)
-    if (step === 10) return !!(form.daysPerWeek && form.sessionDuration)
+    if (step === 10) return !!(form.workoutDays.length > 0 && form.sessionDuration)
     if (step === 11) return !!form.dietType
     return true
   }
@@ -442,11 +438,11 @@ export default function Questionnaire() {
   const getContinueLabel = (): string => {
     if (step === 3) return 'Next'
     if (step === 6) return 'Set my goals'
-    if (step === 7) return 'See plan preview'
+    if (step === 7) return 'Continue'
     if (step === 8) return 'Set up training'
     if (step === 10 && schedSubStep === 0) return 'Add activities'
     if (step === 10) return 'Set my diet'
-    if (step === 11) return 'Set restrictions'
+    if (step === 11) return 'Continue'
     if (step === 12) return 'Almost done'
     if (step === 13) return 'Final step'
     return 'Continue'
@@ -455,14 +451,15 @@ export default function Questionnaire() {
   // ── Submit ─────────────────────────────────────────────────────────────────────
   const handleSubmit = () => {
     const finalAge = computedAge ?? 25
-    const planName = generatePlanName(form.goals, form.fitnessLevel, form.equipment, form.daysPerWeek)
+    const planName = generatePlanName(form.goals, form.fitnessLevel, form.equipment, form.workoutDays)
+    const sortedWorkoutDays = [...form.workoutDays].sort((a, b) => DAY_FULL.indexOf(a) - DAY_FULL.indexOf(b))
     const nutritionData = {
       sex: form.sex as 'male' | 'female',
       age: finalAge,
       weight: weightKg,
       height: heightCm,
       goals: form.goals,
-      daysPerWeek: parseInt(form.daysPerWeek, 10),
+      daysPerWeek: form.workoutDays.length,
       dietType: form.dietType,
       allergies: form.foodAllergies,
       mealsPerDay: 3,
@@ -481,9 +478,8 @@ export default function Questionnaire() {
       equipment: form.equipment,
       equipmentNotes: '',
       injuries: form.injuries,
-      daysPerWeek: form.daysPerWeek,
+      workoutDays: sortedWorkoutDays,
       sessionDuration: form.sessionDuration,
-      unavailableDays: form.unavailableDays,
       otherSports: form.otherSports.length > 0 ? form.otherSports : undefined,
       images: form.images,
       dietType: form.dietType,
@@ -602,7 +598,7 @@ export default function Questionnaire() {
                   </svg>
                 </button>
                 <div className="flex items-center gap-3 text-white/25 text-xs">
-                  <span>Beginner-Friendly</span><span>·</span><span>AI-powered</span><span>·</span><span>Personalized</span>
+                  <span>Beginner-friendly</span><span>·</span><span>AI-powered</span><span>·</span><span>Personalized</span>
                 </div>
               </motion.div>
             </div>
@@ -610,39 +606,40 @@ export default function Questionnaire() {
 
           {/* ── Step 2: Greeting (auto-advances) ──────────────────────────── */}
           {step === 2 && (
-            <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-8 space-y-6">
+            <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-8 space-y-8">
               <motion.div
                 initial={{ scale: 0.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.05 }}
-                className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
-                style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.35)', boxShadow: '0 0 40px rgba(168,85,247,0.2)' }}
+                transition={{ type: 'spring', stiffness: 240, damping: 14, delay: 0.05 }}
+                className="w-28 h-28 rounded-3xl flex items-center justify-center text-6xl"
+                style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18))', border: '1px solid rgba(168,85,247,0.4)', boxShadow: '0 0 60px rgba(168,85,247,0.28), 0 0 120px rgba(168,85,247,0.1)' }}
               >
                 🏆
               </motion.div>
-              <div className="space-y-2.5 max-w-xs">
+              <div className="space-y-4 max-w-sm px-4">
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
-                  className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A855F7' }}
+                  className="text-sm font-bold uppercase tracking-widest" style={{ color: '#A855F7' }}
                 >
                   Let&apos;s go
                 </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                  className="text-2xl font-black text-white tracking-tight leading-tight"
+                  className="text-4xl font-black tracking-tight leading-tight"
+                  style={{ background: 'linear-gradient(135deg, #fff 40%, rgba(168,85,247,0.9))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                 >
                   Hey, {form.name.trim().split(' ')[0]}!
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
-                  className="text-white/50 text-sm leading-relaxed"
+                  className="text-white/55 text-base leading-relaxed"
                 >
                   Your plan is going to be built around you. A few quick questions and we&apos;ll have it ready.
                 </motion.p>
               </div>
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
-                className="w-40 h-1 rounded-full overflow-hidden"
+                className="w-48 h-1.5 rounded-full overflow-hidden"
                 style={{ background: 'rgba(255,255,255,0.08)' }}
               >
                 <motion.div
@@ -1008,6 +1005,7 @@ export default function Questionnaire() {
                               onClick={() => {
                                 if (form.gymAccess !== value) {
                                   setForm(p => ({ ...p, gymAccess: value, equipment: value === 'gym' ? ['Full Gym Access'] : [] }))
+                                  setShowMoreEquipment(false)
                                 }
                                 setTimeout(() => setEquipSubStep(1), 160)
                               }}
@@ -1042,25 +1040,45 @@ export default function Questionnaire() {
                             <p className="text-sm text-white/70">Full gym access is included. Select any extras below.</p>
                           </motion.div>
                         )}
-                        <motion.div
-                          initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                          className="grid grid-cols-2 gap-2.5"
-                        >
-                          {(form.gymAccess === 'gym' ? GYM_EQUIPMENT_OPTIONS : HOME_EQUIPMENT_OPTIONS).map(({ label, icon }) => {
-                            const selected = form.equipment.includes(label)
-                            return (
-                              <button
-                                key={label}
-                                onClick={() => toggleArray('equipment', label)}
-                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                        {(() => {
+                          const allOptions = form.gymAccess === 'gym' ? GYM_EQUIPMENT_OPTIONS : HOME_EQUIPMENT_OPTIONS
+                          const INITIAL_COUNT = 6
+                          const visibleOptions = showMoreEquipment ? allOptions : allOptions.slice(0, INITIAL_COUNT)
+                          const hasMore = allOptions.length > INITIAL_COUNT
+                          return (
+                            <>
+                              <motion.div
+                                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                                className="grid grid-cols-2 gap-2.5"
                               >
-                                <span className="text-xl flex-shrink-0">{icon}</span>
-                                <span className="text-sm font-medium leading-tight flex-1">{label}</span>
-                                {selected && <span className="text-purple-400 text-xs flex-shrink-0">✓</span>}
-                              </button>
-                            )
-                          })}
-                        </motion.div>
+                                {visibleOptions.map(({ label, icon }) => {
+                                  const selected = form.equipment.includes(label)
+                                  return (
+                                    <button
+                                      key={label}
+                                      onClick={() => toggleArray('equipment', label)}
+                                      className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                                    >
+                                      <span className="text-xl flex-shrink-0">{icon}</span>
+                                      <span className="text-sm font-medium leading-tight flex-1">{label}</span>
+                                      {selected && <span className="text-purple-400 text-xs flex-shrink-0">✓</span>}
+                                    </button>
+                                  )
+                                })}
+                              </motion.div>
+                              {hasMore && (
+                                <motion.button
+                                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }}
+                                  onClick={() => setShowMoreEquipment(v => !v)}
+                                  className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98]"
+                                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.45)' }}
+                                >
+                                  {showMoreEquipment ? 'Show less' : `Show ${allOptions.length - INITIAL_COUNT} more`}
+                                </motion.button>
+                              )}
+                            </>
+                          )
+                        })()}
                         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                           <label className="block text-sm font-medium text-white/60 mb-2">Add your own equipment</label>
                           <div className="flex gap-2">
@@ -1071,11 +1089,11 @@ export default function Questionnaire() {
                             <button onClick={addCustomEquipment} disabled={!customInput.trim() || form.equipment.includes(customInput.trim())} className="btn-ghost !px-4 disabled:opacity-30 flex-shrink-0">Add</button>
                           </div>
                         </motion.div>
-                        {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e)) && (
+                        {form.equipment.some((e) => !PRESET_EQUIPMENT_LABELS.has(e) && e !== 'Full Gym Access') && (
                           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <p className="text-xs text-white/40 mb-2">Your custom items</p>
                             <div className="flex flex-wrap gap-2">
-                              {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e)).map((item) => (
+                              {form.equipment.filter((e) => !PRESET_EQUIPMENT_LABELS.has(e) && e !== 'Full Gym Access').map((item) => (
                                 <span key={item} className="chip active flex items-center gap-1.5">
                                   {item}
                                   <button onClick={() => removeEquipment(item)} className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-xs leading-none transition-colors">×</button>
@@ -1106,61 +1124,34 @@ export default function Questionnaire() {
                     {/* Sub-step 0: Main training schedule */}
                     {schedSubStep === 0 && (
                       <>
-                        <StepHeader tag="Schedule" title="Your training schedule" sub="Set your weekly cadence and session preferences." />
+                        <StepHeader tag="Schedule" title="Your training schedule" sub="Pick the days you want to train each week." />
 
-                        {/* Days per week - large number cards */}
+                        {/* Day picker */}
                         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
                           <label className="block text-sm font-medium text-white/60 mb-3">
-                            Training days per week
+                            Training days
                           </label>
                           <div className="grid grid-cols-7 gap-2">
-                            {[1, 2, 3, 4, 5, 6, 7].map((n) => {
-                              const sel = form.daysPerWeek === String(n)
+                            {DAY_OPTIONS.map((day, i) => {
+                              const selected = form.workoutDays.includes(DAY_FULL[i])
                               return (
                                 <button
-                                  key={n}
-                                  onClick={() => {
-                                    setDayBlockError('')
-                                    setForm((p) => ({ ...p, daysPerWeek: String(n), unavailableDays: p.unavailableDays.slice(0, 7 - n) }))
-                                  }}
-                                  className={`py-5 rounded-2xl border transition-all duration-200 flex items-center justify-center active:scale-[0.95] ${sel ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                                  key={day}
+                                  onClick={() => toggleWorkoutDay(DAY_FULL[i])}
+                                  className={`py-5 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 active:scale-[0.95] ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
                                 >
-                                  <span className="text-lg font-black">{n}</span>
+                                  <span className="text-[11px] font-black uppercase tracking-wide">{day}</span>
+                                  {selected && <span className="text-[9px] leading-none" style={{ color: '#A855F7' }}>✓</span>}
                                 </button>
                               )
                             })}
                           </div>
                           <p className="text-xs text-white/35 mt-2.5">
-                            {form.daysPerWeek} day{parseInt(form.daysPerWeek) !== 1 ? 's' : ''} per week selected
+                            {form.workoutDays.length === 0
+                              ? 'Tap the days you want to train'
+                              : `${form.workoutDays.length} day${form.workoutDays.length !== 1 ? 's' : ''} selected`
+                            }
                           </p>
-                        </motion.div>
-
-                        {/* Days you cannot train */}
-                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-                          <label className="block text-sm font-medium text-white/60 mb-3">
-                            Days you cannot train <span className="text-white/25 text-xs font-normal">optional</span>
-                          </label>
-                          <div className="grid grid-cols-7 gap-2">
-                            {DAY_OPTIONS.map((day, i) => {
-                              const unavailable = form.unavailableDays.includes(DAY_FULL[i])
-                              const atLimit = !unavailable && form.unavailableDays.length >= 7 - parseInt(form.daysPerWeek, 10)
-                              return (
-                                <button
-                                  key={day}
-                                  onClick={() => toggleUnavailableDay(DAY_FULL[i])}
-                                  disabled={atLimit}
-                                  className={`py-4 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 active:scale-[0.95] ${unavailable ? 'border-red-500/50 bg-red-500/15 text-red-300' : atLimit ? 'border-white/5 bg-white/2 text-white/20 cursor-not-allowed' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'}`}
-                                >
-                                  <span className="text-[11px] font-bold uppercase tracking-wide">{day}</span>
-                                  {unavailable && <span className="text-[9px] leading-none">✕</span>}
-                                </button>
-                              )
-                            })}
-                          </div>
-                          {dayBlockError
-                            ? <p className="text-xs text-amber-400/80 mt-2.5 flex items-center gap-1.5"><span>⚠</span>{dayBlockError}</p>
-                            : form.unavailableDays.length > 0 && <p className="text-xs text-white/30 mt-2.5">Blocked: {form.unavailableDays.join(', ')}</p>
-                          }
                         </motion.div>
 
                         {/* Session duration - large cards */}
@@ -1205,24 +1196,43 @@ export default function Questionnaire() {
                           title="Other sports?"
                           sub="Let the AI know what else you do so it can plan around your full activity level."
                         />
-                        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-                          <div className="grid grid-cols-2 gap-2.5">
-                            {SPORT_OPTIONS.map(({ label, icon }) => {
-                              const selected = form.otherSports.includes(label)
-                              return (
-                                <button
-                                  key={label}
-                                  onClick={() => toggleSport(label)}
-                                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                        {(() => {
+                          const INITIAL_COUNT = 6
+                          const visibleSports = showMoreSports ? SPORT_OPTIONS : SPORT_OPTIONS.slice(0, INITIAL_COUNT)
+                          const hasMore = SPORT_OPTIONS.length > INITIAL_COUNT
+                          return (
+                            <>
+                              <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+                                <div className="grid grid-cols-2 gap-2.5">
+                                  {visibleSports.map(({ label, icon }) => {
+                                    const selected = form.otherSports.includes(label)
+                                    return (
+                                      <button
+                                        key={label}
+                                        onClick={() => toggleSport(label)}
+                                        className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left ${selected ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white/80'}`}
+                                      >
+                                        <span className="text-xl flex-shrink-0">{icon}</span>
+                                        <span className="text-sm font-medium leading-tight flex-1">{label}</span>
+                                        {selected && <span className="text-purple-400 text-xs flex-shrink-0">✓</span>}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </motion.div>
+                              {hasMore && (
+                                <motion.button
+                                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
+                                  onClick={() => setShowMoreSports(v => !v)}
+                                  className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98]"
+                                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.45)' }}
                                 >
-                                  <span className="text-xl flex-shrink-0">{icon}</span>
-                                  <span className="text-sm font-medium leading-tight flex-1">{label}</span>
-                                  {selected && <span className="text-purple-400 text-xs flex-shrink-0">✓</span>}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </motion.div>
+                                  {showMoreSports ? 'Show less' : `Show ${SPORT_OPTIONS.length - INITIAL_COUNT} more`}
+                                </motion.button>
+                              )}
+                            </>
+                          )
+                        })()}
 
                         {/* Custom sport input */}
                         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}>
@@ -1282,30 +1292,35 @@ export default function Questionnaire() {
                   <StepHeader tag="Diet" title="Your diet" sub="Help us tailor your nutrition guidance to how you already eat." />
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
                     <label className="block text-sm font-medium text-white/60 mb-3">Diet type</label>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {DIET_OPTIONS.slice(0, 6).map(({ value, label, desc }) => (
-                        <button key={value} onClick={() => update({ dietType: value })}
-                          className={`text-left py-4 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${form.dietType === value ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'}`}>
-                          <span className="block text-sm font-medium">{label}</span>
-                          <span className="block text-xs text-white/35 mt-0.5">{desc}</span>
-                        </button>
-                      ))}
-                    </div>
-                    {(showMoreDiets || DIET_OPTIONS.slice(6).some(o => o.value === form.dietType)) && (
-                      <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-                        {DIET_OPTIONS.slice(6).map(({ value, label, desc }) => (
-                          <button key={value} onClick={() => update({ dietType: value })}
-                            className={`text-left py-4 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${form.dietType === value ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'}`}>
-                            <span className="block text-sm font-medium">{label}</span>
-                            <span className="block text-xs text-white/35 mt-0.5">{desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <button onClick={() => setShowMoreDiets(v => !v)} className="mt-3 flex items-center gap-1.5 text-xs text-purple-400/70 hover:text-purple-300 transition-colors">
-                      <HiChevronDown className={`w-3 h-3 transition-transform ${showMoreDiets ? 'rotate-180' : ''}`} />
-                      {showMoreDiets ? 'Show less' : 'More diet types (Halal, Kosher, Hindu, Jain...)'}
-                    </button>
+                    {(() => {
+                      const INITIAL_COUNT = 6
+                      const hasMore = DIET_OPTIONS.length > INITIAL_COUNT
+                      const expanded = showMoreDiets || DIET_OPTIONS.slice(INITIAL_COUNT).some(o => o.value === form.dietType)
+                      const visibleDiets = expanded ? DIET_OPTIONS : DIET_OPTIONS.slice(0, INITIAL_COUNT)
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {visibleDiets.map(({ value, label, desc }) => (
+                              <button key={value} onClick={() => update({ dietType: value })}
+                                className={`text-left py-4 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${form.dietType === value ? 'text-white border-purple-500/60 bg-purple-500/15 shadow-glow' : 'text-white/50 border-white/10 bg-white/5 hover:bg-white/8 hover:text-white/80'}`}>
+                                <span className="block text-sm font-medium">{label}</span>
+                                <span className="block text-xs text-white/35 mt-0.5">{desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                          {hasMore && (
+                            <motion.button
+                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }}
+                              onClick={() => setShowMoreDiets(v => !v)}
+                              className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] mt-6"
+                              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.45)' }}
+                            >
+                              {expanded ? 'Show less' : `Show ${DIET_OPTIONS.length - INITIAL_COUNT} more`}
+                            </motion.button>
+                          )}
+                        </>
+                      )
+                    })()}
                   </motion.div>
                 </div>
               )}

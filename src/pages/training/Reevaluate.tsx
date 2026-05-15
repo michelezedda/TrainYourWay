@@ -43,8 +43,7 @@ interface RevalForm {
   currentHeightIn: string
   physicalFeel: string
   difficulty: string
-  daysPerWeek: string
-  unavailableDays: string[]
+  workoutDays: string[]
   exercisesToRemove: string
   newInjuries: string
   newGoals: string[]
@@ -59,8 +58,7 @@ const INITIAL: RevalForm = {
   currentHeightIn: '',
   physicalFeel: '',
   difficulty: '',
-  daysPerWeek: '3',
-  unavailableDays: [],
+  workoutDays: [],
   exercisesToRemove: '',
   newInjuries: '',
   newGoals: [],
@@ -81,8 +79,6 @@ export default function ReevaluateQuestionnaire() {
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<RevalForm>(() => ({ ...INITIAL, unit: getUnit() }))
-  const [dayBlockError, setDayBlockError] = useState('')
-
   if (!original) {
     navigate('/workout', { replace: true })
     return null
@@ -125,21 +121,13 @@ export default function ReevaluateQuestionnaire() {
     }))
   }
 
-  const toggleDay = (day: string) => {
-    if (form.unavailableDays.includes(day)) {
-      setDayBlockError('')
-      setForm((p) => ({ ...p, unavailableDays: p.unavailableDays.filter((d) => d !== day) }))
-      return
-    }
-    const maxBlocked = 7 - parseInt(form.daysPerWeek, 10)
-    if (form.unavailableDays.length >= maxBlocked) {
-      setDayBlockError(
-        `You want to train ${form.daysPerWeek} day${parseInt(form.daysPerWeek) !== 1 ? 's' : ''} a week, so you can only block up to ${maxBlocked} day${maxBlocked !== 1 ? 's' : ''}.`
-      )
-      return
-    }
-    setDayBlockError('')
-    setForm((p) => ({ ...p, unavailableDays: [...p.unavailableDays, day] }))
+  const toggleWorkoutDay = (day: string) => {
+    setForm((p) => ({
+      ...p,
+      workoutDays: p.workoutDays.includes(day)
+        ? p.workoutDays.filter((d) => d !== day)
+        : [...p.workoutDays, day],
+    }))
   }
 
   // --- validation ---
@@ -192,8 +180,7 @@ export default function ReevaluateQuestionnaire() {
       currentHeight: heightCm.toFixed(0),
       physicalFeel: form.physicalFeel,
       difficulty: form.difficulty,
-      daysPerWeek: form.daysPerWeek,
-      unavailableDays: form.unavailableDays,
+      workoutDays: [...form.workoutDays].sort((a, b) => DAY_FULL.indexOf(a) - DAY_FULL.indexOf(b)),
       exercisesToRemove: form.exercisesToRemove,
       newInjuries: form.newInjuries,
       newGoals: form.newGoals,
@@ -386,67 +373,31 @@ export default function ReevaluateQuestionnaire() {
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-3">
-                Training days per week:{' '}
-                <span className="text-white font-semibold">{form.daysPerWeek} days</span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="7"
-                value={form.daysPerWeek}
-                onChange={(e) => {
-                  const val = e.target.value
-                  const maxBlocked = 7 - parseInt(val, 10)
-                  setDayBlockError('')
-                  setForm((p) => ({
-                    ...p,
-                    daysPerWeek: val,
-                    unavailableDays: p.unavailableDays.slice(0, maxBlocked),
-                  }))
-                }}
-                className="w-full accent-purple-500 h-2 rounded-full"
-              />
-              <div className="flex justify-between text-xs text-white/30 mt-1">
-                {[1,2,3,4,5,6,7].map((n) => <span key={n}>{n}</span>)}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Days you cannot train{' '}
-                <span className="text-white/25 text-xs font-normal">optional</span>
+                Training days{' '}
+                <span className="text-white/25 text-xs font-normal">optional - leave blank to keep current</span>
               </label>
               <div className="grid grid-cols-7 gap-1.5">
                 {DAY_OPTIONS.map((day, i) => {
-                  const unavailable = form.unavailableDays.includes(DAY_FULL[i])
-                  const maxBlocked  = 7 - parseInt(form.daysPerWeek, 10)
-                  const atLimit     = !unavailable && form.unavailableDays.length >= maxBlocked
+                  const selected = form.workoutDays.includes(DAY_FULL[i])
                   return (
                     <button
                       key={day}
-                      onClick={() => toggleDay(DAY_FULL[i])}
-                      disabled={atLimit}
-                      className={`flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 ${
-                        unavailable
-                          ? 'border-red-500/50 bg-red-500/15 text-red-300'
-                          : atLimit
-                          ? 'border-white/5 bg-white/2 text-white/20 cursor-not-allowed'
+                      onClick={() => toggleWorkoutDay(DAY_FULL[i])}
+                      className={`flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 active:scale-[0.95] ${
+                        selected
+                          ? 'border-purple-500/60 bg-purple-500/15 text-white'
                           : 'border-white/10 bg-white/4 text-white/50 hover:bg-white/8 hover:text-white/80'
                       }`}
                     >
-                      <span className="text-[11px] font-bold uppercase tracking-wide">{day}</span>
-                      {unavailable && <span className="text-[9px] mt-0.5">✕</span>}
+                      <span className="text-[11px] font-black uppercase tracking-wide">{day}</span>
+                      {selected && <span className="text-[9px] mt-0.5" style={{ color: '#A855F7' }}>✓</span>}
                     </button>
                   )
                 })}
               </div>
-              {dayBlockError ? (
-                <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1.5">
-                  <span>⚠</span>{dayBlockError}
-                </p>
-              ) : form.unavailableDays.length > 0 && (
+              {form.workoutDays.length > 0 && (
                 <p className="text-xs text-white/30 mt-2">
-                  Blocked: {form.unavailableDays.join(', ')}
+                  {form.workoutDays.length} day{form.workoutDays.length !== 1 ? 's' : ''} selected
                 </p>
               )}
             </div>

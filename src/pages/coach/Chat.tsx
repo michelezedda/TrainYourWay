@@ -514,7 +514,7 @@ export default function Chat() {
 
         {/* Hint row */}
         <div className="flex items-center justify-between px-1 mt-1.5 pb-2">
-          <span className="text-[10px] text-red-500/60">&#9888;
+          <span className="text-[10px] ml-2 text-white/30">&#9888;
             KAI can make mistakes.</span>
         </div>
       </div>

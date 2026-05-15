@@ -7,8 +7,6 @@ import {
 } from 'react-icons/hi'
 import {
   parseAnalysisSections,
-  parseWeeklySchedule,
-  DAY_NAMES,
   SECTION_ICONS,
 } from '@/components/PlanView'
 import { sanitizePlan } from '@/lib/planComponents'
@@ -307,7 +305,7 @@ function CelebrationSlide({ formData, userName }: { formData: WorkoutFormData; u
             Your plan is ready
           </p>
           <h1 className="font-black text-white tracking-tight leading-[1.06] mb-4"
-            style={{ fontSize: 'clamp(2.8rem, 12vw, 4.8rem)' }}>
+            style={{ fontSize: 'clamp(2.4rem, 10vw, 4.2rem)' }}>
             {userName ? (
               <>{userName},<br />you're all set.</>
             ) : (
@@ -333,20 +331,20 @@ function CelebrationSlide({ formData, userName }: { formData: WorkoutFormData; u
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-          className="flex gap-7 items-center pt-2">
+          className="flex gap-4 items-center">
           {[
-            { label: 'Days/wk', value: formData.daysPerWeek },
+            { label: 'Days/wk', value: String(formData.workoutDays.length) },
             { label: 'Per session', value: `${formData.sessionDuration}m` },
             { label: 'Level', value: LEVEL_LABELS[formData.fitnessLevel] ?? formData.fitnessLevel },
           ].map(({ label, value }, i) => (
-            <div key={label} className={`text-center ${i > 0 ? 'border-l border-white/10 pl-7' : ''}`}>
-              <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(1.7rem, 7vw, 2.4rem)' }}>{value}</p>
-              <p className="text-white/35 text-[10px] uppercase tracking-wider mt-2">{label}</p>
+            <div key={label} className={`text-center ${i > 0 ? 'border-l border-white/[0.08] pl-4' : ''}`}>
+              <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.6rem)' }}>{value}</p>
+              <p className="text-white/30 text-[9px] uppercase tracking-wider mt-1">{label}</p>
             </div>
           ))}
         </motion.div>
       </div>
-    </SlideWrap>
+    </SlideWrap >
   )
 }
 
@@ -404,16 +402,16 @@ function ProfileStatsSlide({ formData }: { formData: WorkoutFormData }) {
         )}
 
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}
-          className="grid grid-cols-3 gap-3">
+          className="grid grid-cols-3 gap-2">
           {[
             { label: 'Level', value: LEVEL_LABELS[formData.fitnessLevel] ?? formData.fitnessLevel, color: lc },
-            { label: 'Sessions', value: `${formData.daysPerWeek}x / wk`, color: '#A855F7' },
+            { label: 'Sessions', value: `${formData.workoutDays.length}x / wk`, color: '#A855F7' },
             { label: 'Per Session', value: `${formData.sessionDuration}m`, color: '#22D3EE' },
           ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-2xl px-3 py-5 text-center"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="font-black text-lg leading-none mb-2" style={{ color }}>{value}</p>
-              <p className="text-white/35 text-[10px] uppercase tracking-wider">{label}</p>
+            <div key={label} className="rounded-xl px-2.5 py-3.5 text-center"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="font-bold text-sm leading-none mb-1.5 truncate" style={{ color }}>{value}</p>
+              <p className="text-white/30 text-[9px] uppercase tracking-wider">{label}</p>
             </div>
           ))}
         </motion.div>
@@ -500,34 +498,56 @@ function AnalysisSectionSlide({
 // ── Training Week Slide ───────────────────────────────────────────────────────
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const DAY_FULL_RESULTS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+function parseTrainingDaysFromPlan(plan: string): Set<number> {
+  const result = new Set<number>()
+
+  // Primary: parse the "## Weekly Schedule" section which has **DayName:** activity
+  const scheduleSection = plan.match(/## Weekly Schedule([\s\S]*?)(?=\n## |$)/i)?.[1] ?? ''
+  if (scheduleSection) {
+    DAY_FULL_RESULTS.forEach((day, i) => {
+      const m = scheduleSection.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n]+)`, 'i'))
+      if (!m) return
+      const activity = m[1].replace(/·.*$/, '').trim()
+      if (!/\brest\b/i.test(activity)) result.add(i)
+    })
+    if (result.size > 0) return result
+  }
+
+  // Fallback: scan ### Day N: DayName lines (Day-by-Day section)
+  for (const line of plan.split('\n')) {
+    const trimmed = line.trimStart()
+    if (!/^#{2,3}\s/.test(trimmed)) continue
+    const dayIdx = DAY_FULL_RESULTS.findIndex(d => new RegExp(`\\b${d}\\b`, 'i').test(trimmed))
+    if (dayIdx === -1) continue
+    if (/\brest\b/i.test(trimmed)) continue
+    result.add(dayIdx)
+  }
+
+  return result
+}
 
 function TrainingWeekSlide({ formData, plan }: { formData: WorkoutFormData; plan?: string }) {
-  const days = parseInt(formData.daysPerWeek, 10)
+  const days = formData.workoutDays.length
   const mins = parseInt(formData.sessionDuration, 10)
   const totalMins = days * mins
   const totalStr = totalMins >= 90 ? `${Math.round((totalMins / 60) * 10) / 10}h` : `${totalMins}m`
-  const motivation = TRAINING_MOTIVATION[formData.daysPerWeek] ?? 'Your schedule is built for consistent forward progress.'
+  const motivation = TRAINING_MOTIVATION[String(days)] ?? 'Your schedule is built for consistent forward progress.'
 
   const trainingIndices = useMemo<Set<number>>(() => {
     if (plan) {
-      const schedule = parseWeeklySchedule(sanitizePlan(plan))
-      const result = new Set<number>()
-      DAY_NAMES.forEach((day, i) => {
-        const label = schedule[day] ?? ''
-        if (label && !/rest/i.test(label)) result.add(i)
-      })
-      if (result.size > 0) return result
+      const parsed = parseTrainingDaysFromPlan(plan)
+      if (parsed.size > 0) return parsed
     }
-    // Fallback: pick first N non-unavailable days
-    const unavail = new Set(
-      (formData.unavailableDays ?? []).map(d => DAY_NAMES.indexOf(d)).filter(i => i >= 0)
-    )
+    // Fallback: use the user's explicitly chosen workout days
     const fallback = new Set<number>()
-    for (let i = 0; i < 7 && fallback.size < days; i++) {
-      if (!unavail.has(i)) fallback.add(i)
+    for (const d of formData.workoutDays) {
+      const idx = DAY_FULL_RESULTS.indexOf(d)
+      if (idx >= 0) fallback.add(idx)
     }
     return fallback
-  }, [plan, formData.unavailableDays, days])
+  }, [plan, formData.workoutDays])
 
   return (
     <SlideWrap>
@@ -1258,7 +1278,7 @@ export default function Results() {
 
   const handleViewPlan = () => {
     markOnboardingSeen(userId)
-    navigate('/workout', { replace: true })
+    navigate('/dashboard', { replace: true })
   }
 
   if (!plan) {

@@ -135,7 +135,7 @@ export default function Workout() {
   const plans = (data?.workoutPlans ?? []) as Array<{
     id: string; plan: string; userName: string; fitnessLevel: string
     goals: string; equipment: string; constraints: string; createdAt: number
-    parentPlanId?: string; unavailableDays?: string; dayOverrides?: string
+    parentPlanId?: string; workoutDays?: string; dayOverrides?: string
   }>
 
   const chain = useMemo(() => {
@@ -399,22 +399,27 @@ export default function Workout() {
             <InteractivePlan
               planId={latestPlan.id}
               planText={latestPlan.plan}
-              blockedDays={parseList(latestPlan.unavailableDays ?? '[]')}
+              blockedDays={(() => {
+                const stored = parseList(latestPlan.workoutDays ?? '[]')
+                if (stored.length === 0) return []
+                const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+                return ALL_DAYS.filter(d => !stored.includes(d))
+              })()}
               dayOverrides={dayOverrides}
               onExerciseClick={setSelectedExercise}
               onUnblockDay={day => {
-                const current = parseList(latestPlan.unavailableDays ?? '[]')
+                const current = parseList(latestPlan.workoutDays ?? '[]')
                 void db.transact(db.tx.workoutPlans[latestPlan.id].update({
-                  unavailableDays: JSON.stringify(current.filter(d => d !== day)),
+                  workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
                 }))
               }}
               onGenerateDayWorkout={async day => {
                 const workoutText = await generateDayWorkout(latestPlan.plan, day)
                 const newOverrides = { ...dayOverrides, [day]: workoutText }
-                const currentBlocked = parseList(latestPlan.unavailableDays ?? '[]')
+                const current = parseList(latestPlan.workoutDays ?? '[]')
                 void db.transact(db.tx.workoutPlans[latestPlan.id].update({
                   dayOverrides: JSON.stringify(newOverrides),
-                  unavailableDays: JSON.stringify(currentBlocked.filter(d => d !== day)),
+                  workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
                 }))
               }}
             />

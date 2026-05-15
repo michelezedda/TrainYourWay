@@ -61,6 +61,8 @@ export default function Personal() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [showStartOverConfirm, setShowStartOverConfirm] = useState(false)
+  const [startOverBusy, setStartOverBusy] = useState(false)
   const [editingField, setEditingField] = useState<null | 'name'>(null)
   const [editValue, setEditValue] = useState('')
   const [notifPermission, setNotifPermission] = useState(() => getNotificationPermission())
@@ -97,6 +99,22 @@ export default function Personal() {
   const handleEnableNotifications = async () => {
     const result = await requestNotificationPermission()
     setNotifPermission(result)
+  }
+
+  const handleStartOver = async () => {
+    setStartOverBusy(true)
+    try {
+      const txns = (planData?.workoutPlans ?? []).map((r: { id: string }) => db.tx.workoutPlans[r.id].delete())
+      if (txns.length > 0) await db.transact(txns)
+      localStorage.removeItem('uplift_nutrition_profile')
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('uplift_weights_'))
+        .forEach(k => localStorage.removeItem(k))
+      navigate('/questionnaire', { state: { startOver: true }, replace: true })
+    } finally {
+      setStartOverBusy(false)
+      setShowStartOverConfirm(false)
+    }
   }
 
   const handleLogout = async () => {
@@ -257,38 +275,15 @@ export default function Personal() {
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-3 px-1">Training & Nutrition</p>
           <div className="glass-card overflow-hidden">
             <button
-              onClick={() => {
-                if (!latestPlan) { navigate('/questionnaire'); return }
-                navigate('/reevaluate', {
-                  state: {
-                    planId: latestPlan.id,
-                    originalPlan: latestPlan.plan,
-                    userName: latestPlan.userName,
-                    fitnessLevel: latestPlan.fitnessLevel ?? '',
-                    goals: latestPlan.goals ?? '[]',
-                    equipment: latestPlan.equipment ?? '[]',
-                  },
-                })
-              }}
+              onClick={() => setShowStartOverConfirm(true)}
               className="w-full flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
             >
               <div className="text-left">
-                <p className="text-sm font-medium text-white/80">Edit Training Goals</p>
-                <p className="text-xs text-white/35 mt-0.5">Update your plan based on new goals</p>
-              </div>
-              <HiChevronRight className="w-5 h-5 text-white/25 flex-shrink-0" />
-            </button>
-            <Link
-              to="/questionnaire"
-              className="flex items-center justify-between px-5 py-4 transition-colors active:scale-[0.98]"
-            >
-              <div>
                 <p className="text-sm font-medium text-white/80">Start Over</p>
                 <p className="text-xs text-white/35 mt-0.5">Generate a completely new plan</p>
               </div>
               <HiChevronRight className="w-5 h-5 text-white/25 flex-shrink-0" />
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -380,6 +375,47 @@ export default function Personal() {
           Need help or have feedback?
         </Link>
       </div>
+
+      {/* Start Over confirmation modal */}
+      {showStartOverConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-8 sm:pb-0"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+          onClick={() => !startOverBusy && setShowStartOverConfirm(false)}
+        >
+          <div
+            className="glass-card w-full max-w-sm p-6 space-y-5 mb-20"
+            onClick={e => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Start over?</h3>
+              <p className="text-sm text-white/45 leading-relaxed">
+                Your current plan will be removed and you'll go through onboarding again to generate a fresh one.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowStartOverConfirm(false)}
+                disabled={startOverBusy}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-medium text-white/60 transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleStartOver()}
+                disabled={startOverBusy}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.85), rgba(34,211,238,0.7))' }}
+              >
+                {startOverBusy ? (
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : 'Yes, start over'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (

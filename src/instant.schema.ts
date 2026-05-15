@@ -73,7 +73,7 @@ const _schema = i.schema({
       plan: i.string(),
       createdAt: i.number(),
       parentPlanId: i.string().optional(),
-      unavailableDays: i.string().optional(),
+      workoutDays: i.string().optional(),
       dayOverrides: i.string().optional(),
       otherSports: i.string().optional(),
     }),

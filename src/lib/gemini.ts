@@ -48,9 +48,8 @@ export interface WorkoutFormData {
   equipment: string[]
   equipmentNotes: string
   injuries: string
-  daysPerWeek: string
+  workoutDays: string[]
   sessionDuration: string
-  unavailableDays?: string[]
   otherSports?: string[]
   images: string[]
   dietType: string
@@ -92,26 +91,6 @@ function dietLine(data: WorkoutFormData): string {
   return `- Diet: ${data.dietType}${extra} | ${data.mealsPerDay} meals/day`
 }
 
-function computeOptimalScheduleHint(daysPerWeek: string, unavailableDays?: string[]): string {
-  const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  const n = Math.max(0, Math.min(7, parseInt(daysPerWeek) || 0))
-  if (n <= 0) return ''
-  const unavailable = unavailableDays ?? []
-  const available = ALL_DAYS.filter(d => !unavailable.includes(d))
-  if (available.length === 0 || n >= available.length) return ''
-
-  // Distribute n workouts at maximally spaced positions across available days
-  const chosen = new Set<number>()
-  for (let i = 0; i < n; i++) {
-    let idx = Math.round(i * available.length / n)
-    // Resolve rounding collisions by nudging forward
-    while (chosen.has(idx)) idx = (idx + 1) % available.length
-    chosen.add(idx)
-  }
-  const workoutDays = [...chosen].sort((a, b) => a - b).map(i => available[i])
-
-  return `RECOVERY-AWARE SCHEDULE GUIDANCE: For optimal recovery, assign the ${n} training sessions to: ${workoutDays.join(', ')}. Leave all other available days as Rest. Avoid 3 or more consecutive training days unless the user's unavailability makes it impossible.`
-}
 
 function buildPrompt(data: WorkoutFormData): string {
   return `You are an expert personal trainer and fitness coach. Create a detailed, personalized weekly workout plan based on the profile below.
@@ -123,13 +102,12 @@ USER PROFILE:
 ${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Available Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? `, additional notes: ${data.equipmentNotes}` : ''}
 - Injuries / Limitations: ${data.injuries || 'None'}
-- Training: ${data.daysPerWeek} days/week, ${data.sessionDuration} minutes/session
-${data.unavailableDays?.length ? `- Cannot train on: ${data.unavailableDays.join(', ')}` : ''}
+- Training: ${data.workoutDays.length} days/week on ${data.workoutDays.join(', ')}, ${data.sessionDuration} minutes/session
 ${formatSports(data.otherSports) ? `- Other sports/activities: ${formatSports(data.otherSports)} (schedule workouts to complement these, not compete with them on the same days)` : ''}
 ${dietLine(data)}
 ${data.images.length > 0 ? '\nThe images attached show the user\'s available workout space and equipment. Factor what you can see into the plan.' : ''}
 
-Create a complete ${data.daysPerWeek}-day weekly workout plan formatted in Markdown. Use this exact structure:
+Create a complete ${data.workoutDays.length}-day weekly workout plan formatted in Markdown. Use this exact structure:
 
 # ${data.planName}
 
@@ -137,8 +115,7 @@ Create a complete ${data.daysPerWeek}-day weekly workout plan formatted in Markd
 2-3 sentences summarizing the training approach and why it suits this person's profile.
 
 ## Weekly Schedule
-${computeOptimalScheduleHint(data.daysPerWeek, data.unavailableDays)}
-${data.unavailableDays?.length ? `IMPORTANT: The user CANNOT train on ${data.unavailableDays.join(', ')}. Mark those days as Rest in the schedule.` : ''}
+SCHEDULE DIRECTIVE: The user trains ONLY on ${data.workoutDays.join(', ')}. Assign workouts to exactly these days. All other days MUST be Rest. Do not assign workouts to any unlisted day.
 - **Monday:** [Workout Focus or Rest] · [Duration]
 - **Tuesday:** [Workout Focus or Rest] · [Duration]
 - **Wednesday:** [Workout Focus or Rest] · [Duration]
@@ -219,8 +196,7 @@ USER PROFILE:
 ${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? ` (${data.equipmentNotes})` : ''}
 - Injuries or limitations: ${data.injuries || 'None'}
-- Schedule: ${data.daysPerWeek} days/week, ${data.sessionDuration}-minute sessions
-${data.unavailableDays?.length ? `- Cannot train on: ${data.unavailableDays.join(', ')}` : ''}
+- Schedule: ${data.workoutDays.length} days/week (${data.workoutDays.join(', ')}), ${data.sessionDuration}-minute sessions
 ${formatSports(data.otherSports) ? `- Other sports/activities: ${formatSports(data.otherSports)}` : ''}
 ${hasDiet ? `- Diet: ${data.dietType} | ${data.mealsPerDay} meals/day${data.allergies.length > 0 ? ` | Avoiding: ${data.allergies.join(', ')}` : ''}${data.customRestrictions?.trim() ? ` | Also avoiding: ${data.customRestrictions.trim()}` : ''}` : ''}
 ${hasPhotos ? '\nWORKOUT SPACE PHOTOS: attached below. Study them carefully.' : ''}
@@ -308,8 +284,7 @@ export interface ReevaluationData {
   exercisesToRemove: string
   newInjuries: string
   newGoals: string[]
-  daysPerWeek?: string
-  unavailableDays?: string[]
+  workoutDays?: string[]
 }
 
 export async function reevaluateWorkoutPlan(data: ReevaluationData): Promise<string> {
@@ -344,8 +319,7 @@ UPDATED BODY STATS:
 
 ORIGINAL FITNESS PROFILE:
 - Level: ${data.fitnessLevel} | Goals: ${goals} | Equipment: ${equipment}
-${data.daysPerWeek ? `- New schedule: ${data.daysPerWeek} days/week` : ''}
-${data.unavailableDays?.length ? `- Cannot train on: ${data.unavailableDays.join(', ')}` : ''}
+${data.workoutDays?.length ? `- New schedule: ${data.workoutDays.length} days/week, training on: ${data.workoutDays.join(', ')}` : ''}
 
 THE PLAN THEY HAVE BEEN FOLLOWING:
 ${data.originalPlan}
@@ -363,7 +337,7 @@ ${data.newGoals.length > 0 ? `5. Shift emphasis toward: ${data.newGoals.join(', 
 8. Update rest periods where appropriate.
 9. Rewrite the Overview section to describe this evolved phase and how it differs from the previous one.
 10. Update the Progression Plan for the next 4-8 weeks beyond this phase.
-${data.daysPerWeek ? `11. Build the plan around exactly ${data.daysPerWeek} training days per week${data.unavailableDays?.length ? `. Mark ${data.unavailableDays.join(', ')} as Rest in the Weekly Schedule` : ''}. ${computeOptimalScheduleHint(data.daysPerWeek, data.unavailableDays)}` : ''}
+${data.workoutDays?.length ? `11. Build the plan around exactly these training days: ${data.workoutDays.join(', ')}. All other days must be Rest in the Weekly Schedule.` : ''}
 
 THIS MUST BE A COMPLETE, FULLY WRITTEN PLAN — not a summary or a list of changes. Every training day must be written in full.
 

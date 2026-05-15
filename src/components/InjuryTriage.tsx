@@ -107,7 +107,7 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
             🩹
           </div>
           <div>
-            <h2 className="font-black text-white text-lg leading-tight">Injury Triage</h2>
+            <h2 className="font-black text-white text-lg leading-tight ">Injury Triage</h2>
             <p className="text-white/40 text-xs">Quick check to adapt your training</p>
           </div>
           <button
@@ -159,7 +159,7 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
               <motion.div key="sev" variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.2 }}>
                 <p className="text-white/60 text-sm mb-4">How bad is it?</p>
-                <div className="space-y-2">
+                <div className="space-y-2 pb-6">
                   {SEVERITIES.map(({ key, label, desc, icon, color }) => (
                     <button
                       key={key}
@@ -268,7 +268,7 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
                 >
                   Activate Recovery Mode
                 </button>
-                <button onClick={onClose} className="w-full py-2.5 mt-2 text-xs text-white/30 hover:text-white/50 transition-colors">
+                <button onClick={onClose} className="w-full py-2.5 mt-2 text-xs text-white/30 hover:text-white/50 transition-colors pb-6">
                   Cancel
                 </button>
               </motion.div>

@@ -76,11 +76,11 @@ export default function Generating() {
               fitnessLevel: reevaluation.fitnessLevel,
               goals: typeof reevaluation.goals === 'string' ? reevaluation.goals : JSON.stringify(reevaluation.goals),
               equipment: typeof reevaluation.equipment === 'string' ? reevaluation.equipment : JSON.stringify(reevaluation.equipment),
-              constraints: reevaluation.daysPerWeek ? `${reevaluation.daysPerWeek}d/wk` : '',
+              constraints: reevaluation.workoutDays?.length ? `${reevaluation.workoutDays.length}d/wk` : '',
               plan,
               createdAt: Date.now(),
               parentPlanId: reevaluation.originalPlanId,
-              unavailableDays: JSON.stringify(reevaluation.unavailableDays ?? []),
+              workoutDays: JSON.stringify(reevaluation.workoutDays ?? []),
             }),
           )
           navigate('/results', { state: { plan, planId, reevalData: reevaluation, reevalAnalysis }, replace: true })
@@ -99,11 +99,11 @@ export default function Generating() {
               fitnessLevel: payload.fitnessLevel,
               goals: JSON.stringify(payload.goals),
               equipment: JSON.stringify(payload.equipment),
-              constraints: `${payload.injuries || 'None'} | ${payload.daysPerWeek}d/wk | ${payload.sessionDuration}min`,
+              constraints: `${payload.injuries || 'None'} | ${payload.workoutDays.length}d/wk | ${payload.sessionDuration}min`,
               plan,
               createdAt: Date.now(),
               parentPlanId: '',
-              unavailableDays: JSON.stringify(payload.unavailableDays ?? []),
+              workoutDays: JSON.stringify(payload.workoutDays),
               otherSports: payload.otherSports ? JSON.stringify(payload.otherSports) : undefined,
             }),
           )
