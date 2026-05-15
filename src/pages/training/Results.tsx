@@ -7,6 +7,8 @@ import {
 } from 'react-icons/hi'
 import {
   parseAnalysisSections,
+  parseWeeklySchedule,
+  DAY_NAMES,
   SECTION_ICONS,
 } from '@/components/PlanView'
 import { sanitizePlan } from '@/lib/planComponents'
@@ -498,35 +500,6 @@ function AnalysisSectionSlide({
 // ── Training Week Slide ───────────────────────────────────────────────────────
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-const DAY_FULL_RESULTS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-function parseTrainingDaysFromPlan(plan: string): Set<number> {
-  const result = new Set<number>()
-
-  // Primary: parse the "## Weekly Schedule" section which has **DayName:** activity
-  const scheduleSection = plan.match(/## Weekly Schedule([\s\S]*?)(?=\n## |$)/i)?.[1] ?? ''
-  if (scheduleSection) {
-    DAY_FULL_RESULTS.forEach((day, i) => {
-      const m = scheduleSection.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n]+)`, 'i'))
-      if (!m) return
-      const activity = m[1].replace(/·.*$/, '').trim()
-      if (!/\brest\b/i.test(activity)) result.add(i)
-    })
-    if (result.size > 0) return result
-  }
-
-  // Fallback: scan ### Day N: DayName lines (Day-by-Day section)
-  for (const line of plan.split('\n')) {
-    const trimmed = line.trimStart()
-    if (!/^#{2,3}\s/.test(trimmed)) continue
-    const dayIdx = DAY_FULL_RESULTS.findIndex(d => new RegExp(`\\b${d}\\b`, 'i').test(trimmed))
-    if (dayIdx === -1) continue
-    if (/\brest\b/i.test(trimmed)) continue
-    result.add(dayIdx)
-  }
-
-  return result
-}
 
 function TrainingWeekSlide({ formData, plan }: { formData: WorkoutFormData; plan?: string }) {
   const days = parseInt(formData.daysPerWeek, 10)
@@ -537,12 +510,17 @@ function TrainingWeekSlide({ formData, plan }: { formData: WorkoutFormData; plan
 
   const trainingIndices = useMemo<Set<number>>(() => {
     if (plan) {
-      const parsed = parseTrainingDaysFromPlan(plan)
-      if (parsed.size > 0) return parsed
+      const schedule = parseWeeklySchedule(sanitizePlan(plan))
+      const result = new Set<number>()
+      DAY_NAMES.forEach((day, i) => {
+        const label = schedule[day] ?? ''
+        if (label && !/rest/i.test(label)) result.add(i)
+      })
+      if (result.size > 0) return result
     }
     // Fallback: pick first N non-unavailable days
     const unavail = new Set(
-      (formData.unavailableDays ?? []).map(d => DAY_FULL_RESULTS.indexOf(d)).filter(i => i >= 0)
+      (formData.unavailableDays ?? []).map(d => DAY_NAMES.indexOf(d)).filter(i => i >= 0)
     )
     const fallback = new Set<number>()
     for (let i = 0; i < 7 && fallback.size < days; i++) {

@@ -610,17 +610,17 @@ export default function Questionnaire() {
 
           {/* ── Step 2: Greeting (auto-advances) ──────────────────────────── */}
           {step === 2 && (
-            <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-10 space-y-8">
+            <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-8 space-y-6">
               <motion.div
                 initial={{ scale: 0.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.05 }}
-                className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl"
+                className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
                 style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.35)', boxShadow: '0 0 40px rgba(168,85,247,0.2)' }}
               >
                 🏆
               </motion.div>
-              <div className="space-y-3 max-w-xs">
+              <div className="space-y-2.5 max-w-xs">
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
                   className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A855F7' }}
@@ -629,13 +629,13 @@ export default function Questionnaire() {
                 </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                  className="text-4xl font-black text-white tracking-tight leading-tight"
+                  className="text-2xl font-black text-white tracking-tight leading-tight"
                 >
                   Hey, {form.name.trim().split(' ')[0]}!
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
-                  className="text-white/50 text-base leading-relaxed"
+                  className="text-white/50 text-sm leading-relaxed"
                 >
                   Your plan is going to be built around you. A few quick questions and we&apos;ll have it ready.
                 </motion.p>
@@ -676,6 +676,7 @@ export default function Questionnaire() {
                       onKeyDown={(e) => { if (e.key === 'Enter' && form.name.trim().length >= 2) handleNext() }}
                     />
                   </motion.div>
+
                 </div>
               )}
 
