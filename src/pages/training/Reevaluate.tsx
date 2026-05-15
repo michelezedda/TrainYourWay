@@ -184,6 +184,7 @@ export default function ReevaluateQuestionnaire() {
       exercisesToRemove: form.exercisesToRemove,
       newInjuries: form.newInjuries,
       newGoals: form.newGoals,
+      unit: form.unit,
     }
     navigate('/generating', { state: { reevaluation } })
   }

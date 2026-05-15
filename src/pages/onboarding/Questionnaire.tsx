@@ -486,6 +486,7 @@ export default function Questionnaire() {
       allergies: form.foodAllergies,
       customRestrictions: form.customRestrictions,
       mealsPerDay: '3',
+      unit: form.unit,
     }
 
     if (!user) {

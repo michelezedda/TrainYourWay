@@ -6,6 +6,8 @@ import type { Components } from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { sanitizePlan, transformExercises, WorkoutProgressContext } from '@/lib/planComponents'
+import { useLocale } from '@/context/LocaleContext'
+import { convertPlanUnits } from '@/lib/units'
 
 // ── Day constants ─────────────────────────────────────────────────────────────
 
@@ -342,7 +344,8 @@ export function WorkoutDayView({
   weekWorkouts?: number
   weeklyTarget?: number
 }) {
-  const sanitized   = useMemo(() => sanitizePlan(plan), [plan])
+  const { unit } = useLocale()
+  const sanitized   = useMemo(() => convertPlanUnits(sanitizePlan(plan), unit), [plan, unit])
   const schedule    = useMemo(() => parseWeeklySchedule(sanitized), [sanitized])
   const dayChunks   = useMemo(() => parseDayChunks(sanitized), [sanitized])
   const overview    = useMemo(() => parseSectionContent(sanitized, 'Overview'), [sanitized])
@@ -395,8 +398,8 @@ export function WorkoutDayView({
     ?? rawChunk.replace(/^### Day \d+:[^\n]*\n?/, '').trim()
 
   const parsedDay = useMemo(
-    () => transformExercises(sanitizePlan(dayBody)),
-    [dayBody],
+    () => transformExercises(sanitizePlan(convertPlanUnits(dayBody, unit))),
+    [dayBody, unit],
   )
 
   // Extract exercise keys from raw day body for completion tracking
