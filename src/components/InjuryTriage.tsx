@@ -73,7 +73,7 @@ export default function InjuryTriage({ onClose, onActivate }: Props) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-        className="w-full md:max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden"
+        className="w-full md:max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden pb-14"
         style={{
           background: 'linear-gradient(160deg, rgba(10,5,30,0.98) 0%, rgba(5,5,18,0.99) 100%)',
           border: '1px solid rgba(245,158,11,0.2)',
