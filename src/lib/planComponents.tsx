@@ -7,9 +7,12 @@ import { useLocale } from '@/context/LocaleContext'
 // ── Workout progress context ──────────────────────────────────────────────────
 // Allows ExerciseTableCard to report completion up to WorkoutDayView without
 // prop-drilling through the react-markdown component tree.
+// getInitialDone lets remounted cards hydrate from parent state without
+// accidentally overwriting it on mount.
 
 export const WorkoutProgressContext = createContext<{
   onExerciseDone?: (key: string, done: boolean) => void
+  getInitialDone?: (key: string) => boolean
 }>({})
 
 // ── Plan text utilities ───────────────────────────────────────────────────────
@@ -218,7 +221,7 @@ interface ExerciseTableCardProps {
 function ExerciseTableCard({
   name, meta, tip, exerciseKey, weight, onWeightChange, onGuideClick,
 }: ExerciseTableCardProps) {
-  const { onExerciseDone } = useContext(WorkoutProgressContext)
+  const { onExerciseDone, getInitialDone } = useContext(WorkoutProgressContext)
   const { unit } = useLocale()
 
   const [localWeight, setLocalWeight] = useState(weight)
@@ -244,8 +247,13 @@ function ExerciseTableCard({
     ? parseSetsInfo(metaParts['sets'])
     : { count: 0, reps: '' }
 
-  const [setsDone, setSetsDone] = useState<boolean[]>(() => Array(Math.max(setsCount, 0)).fill(false))
-  const [manualDone, setManualDone] = useState(false)
+  // Hydrate from parent's per-day doneMap so switching days and returning
+  // restores exercise completion without leaking state across days.
+  const [setsDone, setSetsDone] = useState<boolean[]>(() => {
+    const init = getInitialDone?.(exerciseKey) ?? false
+    return Array(Math.max(setsCount, 0)).fill(init)
+  })
+  const [manualDone, setManualDone] = useState(() => getInitialDone?.(exerciseKey) ?? false)
 
   const allSetsDone = setsCount > 0 && setsDone.every(Boolean)
   const isDone = manualDone || allSetsDone
@@ -253,8 +261,12 @@ function ExerciseTableCard({
 
   const tipText = tip.replace(/^Form tip:\s*/i, '').trim()
 
-  // Report done state via context whenever it changes
+  // Skip the initial mount report: the card either starts fresh (no prior state)
+  // or was hydrated FROM the parent's doneMap, so reporting on mount would be
+  // a no-op at best and could overwrite valid parent state at worst.
+  const isMountedRef = useRef(false)
   useEffect(() => {
+    if (!isMountedRef.current) { isMountedRef.current = true; return }
     onExerciseDone?.(exerciseKey, isDone)
   }, [isDone, exerciseKey, onExerciseDone])
 
@@ -611,6 +623,7 @@ export function buildPlanComponents(
 
         return (
           <ExerciseTableCard
+            key={exerciseKey}
             name={name}
             meta={meta}
             tip={tip}

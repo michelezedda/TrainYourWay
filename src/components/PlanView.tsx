@@ -353,10 +353,16 @@ export function WorkoutDayView({
   // Workout completion tracking — doneMap keyed as "DayName:exerciseKey" to prevent
   // cross-day contamination when exercises share the same name across days.
   const [doneMap, setDoneMap]               = useState<Record<string, boolean>>({})
+  // Ref mirrors doneMap so stable callbacks can read the latest value without deps.
+  const doneMapRef = useRef(doneMap)
+  doneMapRef.current = doneMap
   const [showCelebration, setShowCelebration] = useState(false)
+  // Incremented whenever a day's content is replaced (override generated), forcing
+  // the content subtree to remount so exercise cards start with fresh local state.
+  const [contentKey, setContentKey] = useState(0)
   const completionFiredRef   = useRef<Record<string, boolean>>({})
   const dayBodySnapshotRef   = useRef<Record<string, string>>({})
-  // Updated each render so handleExerciseDone can stay stable (empty useCallback deps).
+  // Updated each render so stable callbacks can read the current day name.
   const currentDayNameRef    = useRef('')
 
   const handleExerciseDone = useCallback((key: string, done: boolean) => {
@@ -366,6 +372,19 @@ export function WorkoutDayView({
       return { ...prev, [fullKey]: done }
     })
   }, [])
+
+  // Stable getter used by ExerciseTableCard to hydrate its initial state from
+  // the parent's doneMap when it mounts (after a day switch or content reset).
+  const getInitialDone = useCallback((key: string) => {
+    return doneMapRef.current[`${currentDayNameRef.current}:${key}`] === true
+  }, [])
+
+  // Memoized context value: both callbacks are stable so this never changes,
+  // preventing ExerciseTableCard instances from re-rendering on doneMap updates.
+  const contextValue = useMemo(() => ({
+    onExerciseDone: handleExerciseDone,
+    getInitialDone,
+  }), [handleExerciseDone, getInitialDone])
 
   useEffect(() => {
     setSelectedDay(getDefaultDayIdx(schedule))
@@ -419,8 +438,9 @@ export function WorkoutDayView({
     }
   }, [allDone, currentDayName, exerciseKeys.length, setsCount, onWorkoutComplete])
 
-  // When a day's body content changes (override generated), reset only that day's state.
-  // On a plain day-switch, snapshot shows the same body, so doneMap is preserved.
+  // When a day's body content changes (override generated), reset only that day's state
+  // and bump contentKey to force the exercise subtree to remount with fresh local state.
+  // On a plain day-switch, snapshot shows the same body so nothing is cleared.
   useEffect(() => {
     const prev = dayBodySnapshotRef.current[currentDayName]
     dayBodySnapshotRef.current[currentDayName] = dayBody
@@ -430,6 +450,7 @@ export function WorkoutDayView({
         Object.fromEntries(Object.entries(cur).filter(([k]) => !k.startsWith(prefix)))
       )
       delete completionFiredRef.current[currentDayName]
+      setContentKey(k => k + 1)
     }
     setShowCelebration(false)
   }, [dayBody, currentDayName])
@@ -471,7 +492,7 @@ export function WorkoutDayView({
   // Fallback: no ### Day N: structure
   if (dayChunks.length === 0) {
     return (
-      <WorkoutProgressContext.Provider value={{ onExerciseDone: handleExerciseDone }}>
+      <WorkoutProgressContext.Provider value={contextValue}>
         <GlassCard padding={false} className="overflow-hidden">
           <div className="p-6 sm:p-8 prose prose-invert max-w-none">
             <ReactMarkdown components={planComponents}>
@@ -484,7 +505,7 @@ export function WorkoutDayView({
   }
 
   return (
-    <WorkoutProgressContext.Provider value={{ onExerciseDone: handleExerciseDone }}>
+    <WorkoutProgressContext.Provider value={contextValue}>
       <div>
         {/* ── Day selector: mobile (horizontal scroll, unchanged) ── */}
         <div className="flex md:hidden gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
@@ -741,7 +762,7 @@ export function WorkoutDayView({
                 </p>
               </div>
             ) : dayBody ? (
-              <div className="prose prose-invert max-w-none">
+              <div key={`${currentDayName}:${contentKey}`} className="prose prose-invert max-w-none">
                 <ReactMarkdown components={planComponents}>{parsedDay}</ReactMarkdown>
               </div>
             ) : (
