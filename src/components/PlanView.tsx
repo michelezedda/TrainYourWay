@@ -7,7 +7,7 @@ import GlassCard from '@/components/GlassCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { sanitizePlan, transformExercises, WorkoutProgressContext } from '@/lib/planComponents'
 import { useLocale } from '@/context/LocaleContext'
-import { convertPlanUnits } from '@/lib/units'
+import { convertPlanUnits, getUnit } from '@/lib/units'
 
 // ── Day constants ─────────────────────────────────────────────────────────────
 
@@ -91,28 +91,63 @@ export function getWeeklyWorkoutDays(planText: string): number {
 
 // ── localStorage persistence helpers ─────────────────────────────────────────
 
-function getStoredWeekDoneMap(): Record<string, boolean> {
-  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+// Compute the Monday (or Sunday) that starts the current week.
+// Reads the unit preference directly from localStorage so this can be called
+// outside React (in useState lazy initializers and useRef initializers) without
+// needing the LocaleContext to be mounted first.
+function computeWeekKey(): string {
+  const weekStart = getUnit() === 'imperial' ? 0 : 1
+  const d = new Date()
+  const diff = (d.getDay() - weekStart + 7) % 7
+  d.setDate(d.getDate() - diff)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Read helpers — always use the computed current-week key so initialization
+// is correct even when tyw-workout-week hasn't been written yet (first visit)
+// or still holds the previous week's key (week-boundary transition).
+function readDoneMap(): Record<string, boolean> {
   try {
-    const stored = localStorage.getItem(`tyw-done-map-${wk}`)
-    return stored ? JSON.parse(stored) as Record<string, boolean> : {}
+    const raw = localStorage.getItem(`tyw-done-map-${computeWeekKey()}`)
+    return raw ? JSON.parse(raw) as Record<string, boolean> : {}
   } catch { return {} }
 }
 
-function getStoredFiredRef(): Record<string, boolean> {
-  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+function readSetsMap(): Record<string, boolean[]> {
   try {
-    const stored = localStorage.getItem(`tyw-fired-${wk}`)
-    return stored ? JSON.parse(stored) as Record<string, boolean> : {}
+    const raw = localStorage.getItem(`tyw-sets-map-${computeWeekKey()}`)
+    return raw ? JSON.parse(raw) as Record<string, boolean[]> : {}
   } catch { return {} }
 }
 
-function getStoredSetsMap(): Record<string, boolean[]> {
-  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+function readFiredMap(): Record<string, boolean> {
   try {
-    const stored = localStorage.getItem(`tyw-sets-map-${wk}`)
-    return stored ? JSON.parse(stored) as Record<string, boolean[]> : {}
+    const raw = localStorage.getItem(`tyw-fired-${computeWeekKey()}`)
+    return raw ? JSON.parse(raw) as Record<string, boolean> : {}
   } catch { return {} }
+}
+
+// Write helpers — symmetric to the read helpers above.
+function writeDoneMap(map: Record<string, boolean>): void {
+  try { localStorage.setItem(`tyw-done-map-${computeWeekKey()}`, JSON.stringify(map)) } catch {}
+}
+
+function writeSetsMap(map: Record<string, boolean[]>): void {
+  try { localStorage.setItem(`tyw-sets-map-${computeWeekKey()}`, JSON.stringify(map)) } catch {}
+}
+
+function writeFiredMap(map: Record<string, boolean>): void {
+  try { localStorage.setItem(`tyw-fired-${computeWeekKey()}`, JSON.stringify(map)) } catch {}
+}
+
+// Wipe all three current-week keys atomically (used when the plan changes).
+function clearWeekPersistence(): void {
+  const wk = computeWeekKey()
+  try {
+    localStorage.removeItem(`tyw-done-map-${wk}`)
+    localStorage.removeItem(`tyw-sets-map-${wk}`)
+    localStorage.removeItem(`tyw-fired-${wk}`)
+  } catch {}
 }
 
 // Extract exercise keys from raw day body (before transformExercises).
@@ -381,7 +416,7 @@ export function WorkoutDayView({
   weekWorkouts?: number
   weeklyTarget?: number
 }) {
-  const { unit, weekStart } = useLocale()
+  const { unit } = useLocale()
   const sanitized   = useMemo(() => convertPlanUnits(sanitizePlan(plan), unit), [plan, unit])
   const schedule    = useMemo(() => parseWeeklySchedule(sanitized), [sanitized])
   const dayChunks   = useMemo(() => parseDayChunks(sanitized), [sanitized])
@@ -395,15 +430,16 @@ export function WorkoutDayView({
 
   // Workout completion tracking — doneMap keyed as "DayName:exerciseKey" to prevent
   // cross-day contamination when exercises share the same name across days.
-  // Initialized from localStorage so state survives page navigation within the same week.
-  const [doneMap, setDoneMap]               = useState<Record<string, boolean>>(getStoredWeekDoneMap)
+  // readDoneMap() computes the current week key directly so hydration is always
+  // correct regardless of whether tyw-workout-week has been written yet.
+  const [doneMap, setDoneMap]               = useState<Record<string, boolean>>(readDoneMap)
   // Ref mirrors doneMap so stable callbacks can read the latest value without deps.
   const doneMapRef = useRef(doneMap)
   doneMapRef.current = doneMap
 
   // Per-exercise per-set completion: "DayName:exerciseKey" → boolean[]
   // Persists individual set states so partial progress survives page navigation.
-  const [setsMap, setSetsMap] = useState<Record<string, boolean[]>>(getStoredSetsMap)
+  const [setsMap, setSetsMap] = useState<Record<string, boolean[]>>(readSetsMap)
   const setsMapRef = useRef(setsMap)
   setsMapRef.current = setsMap
   const [showCelebration, setShowCelebration] = useState(false)
@@ -414,12 +450,15 @@ export function WorkoutDayView({
   // the content subtree to remount so exercise cards start with fresh local state.
   const [contentKey, setContentKey] = useState(0)
   // Restored from localStorage so celebration doesn't re-fire after a reload.
-  const completionFiredRef   = useRef<Record<string, boolean>>(getStoredFiredRef())
+  const completionFiredRef   = useRef<Record<string, boolean>>(readFiredMap())
   const dayBodySnapshotRef   = useRef<Record<string, string>>({})
   // Updated each render so stable callbacks can read the current day name.
   const currentDayNameRef    = useRef('')
-  // Skip the first run of the [plan] effect so it doesn't clear restored state on mount.
-  const planMountedRef       = useRef(false)
+  // Stores the previous plan text so the [plan] effect can detect real changes.
+  // Using a value ref instead of a boolean mount-guard means StrictMode's
+  // double-effect invocation is safe: the second run sees the same plan string
+  // (ref was set in the first run) and correctly skips the reset.
+  const prevPlanRef          = useRef<string | null>(null)
 
   const handleExerciseDone = useCallback((key: string, done: boolean) => {
     const fullKey = `${currentDayNameRef.current}:${key}`
@@ -502,12 +541,13 @@ export function WorkoutDayView({
   const allDone  = exerciseKeys.length > 0 && exerciseKeys.every(k => doneMap[`${currentDayName}:${k}`] === true)
   const doneCount = Object.entries(doneMap).filter(([k, v]) => k.startsWith(`${currentDayName}:`) && v).length
 
-  // Fire celebration exactly once per day per plan session.
+  // Fire celebration exactly once per day per week.
+  // completionFiredRef is restored from localStorage so the modal never re-fires
+  // after a page refresh or navigation.
   useEffect(() => {
     if (allDone && !completionFiredRef.current[currentDayName]) {
       completionFiredRef.current[currentDayName] = true
-      const wk = localStorage.getItem('tyw-workout-week')
-      if (wk) localStorage.setItem(`tyw-fired-${wk}`, JSON.stringify(completionFiredRef.current))
+      writeFiredMap(completionFiredRef.current)
       // +1 optimistically: the DB write hasn't resolved yet when the modal opens.
       setCelebrationWeekWorkouts((weekWorkouts ?? 0) + 1)
       setShowCelebration(true)
@@ -535,59 +575,47 @@ export function WorkoutDayView({
     setShowCelebration(false)
   }, [dayBody, currentDayName])
 
-  // Hard-reset everything when the plan text itself is replaced (skip initial mount
-  // so we don't clobber the state restored from localStorage above).
+  // Hard-reset when the plan text is replaced (user evolved / imported a new plan).
+  // prevPlanRef holds the plan value from the previous effect run. On the very
+  // first run (null) we just store the value. On StrictMode's second invocation
+  // the ref already holds the same plan string, so we skip — no false clear.
   useEffect(() => {
-    if (!planMountedRef.current) { planMountedRef.current = true; return }
+    const prev = prevPlanRef.current
+    prevPlanRef.current = plan
+    if (prev === null || prev === plan) return
     setDoneMap({})
     setSetsMap({})
     setShowCelebration(false)
     completionFiredRef.current = {}
     dayBodySnapshotRef.current = {}
-    const wk = localStorage.getItem('tyw-workout-week')
-    if (wk) {
-      localStorage.removeItem(`tyw-done-map-${wk}`)
-      localStorage.removeItem(`tyw-fired-${wk}`)
-      localStorage.removeItem(`tyw-sets-map-${wk}`)
-    }
+    clearWeekPersistence()
   }, [plan])
 
-  // Weekly reset: clear completion marks + localStorage when a new week starts.
-  // Same-week case: getStoredWeekDoneMap/getStoredFiredRef already restored state.
+  // Weekly reset: evict previous-week localStorage keys when the week rolls over.
+  // State is already correctly initialized — readDoneMap/readSetsMap/readFiredMap
+  // compute the current week key independently, so they return {} for any new week
+  // before any data has been written. No setDoneMap({}) call needed here.
   useEffect(() => {
-    const d = new Date()
-    const diff = (d.getDay() - weekStart + 7) % 7
-    d.setDate(d.getDate() - diff)
-    const wk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const storedWk = localStorage.getItem('tyw-workout-week')
-    if (storedWk !== wk) {
+    const currentWk = computeWeekKey()
+    const storedWk  = localStorage.getItem('tyw-workout-week')
+    if (storedWk !== currentWk) {
       if (storedWk) {
         localStorage.removeItem(`tyw-done-map-${storedWk}`)
-        localStorage.removeItem(`tyw-fired-${storedWk}`)
         localStorage.removeItem(`tyw-sets-map-${storedWk}`)
+        localStorage.removeItem(`tyw-fired-${storedWk}`)
       }
-      localStorage.setItem('tyw-workout-week', wk)
-      setDoneMap({})
-      setSetsMap({})
-      completionFiredRef.current = {}
-      dayBodySnapshotRef.current = {}
+      localStorage.setItem('tyw-workout-week', currentWk)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // mount-only: next load after week boundary picks up fresh wk value
+  }, []) // mount-only: fired once; next load after week boundary uses fresh key
 
   // Persist exercise completion state across page navigation (same week).
-  useEffect(() => {
-    const wk = localStorage.getItem('tyw-workout-week')
-    if (!wk) return
-    localStorage.setItem(`tyw-done-map-${wk}`, JSON.stringify(doneMap))
-  }, [doneMap])
+  // writeDoneMap computes the week key directly so the write is never blocked by
+  // tyw-workout-week being unset (first visit) or stale (week-boundary transition).
+  useEffect(() => { writeDoneMap(doneMap) }, [doneMap])
 
   // Persist individual set states across page navigation (same week).
-  useEffect(() => {
-    const wk = localStorage.getItem('tyw-workout-week')
-    if (!wk) return
-    localStorage.setItem(`tyw-sets-map-${wk}`, JSON.stringify(setsMap))
-  }, [setsMap])
+  useEffect(() => { writeSetsMap(setsMap) }, [setsMap])
 
   const handleGenerateWorkout = async () => {
     if (!onGenerateDayWorkout) return
