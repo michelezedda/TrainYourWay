@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { PiForkKnifeDuotone, PiUserGearLight, PiBrainLight, PiBarcodeLight, PiUsersThreeLight, PiBookOpenLight } from 'react-icons/pi'
-import { IoChatbubblesOutline } from 'react-icons/io5'
 import { GrHomeOption } from 'react-icons/gr'
 import { db } from '@/lib/db'
 
@@ -24,10 +23,6 @@ function ForkIcon({ active }: { active: boolean }) {
 
 function HomeIcon({ active }: { active: boolean }) {
   return <GrHomeOption className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.2 : 1.8 }} />
-}
-
-function ChatIcon({ active }: { active: boolean }) {
-  return <IoChatbubblesOutline className="w-[22px] h-[22px]" style={{ strokeWidth: active ? 2.1 : 1.7 }} />
 }
 
 function PersonIcon({ active }: { active: boolean }) {
@@ -65,7 +60,6 @@ const ALL_NAV = [
   { to: '/workout', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
-  { to: '/chat', label: 'Kai', Icon: ChatIcon },
   { to: '/me', label: 'Settings', Icon: PersonIcon },
   { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
   { to: '/community', label: 'Community', Icon: CommunityIcon },

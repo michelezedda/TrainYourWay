@@ -2,19 +2,16 @@ import { useState, useRef } from 'react'
 import { HiChevronDown, HiChevronLeft, HiChevronRight, HiRefresh, HiCheck, HiPhotograph, HiInformationCircle, HiPaperAirplane } from 'react-icons/hi'
 import { id } from '@instantdb/react'
 import emailjs from '@emailjs/browser'
-import ReactMarkdown from 'react-markdown'
-import type { Components } from 'react-markdown'
 import GlassCard from '@/components/GlassCard'
-import { draftSupportTicket } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { useLocale } from '@/context/LocaleContext'
 
-type Step = 'category' | 'details' | 'drafting' | 'review' | 'sending' | 'done' | 'error'
+type Step = 'category' | 'details' | 'sending' | 'done' | 'error'
 type View = 'new' | 'tickets'
 
 const CATEGORIES = [
-  { label: 'AI / Kai issue', icon: '🤖', desc: 'Kai gave wrong, weird, or off-topic advice' },
+  { label: 'Coaching tips', icon: '💡', desc: 'A tip or suggestion seemed wrong or unhelpful' },
   { label: 'Plan generation', icon: '📋', desc: 'Plan failed to generate or looks incorrect' },
   { label: 'Diet tracker', icon: '🍎', desc: 'Food logging, macros, or nutrition data issue' },
   { label: 'App bug', icon: '🐛', desc: 'Something is broken or not working as expected' },
@@ -44,23 +41,6 @@ async function compressImage(dataUrl: string, maxWidth = 700, quality = 0.72): P
   })
 }
 
-const mdComponents: Components = {
-  h2: ({ children }) => (
-    <h2 className="text-sm font-bold text-white mt-5 mb-2 flex items-center gap-2 first:mt-0">
-      <span className="w-1 h-3.5 rounded-full flex-shrink-0" style={{ background: 'linear-gradient(180deg,#A855F7,#22D3EE)' }} />
-      {children}
-    </h2>
-  ),
-  p: ({ children }) => <p className="text-white/65 text-sm leading-relaxed mb-2">{children}</p>,
-  ul: ({ children }) => <ul className="space-y-1.5 mb-3">{children}</ul>,
-  li: ({ children }) => (
-    <li className="flex gap-2 text-white/65 text-sm">
-      <span className="text-purple-400/70 flex-shrink-0 mt-0.5 text-xs">-</span>
-      <span>{children}</span>
-    </li>
-  ),
-  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
-}
 
 // ── Ticket list view ──────────────────────────────────────────────────────────
 
@@ -126,7 +106,7 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
           className="text-xs text-white/35 hover:text-white/60 transition-colors flex items-center gap-1"
         >
           <HiChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          {expanded ? 'Hide' : 'View'} Kai summary
+          {expanded ? 'Hide' : 'View'} description
         </button>
 
         <button
@@ -152,11 +132,7 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-white/6 pt-4">
-          <div className="flex items-center gap-2 mb-3">
-            <img src="/kai-avatar.svg" alt="Kai" className="w-5 h-5 rounded-full" />
-            <span className="text-white/40 text-xs">Kai's summary</span>
-          </div>
-          <ReactMarkdown components={mdComponents}>{ticket.draft}</ReactMarkdown>
+          <p className="text-white/50 text-sm leading-relaxed">{ticket.description || ticket.draft}</p>
         </div>
       )}
     </GlassCard>
@@ -184,11 +160,10 @@ export default function Support() {
   const [description, setDescription] = useState('')
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [draft, setDraft] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const isLoading = step === 'drafting' || step === 'sending'
+  const isLoading = step === 'sending'
 
   const resetForm = () => {
     setStep('category')
@@ -196,7 +171,6 @@ export default function Support() {
     setDescription('')
     setImageDataUrl(null)
     setImagePreview(null)
-    setDraft('')
     setErrorMsg('')
   }
 
@@ -214,25 +188,12 @@ export default function Support() {
     e.target.value = ''
   }
 
-  const handleDraftTicket = async () => {
-    setStep('drafting')
-    try {
-      const result = await draftSupportTicket(category, description, imageDataUrl ?? undefined)
-      setDraft(result)
-      setStep('review')
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to draft ticket')
-      setStep('error')
-    }
-  }
-
   const buildEmailBody = () =>
     `UPLYFT SUPPORT TICKET\n` +
     `=====================\n` +
     `Category: ${category}\n` +
     `User ID: ${userId}\n\n` +
-    `USER DESCRIPTION:\n${description}\n\n` +
-    `KAI SUMMARY:\n${draft.replace(/#{1,6} /g, '').replace(/\*\*/g, '')}\n\n` +
+    `DESCRIPTION:\n${description}\n\n` +
     `Screenshot: ${imageDataUrl ? 'Attached' : 'None'}`
 
   const handleSend = async () => {
@@ -242,7 +203,6 @@ export default function Support() {
         await emailjs.send(EMAILJS_SERVICE!, EMAILJS_TEMPLATE!, {
           category,
           description,
-          kai_summary: draft,
           user_id: userId,
           has_screenshot: imageDataUrl ? 'Yes' : 'No',
           screenshot_url: imageDataUrl ?? '',
@@ -259,7 +219,6 @@ export default function Support() {
           userId,
           category,
           description,
-          draft,
           hasScreenshot: !!imageDataUrl,
           status: 'open',
           createdAt: Date.now(),
@@ -282,7 +241,7 @@ export default function Support() {
     <div className="flex items-center justify-between mb-8">
       <div>
         <h1 className="text-3xl font-black tracking-tight gradient-text">Support</h1>
-        <p className="text-white/40 text-sm mt-1">Kai helps write a clear ticket for the support team</p>
+        <p className="text-white/40 text-sm mt-1">Submit a ticket and we'll get back to you quickly</p>
       </div>
 
       {showTabs && (
@@ -316,26 +275,6 @@ export default function Support() {
   )
 
   // ── Loading screens ───────────────────────────────────────────────────────
-
-  if (step === 'drafting') {
-    return (
-      <main className="min-h-[70vh] flex items-center justify-center px-4 animate-fade-in">
-        <div className="text-center">
-          <div className="relative w-24 h-24 mx-auto mb-8">
-            <div className="absolute inset-0 rounded-full animate-spin-slow"
-              style={{ background: 'conic-gradient(from 0deg, #A855F7 0%, #22D3EE 45%, transparent 65%, #A855F7 100%)', padding: '3px' }}>
-              <div className="w-full h-full rounded-full" style={{ background: '#050510' }} />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center text-2xl">🤖</div>
-          </div>
-          <h2 className="text-2xl font-black text-white mb-3 tracking-tight">
-            Kai is reviewing your issue<span className="animate-pulse">...</span>
-          </h2>
-          <p className="text-white/50">Writing a clear summary for the support team</p>
-        </div>
-      </main>
-    )
-  }
 
   if (step === 'sending') {
     return (
@@ -440,80 +379,6 @@ export default function Support() {
     )
   }
 
-  // ── Review step ───────────────────────────────────────────────────────────
-
-  if (step === 'review') {
-    return (
-      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
-        <PageHeader />
-
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setStep('details')} className="text-white/40 hover:text-white transition-colors">
-            <HiChevronLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Review your ticket</h2>
-            <p className="text-white/40 text-xs mt-0.5">Kai drafted this based on your description</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-xl">{CATEGORIES.find(c => c.label === category)?.icon}</span>
-          <span className="text-sm font-medium text-white/70">{category}</span>
-          {imageDataUrl && (
-            <span className="flex items-center gap-1 text-xs text-purple-300 border border-purple-500/25 bg-purple-500/10 px-2.5 py-1 rounded-full">
-              <HiPhotograph className="w-3 h-3" />
-              Screenshot attached
-            </span>
-          )}
-        </div>
-
-        <GlassCard className="mb-4">
-          <div className="flex items-center gap-2 mb-4">
-            <img src="/kai-avatar.svg" alt="Kai" className="w-7 h-7 rounded-full" />
-            <span className="text-white/60 text-xs">Kai drafted this ticket</span>
-          </div>
-          <ReactMarkdown components={mdComponents}>{draft}</ReactMarkdown>
-        </GlassCard>
-
-        <details className="mb-5">
-          <summary className="text-xs text-white/30 cursor-pointer hover:text-white/50 transition-colors select-none mb-2">
-            Show original description
-          </summary>
-          <div className="mt-2 p-3 rounded-xl bg-white/3 border border-white/8 text-white/50 text-sm leading-relaxed">
-            {description}
-          </div>
-        </details>
-
-        {imageDataUrl && imagePreview && (
-          <details className="mb-5">
-            <summary className="text-xs text-white/30 cursor-pointer hover:text-white/50 transition-colors select-none mb-2">
-              Show screenshot
-            </summary>
-            <div className="mt-2">
-              <img src={imagePreview} alt="Screenshot"
-                className="w-full rounded-2xl border border-white/10 max-h-64 object-cover" />
-            </div>
-          </details>
-        )}
-
-        {!emailJsConfigured && (
-          <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-2xl border"
-            style={{ background: 'rgba(251,191,36,0.06)', borderColor: 'rgba(251,191,36,0.2)' }}>
-            <HiInformationCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-amber-300/80 text-xs leading-relaxed">
-              EmailJS is not configured. Clicking "Send" will open your email client with the ticket pre-filled.
-            </p>
-          </div>
-        )}
-
-        <button onClick={() => void handleSend()} className="btn-primary w-full flex items-center justify-center gap-2">
-          <HiPaperAirplane className="w-4 h-4" />
-          {emailJsConfigured ? 'Send ticket' : 'Open email client'}
-        </button>
-      </main>
-    )
-  }
 
   // ── Details step ──────────────────────────────────────────────────────────
 
@@ -578,10 +443,20 @@ export default function Support() {
           )}
         </GlassCard>
 
-        <button onClick={() => void handleDraftTicket()} disabled={!description.trim()}
+        {!emailJsConfigured && (
+          <div className="mb-4 flex items-start gap-3 px-4 py-3.5 rounded-2xl border"
+            style={{ background: 'rgba(251,191,36,0.06)', borderColor: 'rgba(251,191,36,0.2)' }}>
+            <HiInformationCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-amber-300/80 text-xs leading-relaxed">
+              EmailJS is not configured. Clicking "Send" will open your email client with the ticket pre-filled.
+            </p>
+          </div>
+        )}
+
+        <button onClick={() => void handleSend()} disabled={!description.trim()}
           className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-          <img src="/kai-avatar.svg" alt="Kai" className="w-5 h-5 rounded-full" />
-          Let Kai review this
+          <HiPaperAirplane className="w-4 h-4" />
+          {emailJsConfigured ? 'Send ticket' : 'Open email client'}
         </button>
       </main>
     )
@@ -615,7 +490,7 @@ export default function Support() {
 
       <div className="rounded-2xl border border-white/8 px-5 py-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
         <p className="text-white/30 text-xs leading-relaxed">
-          After you describe the issue, Kai will write a structured summary to help the support team
+          Describe your issue clearly and we'll follow up as soon as possible
           understand and resolve it faster. You review it before anything is sent.
         </p>
       </div>

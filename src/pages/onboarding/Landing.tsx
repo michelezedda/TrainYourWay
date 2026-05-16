@@ -12,8 +12,8 @@ const FEATURES = [
     border: 'rgba(168,85,247,0.25)', glow: '0 0 40px rgba(168,85,247,0.22)',
   },
   {
-    icon: '🤖', badge: 'AI-Powered', title: 'KAI Coach',
-    desc: 'Expert-level coaching, answers, and motivation on demand.',
+    icon: '🎯', badge: 'Built-In', title: 'Smart Coaching',
+    desc: 'Form cues, session tips, and coaching insights woven into every workout.',
     color: '#22D3EE', bg: 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(34,211,238,0.04) 100%)',
     border: 'rgba(34,211,238,0.22)', glow: '0 0 40px rgba(34,211,238,0.2)',
   },

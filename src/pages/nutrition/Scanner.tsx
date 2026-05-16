@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { HiCheckCircle, HiQuestionMarkCircle, HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar, HiChevronLeft } from 'react-icons/hi'
+import { HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar, HiChevronLeft } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { id } from '@instantdb/react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
@@ -9,7 +9,6 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { fetchProduct, addToScanHistory, getScanHistory, type OFFProduct, type ScanHistoryEntry } from '@/lib/openFoodFacts'
 import { scoreProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
 import { getNutritionProfile } from '@/lib/nutrition'
-import { sendChatMessage } from '@/lib/gemini'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { generateProductStory, shareOrDownload } from '@/lib/storyCanvas'
@@ -56,7 +55,7 @@ const FEATURE_CARDS = [
   { icon: '🏆', label: 'NutriScore A-E', desc: 'Science-backed grade for every product' },
   { icon: '📊', label: 'Macro Breakdown', desc: 'Calories, protein, carbs, fat per 100g' },
   { icon: '🚨', label: 'Allergen Check', desc: 'Flags your personal restrictions' },
-  { icon: '🤖', label: 'KAI Verdict', desc: 'Coach says if it fits your goals' },
+  { icon: '🎯', label: 'Goal Match', desc: 'See if it fits your nutrition goals' },
 ]
 
 const HOW_STEPS = [
@@ -118,7 +117,7 @@ function IntroScreen({
 
         <div className="relative z-10">
           <span className="inline-block text-xs font-bold uppercase tracking-widest text-purple-400/70 mb-3">
-            Powered by Open Food Facts + KAI
+            Powered by Open Food Facts
           </span>
           <h2 className="text-white font-black text-xl leading-tight mb-2">
             Know exactly what's<br />
@@ -587,116 +586,27 @@ function VerdictChips({ verdicts }: { verdicts: ScoredProduct['verdicts'] }) {
   )
 }
 
-// ── Can I eat this? ───────────────────────────────────────────────────────────
+// ── Goal match (rule-based, zero API calls) ───────────────────────────────────
 
-const CAN_I_EAT_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  'Yes': { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#86efac', dot: '#22c55e' },
-  'Sometimes': { bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.3)', text: '#fde68a', dot: '#eab308' },
-  'Avoid often': { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#fca5a5', dot: '#ef4444' },
+const GRADE_VERDICT: Record<string, { label: string; reason: string; style: { bg: string; border: string; text: string; dot: string } }> = {
+  A: { label: 'Yes', reason: 'Excellent nutritional quality. Great fit for most goals.', style: { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#86efac', dot: '#22c55e' } },
+  B: { label: 'Yes', reason: 'Good quality. Fits well into a balanced diet.', style: { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#86efac', dot: '#22c55e' } },
+  C: { label: 'Sometimes', reason: 'Average quality. Fine occasionally, not as a staple.', style: { bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.3)', text: '#fde68a', dot: '#eab308' } },
+  D: { label: 'Avoid often', reason: 'Poor nutritional profile. Limit intake where possible.', style: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#fca5a5', dot: '#ef4444' } },
+  E: { label: 'Avoid often', reason: 'Very poor quality. Look for a grade A or B alternative.', style: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#fca5a5', dot: '#ef4444' } },
 }
 
-function CanIEatThis({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
-  const [verdict, setVerdict] = useState('')
-  const [reason, setReason] = useState('')
-
-  const ask = async () => {
-    if (status === 'loading') return
-    setStatus('loading')
-    try {
-      const profile = getNutritionProfile()
-      const negatives = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text)
-      const prompt =
-        `You are a strict, direct nutrition coach. Reply in this EXACT format, nothing else:\n` +
-        `[Verdict]: [reason]\n` +
-        `[Verdict] must be one of exactly: Yes / Sometimes / Avoid often\n` +
-        `[reason] is under 8 words. No emojis, no filler, no punctuation at end.\n` +
-        `Be supportive for healthy products, strict for ultra-processed or poor ones.\n\n` +
-        `Product: ${product.product_name || 'Unknown'}\n` +
-        `Grade: ${scored.grade} (${scored.gradeLabel})\n` +
-        `Issues: ${negatives.join(', ') || 'none'}\n` +
-        (profile ? `Goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}.` : '')
-
-      const reply = await sendChatMessage([{ role: 'user', content: prompt }], '')
-      const colonIdx = reply.indexOf(':')
-      if (colonIdx === -1) throw new Error('bad format')
-      setVerdict(reply.slice(0, colonIdx).trim())
-      setReason(reply.slice(colonIdx + 1).trim())
-      setStatus('done')
-    } catch {
-      setStatus('idle')
-    }
-  }
-
-  if (status === 'done') {
-    const s = CAN_I_EAT_STYLES[verdict] ?? CAN_I_EAT_STYLES['Sometimes']
-    return (
-      <div className="rounded-2xl p-4 border animate-fade-in" style={{ background: s.bg, borderColor: s.border }}>
-        <div className="flex items-start gap-3">
-          <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: s.dot }} />
-          <div className="flex-1">
-            <p className="font-black text-base leading-tight" style={{ color: s.text }}>{verdict}</p>
-            <p className="text-white/70 text-sm mt-0.5">{reason}</p>
-          </div>
-          <button onClick={() => { setStatus('idle'); setVerdict(''); setReason('') }}
-            className="text-white/25 text-[10px] mt-0.5 flex-shrink-0">Ask again</button>
+function GoalMatch({ scored }: { scored: ScoredProduct }) {
+  const verdict = GRADE_VERDICT[scored.grade] ?? GRADE_VERDICT['C']
+  const s = verdict.style
+  return (
+    <div className="rounded-2xl p-4 border animate-fade-in" style={{ background: s.bg, borderColor: s.border }}>
+      <div className="flex items-start gap-3">
+        <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: s.dot }} />
+        <div className="flex-1">
+          <p className="font-black text-base leading-tight" style={{ color: s.text }}>{verdict.label}</p>
+          <p className="text-white/70 text-sm mt-0.5">{verdict.reason}</p>
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <button onClick={() => void ask()} disabled={status === 'loading'}
-      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
-      style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.25)', color: '#c084fc', opacity: status === 'loading' ? 0.7 : 1 }}>
-      {status === 'loading' ? (
-        <><LoadingSpinner size="sm" /><span>Asking coach...</span></>
-      ) : (
-        <><HiQuestionMarkCircle className="w-4 h-4" /><span>Can I eat this?</span></>
-      )}
-    </button>
-  )
-}
-
-// ── Alternative suggestion ────────────────────────────────────────────────────
-
-function AlternativeCard({ product, scored }: { product: OFFProduct; scored: ScoredProduct }) {
-  const [alt, setAlt] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const profile = getNutritionProfile()
-    const issues = scored.verdicts.filter(v => v.type !== 'positive').map(v => v.text).join(', ')
-    const prompt =
-      `You are a strict nutrition coach. ` +
-      `Product scanned: "${product.product_name || 'Unknown'}" by "${product.brands || 'Unknown'}". ` +
-      `Grade: ${scored.grade}. Issues: ${issues || 'poor nutritional profile'}. ` +
-      (profile ? `User goals: ${profile.goals.join(', ')}. Diet: ${profile.dietType}. ` : '') +
-      `Name ONE better alternative with a short reason. ` +
-      `Reply format: "Product name - reason." Under 15 words. No emojis, no filler, no marketing language.`
-
-    sendChatMessage([{ role: 'user', content: prompt }], '')
-      .then(reply => setAlt(reply))
-      .catch(() => setAlt(null))
-      .finally(() => setLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <LoadingSpinner size="sm" />
-        <span className="text-white/40 text-xs">Finding a better alternative...</span>
-      </div>
-    )
-  }
-  if (!alt) return null
-  return (
-    <div className="flex items-start gap-3 p-4 rounded-2xl border animate-fade-in"
-      style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.2)' }}>
-      <HiCheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-green-300 text-xs font-semibold mb-0.5">Better alternative</p>
-        <p className="text-white/70 text-sm leading-relaxed">{alt}</p>
       </div>
     </div>
   )
@@ -1060,8 +970,7 @@ export default function Scanner() {
                     <VerdictChips verdicts={scored.verdicts} />
                   </div>
                 )}
-                <CanIEatThis product={product} scored={scored} />
-                {scored.needsAlternative && <AlternativeCard product={product} scored={scored} />}
+                <GoalMatch scored={scored} />
               </>
             )}
 

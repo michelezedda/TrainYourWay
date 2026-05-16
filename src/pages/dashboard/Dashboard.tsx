@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ExerciseModal from '@/components/ExerciseModal'
 import { getWeeklyWorkoutDays, readFiredMap } from '@/components/PlanView'
+import { getDailyInsight } from '@/lib/coaching'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
@@ -592,13 +593,33 @@ export default function Dashboard() {
 
       </div>{/* end mood+hydration grid */}
 
+      {/* Daily coaching insight */}
+      {(() => {
+        const insight = getDailyInsight()
+        return (
+          <div
+            className="flex items-start gap-3 px-4 py-3.5 rounded-2xl mb-4"
+            style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)' }}
+          >
+            <span className="flex-shrink-0 mt-0.5 text-base" style={{ color: 'rgba(192,132,252,0.7)' }}>✦</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
+                {insight.label}
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {insight.tip}
+              </p>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Feature Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
         <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
         <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
         <FeatureCard to="/wellness" emoji="🧠" label="Mindspace" sub="Mental wellness" accent="99,102,241" />
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
-        <FeatureCard to="/chat" emoji="🤖" label="Ask Kai" sub="Your AI coach" accent="52,211,153" />
       </div>
     </main>
   )

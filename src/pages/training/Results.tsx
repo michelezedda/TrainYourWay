@@ -661,7 +661,7 @@ function NutritionPreviewSlide({ goals }: { goals: string[] }) {
             className="font-black text-white tracking-tight leading-tight"
             style={{ fontSize: 'clamp(3rem, 12vw, 5rem)' }}>
             Your fuel<br />
-            <span className="text-white/22" style={{ fontSize: '0.5em' }}>locked in.</span>
+            <span className="text-white/22" style={{ fontSize: 'clamp(3rem, 12vw, 5rem)' }}>locked in.</span>
           </motion.h2>
         </div>
 
@@ -821,7 +821,7 @@ function ReadySlide({ formData }: { formData: WorkoutFormData }) {
           className="grid grid-cols-2 gap-3">
           {[
             { icon: '📋', label: 'Full Workout Plan', desc: 'Your complete program', color: '#A855F7' },
-            { icon: '🤖', label: 'KAI AI Coach', desc: 'Ask anything, anytime', color: '#22D3EE' },
+            { icon: '🎯', label: 'Smart Coaching', desc: 'Tips built into every session', color: '#22D3EE' },
             { icon: '🥗', label: 'Nutrition Tracker', desc: 'Hit your macro targets', color: '#10b981' },
             { icon: '📈', label: 'Progress History', desc: 'Track every milestone', color: '#f59e0b' },
           ].map(({ icon, label, desc, color }) => (
@@ -1326,7 +1326,7 @@ function ReevalReadySlide() {
           className="grid grid-cols-2 gap-3">
           {[
             { icon: '📋', label: 'Evolved Plan', desc: 'Rebuilt from your feedback', color: '#A855F7' },
-            { icon: '🤖', label: 'KAI AI Coach', desc: 'Ask anything, anytime', color: '#22D3EE' },
+            { icon: '🎯', label: 'Smart Coaching', desc: 'Tips built into every session', color: '#22D3EE' },
             { icon: '📈', label: 'Progress History', desc: 'Track every milestone', color: '#f59e0b' },
             { icon: '🔄', label: 'Phase System', desc: 'Evolve again when ready', color: '#10b981' },
           ].map(({ icon, label, desc, color }) => (

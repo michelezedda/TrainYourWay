@@ -8,6 +8,8 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { sanitizePlan, transformExercises, WorkoutProgressContext } from '@/lib/planComponents'
 import { useLocale } from '@/context/LocaleContext'
 import { convertPlanUnits, getUnit } from '@/lib/units'
+import CoachingBanner from '@/components/CoachingBanner'
+import { getSessionTip, getRestDayMessage } from '@/lib/coaching'
 
 // ── Day constants ─────────────────────────────────────────────────────────────
 
@@ -969,15 +971,22 @@ export function WorkoutDayView({
                 </div>
               )
             ) : isRest ? (
-              <div className="py-10 text-center">
+              <div className="py-8 text-center">
                 <div className="text-4xl mb-3">😴</div>
                 <p className="text-white font-medium mb-1">Rest Day</p>
-                <p className="text-white/40 text-sm leading-relaxed">
+                <p className="text-white/40 text-sm leading-relaxed mb-5">
                   Recovery is part of the programme. Prioritise sleep and hydration today.
                 </p>
+                <CoachingBanner tip={getRestDayMessage()} dismissKey={`rest-${currentDayName}`} />
               </div>
             ) : dayBody ? (
               <div key={`${currentDayName}:${contentKey}`} className="prose prose-invert max-w-none">
+                <div className="mb-4 not-prose">
+                  <CoachingBanner
+                    tip={getSessionTip(schedule[currentDayName] ?? '')}
+                    dismissKey={`session-${currentDayName}-${currentDayIdx}`}
+                  />
+                </div>
                 <ReactMarkdown components={planComponents}>{parsedDay}</ReactMarkdown>
               </div>
             ) : (

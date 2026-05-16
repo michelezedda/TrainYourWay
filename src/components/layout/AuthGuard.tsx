@@ -6,7 +6,6 @@ import Results from '@/pages/training/Results'
 import Workout from '@/pages/training/Workout'
 import Generating from '@/pages/onboarding/Generating'
 import Diet from '@/pages/nutrition/Diet'
-import Chat from '@/pages/coach/Chat'
 import Import from '@/pages/training/Import'
 import Support from '@/pages/support/Support'
 import Settings from '@/pages/settings/Settings'
@@ -67,7 +66,6 @@ export default function AuthGuard() {
       <Route path="/results"                element={<Results />} />
       <Route path="/workout"                 element={<Workout />} />
       <Route path="/diet"                   element={<Diet />} />
-      <Route path="/chat"                   element={<Chat />} />
       <Route path="/import"                 element={<Import />} />
       <Route path="/support"                element={<Support />} />
       <Route path="/me"                     element={<Settings />} />
