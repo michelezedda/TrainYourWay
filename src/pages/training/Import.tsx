@@ -55,11 +55,11 @@ const SAVE_PHASES = [
 // ── Analysis section design tokens ────────────────────────────────────────────
 
 const ANALYSIS_THEME: Record<string, { icon: string; tag: string; accent: string }> = {
-  'Plan Assessment':          { icon: '🎯', tag: 'Plan overview',          accent: '#22D3EE' },
-  'Suitability for Your Goals': { icon: '📊', tag: 'Goal alignment',      accent: '#A855F7' },
-  'What Works Well':          { icon: '✅', tag: 'Strengths',              accent: '#10b981' },
-  'What Could Be Better':     { icon: '🔧', tag: 'Optimization areas',    accent: '#f59e0b' },
-  'Verdict':                  { icon: '⚡', tag: 'Coach recommendation',  accent: '#ec4899' },
+  'Plan Assessment': { icon: '🎯', tag: 'Plan overview', accent: '#22D3EE' },
+  'Suitability for Your Goals': { icon: '📊', tag: 'Goal alignment', accent: '#A855F7' },
+  'What Works Well': { icon: '✅', tag: 'Strengths', accent: '#10b981' },
+  'What Could Be Better': { icon: '🔧', tag: 'Optimization areas', accent: '#f59e0b' },
+  'Verdict': { icon: '⚡', tag: 'Coach recommendation', accent: '#ec4899' },
 }
 
 const ANALYSIS_TIPS: Record<string, string> = {
@@ -343,7 +343,7 @@ function ConfirmReplaceModal({ onConfirm, onCancel }: { onConfirm: () => void; o
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-32 sm:pb-0"
       style={{ background: 'rgba(5,5,16,0.88)', backdropFilter: 'blur(16px)' }}
       onClick={onCancel}
     >
@@ -469,7 +469,7 @@ function AnalysisHeroSlide({ sectionCount }: { sectionCount: number }) {
             Your plan<br />is reviewed.
           </h1>
           <p className="text-white/45 text-base leading-relaxed max-w-[260px] mx-auto">
-            Your AI coach analyzed {sectionCount} key areas of your uploaded program.
+            We have analyzed {sectionCount} key areas of your uploaded program.
           </p>
         </motion.div>
 
@@ -481,7 +481,7 @@ function AnalysisHeroSlide({ sectionCount }: { sectionCount: number }) {
         >
           {[
             { label: 'Areas reviewed', value: String(sectionCount) },
-            { label: 'Powered by', value: 'AI coach' },
+            { label: '100%', value: 'Optimized' },
           ].map(({ label, value }, i) => (
             <div key={label} className={`text-center ${i > 0 ? 'border-l border-white/[0.08] pl-4' : ''}`}>
               <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.6rem)' }}>
@@ -498,7 +498,7 @@ function AnalysisHeroSlide({ sectionCount }: { sectionCount: number }) {
 
 function AnalysisInsightSlide({ section }: { section: { title: string; content: string } }) {
   const theme = ANALYSIS_THEME[section.title] ?? { icon: '📋', tag: 'Insight', accent: '#A855F7' }
-  const tip   = ANALYSIS_TIPS[section.title]
+  const tip = ANALYSIS_TIPS[section.title]
   const { accent } = theme
 
   return (
@@ -568,9 +568,9 @@ function ImportAnalysisReveal({
   onImprove: () => void
 }) {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [dir, setDir]           = useState(1)
+  const [dir, setDir] = useState(1)
 
-  const total  = 1 + sections.length
+  const total = 1 + sections.length
   const isLast = slideIdx === total - 1
 
   const go = (next: number) => { setDir(next > slideIdx ? 1 : -1); setSlideIdx(next) }
@@ -672,13 +672,13 @@ function ImprovementHeroSlide({ itemCount }: { itemCount: number }) {
 }
 
 function ImprovementItemSlide({ item, index }: { item: string; index: number }) {
-  const icon   = getImprovementIcon(item)
+  const icon = getImprovementIcon(item)
   const accent = IMPROVEMENT_ACCENTS[index % IMPROVEMENT_ACCENTS.length]
 
   // Split on first capital-letter sentence boundary after a full stop
   const splitIdx = item.search(/(?<=[.!?])\s+[A-Z]/)
   const headline = splitIdx > 0 ? item.slice(0, splitIdx + 1) : item
-  const detail   = splitIdx > 0 ? item.slice(splitIdx + 1) : ''
+  const detail = splitIdx > 0 ? item.slice(splitIdx + 1) : ''
 
   return (
     <SlideWrap>
@@ -735,11 +735,11 @@ function ImprovementItemSlide({ item, index }: { item: string; index: number }) 
 
 function ImprovementReveal({ items, onStart }: { items: string[]; onStart: () => void }) {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [dir, setDir]           = useState(1)
+  const [dir, setDir] = useState(1)
 
   const slideItems = items.length > 0 ? items : ['Your plan has been tailored to your profile and goals.']
-  const total      = 1 + slideItems.length
-  const isLast     = slideIdx === total - 1
+  const total = 1 + slideItems.length
+  const isLast = slideIdx === total - 1
 
   const go = (next: number) => { setDir(next > slideIdx ? 1 : -1); setSlideIdx(next) }
 
@@ -780,21 +780,21 @@ function ImprovementReveal({ items, onStart }: { items: string[]; onStart: () =>
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function ImportPlan() {
-  const navigate    = useNavigate()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [step, setStep]                         = useState<Step>('upload')
-  const [images, setImages]                     = useState<string[]>([])
-  const [extractedPlan, setExtractedPlan]       = useState('')
+  const [step, setStep] = useState<Step>('upload')
+  const [images, setImages] = useState<string[]>([])
+  const [extractedPlan, setExtractedPlan] = useState('')
   const [analysisSections, setAnalysisSections] = useState<ReturnType<typeof parseAnalysisSections>>([])
   const [whatChangedItems, setWhatChangedItems] = useState<string[]>([])
-  const [error, setError]                       = useState<string | null>(null)
-  const [showConfirm, setShowConfirm]           = useState(false)
-  const [pendingAction, setPendingAction]       = useState<'save' | 'improve' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'save' | 'improve' | null>(null)
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
 
   const profileContext = buildProfileContext()
-  const hasProfile     = !!profileContext
+  const hasProfile = !!profileContext
 
   const previewComponents = useMemo(() => buildPlanComponents(setSelectedExercise), [])
 
@@ -854,12 +854,12 @@ export default function ImportPlan() {
     }
   }
 
-  const requestSave    = () => { setPendingAction('save');    setShowConfirm(true) }
+  const requestSave = () => { setPendingAction('save'); setShowConfirm(true) }
   const requestImprove = () => { setPendingAction('improve'); setShowConfirm(true) }
 
   const handleConfirmed = () => {
     setShowConfirm(false)
-    if (pendingAction === 'save')    void doSave()
+    if (pendingAction === 'save') void doSave()
     if (pendingAction === 'improve') void doImprove()
   }
 
@@ -893,7 +893,7 @@ export default function ImportPlan() {
     setError(null)
     try {
       const improved = await improveImportedPlan(extractedPlan, profileContext)
-      const items    = parseWhatChanged(improved)
+      const items = parseWhatChanged(improved)
       await savePlan(improved)
       setWhatChangedItems(items)
       setStep('improvement-reveal')
@@ -906,9 +906,9 @@ export default function ImportPlan() {
   // ── Loading steps ─────────────────────────────────────────────────────────────
 
   if (step === 'extracting') return <CinematicLoader phases={EXTRACT_PHASES} />
-  if (step === 'analyzing')  return <CinematicLoader phases={ANALYZE_PHASES} />
-  if (step === 'improving')  return <CinematicLoader phases={IMPROVE_PHASES} />
-  if (step === 'saving')     return <CinematicLoader phases={SAVE_PHASES} />
+  if (step === 'analyzing') return <CinematicLoader phases={ANALYZE_PHASES} />
+  if (step === 'improving') return <CinematicLoader phases={IMPROVE_PHASES} />
+  if (step === 'saving') return <CinematicLoader phases={SAVE_PHASES} />
 
   // ── Success (save-only path) ──────────────────────────────────────────────────
 
@@ -1125,13 +1125,12 @@ export default function ImportPlan() {
             className="mb-6 space-y-3"
           >
             <div
-              className={`grid gap-3 ${
-                images.length === 1
-                  ? 'grid-cols-1 max-w-[200px] mx-auto'
-                  : images.length === 2
+              className={`grid gap-3 ${images.length === 1
+                ? 'grid-cols-1 max-w-[200px] mx-auto'
+                : images.length === 2
                   ? 'grid-cols-2'
                   : 'grid-cols-3'
-              }`}
+                }`}
             >
               <AnimatePresence>
                 {images.map((src, i) => (
