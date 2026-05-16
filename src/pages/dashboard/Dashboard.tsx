@@ -3,6 +3,7 @@ import { HiArrowNarrowRight } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ExerciseModal from '@/components/ExerciseModal'
+import { getWeeklyWorkoutDays } from '@/components/PlanView'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
@@ -24,25 +25,6 @@ function getGreeting(name: string | undefined): string {
   return first ? `Good ${period}, ${first}!` : `Good ${period}!`
 }
 
-function getWeeklyWorkoutDays(planText: string): number {
-  const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-  // Primary: parse the ## Weekly Schedule section (same logic as WorkoutDayView)
-  const section = planText.match(/## Weekly Schedule([\s\S]*?)(?=\n## )/)?.[1] ?? ''
-  if (section) {
-    let count = 0
-    for (const day of DAY_NAMES) {
-      const m = section.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n·]+)`, 'i'))
-      if (m && !/rest|recovery/i.test(m[1])) count++
-    }
-    if (count > 0) return count
-  }
-
-  // Fallback: count ### Day N: headers that aren't rest days
-  const dayHeaders = planText.match(/### Day \d+:[^\n]*/gi) ?? []
-  const count = dayHeaders.filter(h => !/rest|recovery/i.test(h)).length
-  return count > 0 ? count : 5
-}
 
 function getTodayWorkout(planText: string): { dayName: string; exercises: string[] } | null {
   const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -261,7 +243,7 @@ export default function Dashboard() {
     userProfiles: { $: { where: { userId } } },
   })
 
-  const allPlans = (data?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number }>
+  const allPlans = (data?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number; workoutDays?: string }>
   const mealEntries = (data?.mealEntries ?? []) as Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>
   const completions = (data?.workoutCompletions ?? []) as Array<{ date: string }>
   const waterLogs = (data?.waterLogs ?? []) as Array<{ id: string; date: string; glasses: number }>
@@ -333,10 +315,14 @@ export default function Dashboard() {
     [latestPlan?.plan],
   )
 
-  const weeklyWorkoutDays = useMemo(
-    () => latestPlan?.plan ? getWeeklyWorkoutDays(latestPlan.plan) : 5,
-    [latestPlan?.plan],
-  )
+  const weeklyWorkoutDays = useMemo(() => {
+    if (!latestPlan) return 0
+    try {
+      const days = JSON.parse(latestPlan.workoutDays ?? '[]') as string[]
+      if (days.length > 0) return days.length
+    } catch {}
+    return latestPlan.plan ? getWeeklyWorkoutDays(latestPlan.plan) : 0
+  }, [latestPlan])
 
   const todayIsRest = !!latestPlan && (!todayWorkout || todayWorkout.exercises[0] === 'Rest Day')
 
@@ -371,7 +357,7 @@ export default function Dashboard() {
             ringId="ring-week"
             pct={weekWorkouts / Math.max(1, weeklyWorkoutDays)}
             title="Workouts"
-            subtitle={`${weekWorkouts}/${weeklyWorkoutDays} this week`}
+            subtitle={weeklyWorkoutDays > 0 ? `${weekWorkouts}/${weeklyWorkoutDays} this week` : `${weekWorkouts} this week`}
             color1="#ee9c22"
             color2="#d39134"
           />

@@ -6,7 +6,7 @@ import { id } from '@instantdb/react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ExerciseModal from '@/components/ExerciseModal'
 import InjuryTriage from '@/components/InjuryTriage'
-import { WorkoutDayView } from '@/components/PlanView'
+import { WorkoutDayView, getWeeklyWorkoutDays } from '@/components/PlanView'
 import { buildPlanComponents } from '@/lib/planComponents'
 import { generateDayWorkout } from '@/lib/gemini'
 import { getWeights, setWeight } from '@/lib/exerciseWeights'
@@ -165,7 +165,7 @@ export default function Workout() {
 
   const latestPlan = chain[chain.length - 1]
   const previousVersions = chain.slice(0, -1).reverse()
-  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
+  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt <= FOUR_WEEKS_MS : false
   const daysUntilEvolve = latestPlan && !canEvolve
     ? Math.ceil((FOUR_WEEKS_MS - (Date.now() - latestPlan.createdAt)) / (24 * 60 * 60 * 1000))
     : 0
@@ -184,9 +184,10 @@ export default function Workout() {
   }, [completions, weekStart, today])
 
   const weeklyTarget = useMemo(() => {
-    if (!latestPlan) return 5
+    if (!latestPlan) return 0
     const days = parseList(latestPlan.workoutDays ?? '[]')
-    return days.length > 0 ? days.length : 5
+    if (days.length > 0) return days.length
+    return getWeeklyWorkoutDays(latestPlan.plan)
   }, [latestPlan])
 
   const weekStreak = useMemo(
@@ -451,7 +452,7 @@ export default function Workout() {
               blockedDays={(() => {
                 const stored = parseList(latestPlan.workoutDays ?? '[]')
                 if (stored.length === 0) return []
-                const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+                const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                 return ALL_DAYS.filter(d => !stored.includes(d))
               })()}
               dayOverrides={dayOverrides}

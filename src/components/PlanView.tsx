@@ -72,6 +72,41 @@ export function getDefaultDayIdx(schedule: Record<string, string>): number {
   return today
 }
 
+// ── Workout day count (shared with Dashboard + Workout pages) ─────────────────
+
+export function getWeeklyWorkoutDays(planText: string): number {
+  const section = planText.match(/## Weekly Schedule([\s\S]*?)(?=\n## )/)?.[1] ?? ''
+  if (section) {
+    let count = 0
+    for (const day of DAY_NAMES) {
+      const m = section.match(new RegExp(`\\*\\*${day}:?\\*\\*:?\\s*([^\\n·]+)`, 'i'))
+      if (m && !/rest|recovery/i.test(m[1])) count++
+    }
+    if (count > 0) return count
+  }
+  const dayHeaders = planText.match(/### Day \d+:[^\n]*/gi) ?? []
+  const count = dayHeaders.filter(h => !/rest|recovery/i.test(h)).length
+  return count > 0 ? count : 0
+}
+
+// ── localStorage persistence helpers ─────────────────────────────────────────
+
+function getStoredWeekDoneMap(): Record<string, boolean> {
+  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+  try {
+    const stored = localStorage.getItem(`tyw-done-map-${wk}`)
+    return stored ? JSON.parse(stored) as Record<string, boolean> : {}
+  } catch { return {} }
+}
+
+function getStoredFiredRef(): Record<string, boolean> {
+  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+  try {
+    const stored = localStorage.getItem(`tyw-fired-${wk}`)
+    return stored ? JSON.parse(stored) as Record<string, boolean> : {}
+  } catch { return {} }
+}
+
 // Extract exercise keys from raw day body (before transformExercises).
 // Must produce the same key format that ExerciseTableCard derives internally.
 function extractExerciseKeys(rawText: string): string[] {
@@ -352,18 +387,25 @@ export function WorkoutDayView({
 
   // Workout completion tracking — doneMap keyed as "DayName:exerciseKey" to prevent
   // cross-day contamination when exercises share the same name across days.
-  const [doneMap, setDoneMap]               = useState<Record<string, boolean>>({})
+  // Initialized from localStorage so state survives page navigation within the same week.
+  const [doneMap, setDoneMap]               = useState<Record<string, boolean>>(getStoredWeekDoneMap)
   // Ref mirrors doneMap so stable callbacks can read the latest value without deps.
   const doneMapRef = useRef(doneMap)
   doneMapRef.current = doneMap
   const [showCelebration, setShowCelebration] = useState(false)
+  // Holds the optimistic week count shown in the celebration modal (+1 vs DB, which
+  // hasn't updated yet when the modal opens).
+  const [celebrationWeekWorkouts, setCelebrationWeekWorkouts] = useState(0)
   // Incremented whenever a day's content is replaced (override generated), forcing
   // the content subtree to remount so exercise cards start with fresh local state.
   const [contentKey, setContentKey] = useState(0)
-  const completionFiredRef   = useRef<Record<string, boolean>>({})
+  // Restored from localStorage so celebration doesn't re-fire after a reload.
+  const completionFiredRef   = useRef<Record<string, boolean>>(getStoredFiredRef())
   const dayBodySnapshotRef   = useRef<Record<string, string>>({})
   // Updated each render so stable callbacks can read the current day name.
   const currentDayNameRef    = useRef('')
+  // Skip the first run of the [plan] effect so it doesn't clear restored state on mount.
+  const planMountedRef       = useRef(false)
 
   const handleExerciseDone = useCallback((key: string, done: boolean) => {
     const fullKey = `${currentDayNameRef.current}:${key}`
@@ -433,10 +475,14 @@ export function WorkoutDayView({
   useEffect(() => {
     if (allDone && !completionFiredRef.current[currentDayName]) {
       completionFiredRef.current[currentDayName] = true
+      const wk = localStorage.getItem('tyw-workout-week')
+      if (wk) localStorage.setItem(`tyw-fired-${wk}`, JSON.stringify(completionFiredRef.current))
+      // +1 optimistically: the DB write hasn't resolved yet when the modal opens.
+      setCelebrationWeekWorkouts((weekWorkouts ?? 0) + 1)
       setShowCelebration(true)
       onWorkoutComplete?.(currentDayName, exerciseKeys.length, setsCount)
     }
-  }, [allDone, currentDayName, exerciseKeys.length, setsCount, onWorkoutComplete])
+  }, [allDone, currentDayName, exerciseKeys.length, setsCount, onWorkoutComplete, weekWorkouts])
 
   // When a day's body content changes (override generated), reset only that day's state
   // and bump contentKey to force the exercise subtree to remount with fresh local state.
@@ -455,21 +501,34 @@ export function WorkoutDayView({
     setShowCelebration(false)
   }, [dayBody, currentDayName])
 
-  // Hard-reset everything when the plan text itself is replaced.
+  // Hard-reset everything when the plan text itself is replaced (skip initial mount
+  // so we don't clobber the state restored from localStorage above).
   useEffect(() => {
+    if (!planMountedRef.current) { planMountedRef.current = true; return }
     setDoneMap({})
     setShowCelebration(false)
     completionFiredRef.current = {}
     dayBodySnapshotRef.current = {}
+    const wk = localStorage.getItem('tyw-workout-week')
+    if (wk) {
+      localStorage.removeItem(`tyw-done-map-${wk}`)
+      localStorage.removeItem(`tyw-fired-${wk}`)
+    }
   }, [plan])
 
-  // Weekly reset: clear in-session completion marks when a new week starts.
+  // Weekly reset: clear completion marks + localStorage when a new week starts.
+  // Same-week case: getStoredWeekDoneMap/getStoredFiredRef already restored state.
   useEffect(() => {
     const d = new Date()
     const diff = (d.getDay() - weekStart + 7) % 7
     d.setDate(d.getDate() - diff)
     const wk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    if (localStorage.getItem('tyw-workout-week') !== wk) {
+    const storedWk = localStorage.getItem('tyw-workout-week')
+    if (storedWk !== wk) {
+      if (storedWk) {
+        localStorage.removeItem(`tyw-done-map-${storedWk}`)
+        localStorage.removeItem(`tyw-fired-${storedWk}`)
+      }
       localStorage.setItem('tyw-workout-week', wk)
       setDoneMap({})
       completionFiredRef.current = {}
@@ -477,6 +536,13 @@ export function WorkoutDayView({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // mount-only: next load after week boundary picks up fresh wk value
+
+  // Persist exercise completion state across page navigation (same week).
+  useEffect(() => {
+    const wk = localStorage.getItem('tyw-workout-week')
+    if (!wk) return
+    localStorage.setItem(`tyw-done-map-${wk}`, JSON.stringify(doneMap))
+  }, [doneMap])
 
   const handleGenerateWorkout = async () => {
     if (!onGenerateDayWorkout) return
@@ -778,7 +844,7 @@ export function WorkoutDayView({
               exerciseCount={exerciseKeys.length}
               setsCount={setsCount}
               weekStreak={weekStreak ?? 0}
-              weekWorkouts={weekWorkouts ?? 0}
+              weekWorkouts={celebrationWeekWorkouts}
               weeklyTarget={weeklyTarget ?? 0}
               dayFocus={selectedLabel || undefined}
               onDismiss={() => setShowCelebration(false)}
