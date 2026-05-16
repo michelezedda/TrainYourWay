@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  HiChevronDown, HiArrowNarrowRight, HiChevronRight, HiChevronLeft,
+  HiChevronDown, HiArrowNarrowRight, HiChevronLeft,
 } from 'react-icons/hi'
 import {
   parseAnalysisSections,
@@ -196,10 +196,10 @@ function SlideWrap({ children }: { children: React.ReactNode }) {
 // ── Sticky bottom navigation ───────────────────────────────────────────────────
 
 function StickyNav({
-  slideIdx, total, isFirst, isLast, nextLabel, onNext, onBack, onDone,
+  slideIdx, total, isFirst, isLast, nextLabel, doneLabel, onNext, onBack, onDone,
 }: {
   slideIdx: number; total: number; isFirst: boolean; isLast: boolean
-  nextLabel: string; onNext: () => void; onBack: () => void; onDone: () => void
+  nextLabel: string; doneLabel?: string; onNext: () => void; onBack: () => void; onDone: () => void
 }) {
   return (
     <div
@@ -256,7 +256,7 @@ function StickyNav({
                   boxShadow: '0 4px 24px rgba(168,85,247,0.5)',
                 }}
               >
-                View My Full Plan
+                {doneLabel ?? 'View My Full Plan'}
                 <HiArrowNarrowRight className="w-4 h-4" />
               </button>
             ) : (
@@ -1147,111 +1147,309 @@ function ReevalSummary({ data }: { data: ReevaluationData }) {
   )
 }
 
-// ── Reevaluation Analysis Card ────────────────────────────────────────────────
+// ── Reevaluation Immersive Reveal ─────────────────────────────────────────────
 
-const REEVAL_SLIDE_GRADIENTS: Record<string, string> = {
-  'Your Progress': 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(99,102,241,0.18))',
-  'Training Assessment': 'linear-gradient(135deg, rgba(239,68,68,0.22), rgba(249,115,22,0.15))',
-  'What Changes in This Phase': 'linear-gradient(135deg, rgba(34,211,238,0.22), rgba(99,102,241,0.18))',
-}
-
-function ReevalAnalysisCard({ analysis, onViewPlan }: { analysis: string; onViewPlan: () => void }) {
-  const sections = useMemo(() => parseAnalysisSections(sanitizePlan(analysis)), [analysis])
-  const [idx, setIdx] = useState(0)
-  const [dir, setDir] = useState(1)
-
-  if (!sections.length) {
-    return (
-      <div className="mb-8">
-        <button onClick={onViewPlan} className="btn-primary w-full justify-center">
-          View My Evolved Plan <HiArrowNarrowRight className="w-4 h-4" />
-        </button>
-      </div>
-    )
-  }
-
-  const current = sections[idx]
-  const isLast = idx === sections.length - 1
-  const theme = SECTION_THEME[current.title]
-  const gradient = REEVAL_SLIDE_GRADIENTS[current.title] ?? 'linear-gradient(135deg, rgba(168,85,247,0.22), rgba(34,211,238,0.14))'
-
-  function go(next: number) {
-    setDir(next > idx ? 1 : -1)
-    setIdx(next)
-  }
+function ReevalCelebrationSlide({ data, userName }: { data: ReevaluationData; userName: string }) {
+  const goals = data.newGoals.length > 0 ? data.newGoals : data.goals
 
   return (
-    <div className="mb-8">
-      {/* Progress */}
-      <div className="flex gap-1.5 mb-4">
-        {sections.map((_, i) => (
-          <button key={i} onClick={() => go(i)}
-            className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <motion.div className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, #A855F7, #22D3EE)' }}
-              initial={{ width: 0 }}
-              animate={{ width: i <= idx ? '100%' : '0%' }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </button>
-        ))}
+    <SlideWrap>
+      <div className="flex flex-col items-center text-center space-y-8 pt-2">
+        <motion.div
+          initial={{ scale: 0.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 14, delay: 0.06 }}
+          className="w-32 h-32 rounded-3xl flex items-center justify-center mt-2 relative"
+          style={{
+            fontSize: 64,
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18))',
+            border: '1px solid rgba(168,85,247,0.45)',
+            boxShadow: '0 0 80px rgba(168,85,247,0.38), 0 0 130px rgba(168,85,247,0.14)',
+          }}
+        >
+          🔄
+          <motion.div
+            className="absolute inset-0 rounded-3xl"
+            animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.16, 1] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ border: '1px solid rgba(168,85,247,0.5)' }}
+          />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] mb-4" style={{ color: '#A855F7' }}>
+            Evolution complete
+          </p>
+          <h1 className="font-black text-white tracking-tight leading-[1.06] mb-4"
+            style={{ fontSize: 'clamp(2.4rem, 10vw, 4.2rem)' }}>
+            {userName ? (
+              <>{userName},<br />you've leveled up.</>
+            ) : (
+              <>Your plan<br />has evolved.</>
+            )}
+          </h1>
+          <p className="text-white/45 text-base leading-relaxed max-w-[260px] mx-auto">
+            Phase 2 is built and ready. Let's see what changed.
+          </p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="flex flex-wrap gap-2 justify-center">
+          {goals.slice(0, 3).map(g => {
+            const m = GOAL_META[g]
+            return (
+              <span key={g}
+                className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold border ${m?.bg ?? 'bg-white/8'} ${m?.color ?? 'text-white/70'} ${m?.border ?? 'border-white/15'}`}>
+                {m?.icon} {g}
+              </span>
+            )
+          })}
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+          className="flex gap-4 items-center">
+          {[
+            { label: 'Time on plan', value: data.timeOnPlan },
+            { label: 'Adherence', value: data.adherence },
+            { label: 'Progress', value: data.physicalFeel },
+          ].map(({ label, value }, i) => (
+            <div key={label} className={`text-center ${i > 0 ? 'border-l border-white/[0.08] pl-4' : ''}`}>
+              <p className="font-black text-white leading-none truncate max-w-[80px]" style={{ fontSize: 'clamp(0.75rem, 3vw, 0.95rem)' }}>{value}</p>
+              <p className="text-white/30 text-[9px] uppercase tracking-wider mt-1">{label}</p>
+            </div>
+          ))}
+        </motion.div>
       </div>
+    </SlideWrap>
+  )
+}
 
-      <div className="rounded-3xl overflow-hidden"
-        style={{ border: '1px solid rgba(168,85,247,0.2)', background: 'rgba(255,255,255,0.03)' }}>
+function ReevalProgressSlide({ data }: { data: ReevaluationData }) {
+  const adherencePct: Record<string, number> = {
+    'Every session': 100, 'Most sessions': 80, 'About half': 50, 'Rarely': 25,
+  }
+  const pct = adherencePct[data.adherence] ?? 70
 
-        {/* Header */}
-        <div className="px-6 pt-6 pb-5" style={{ background: gradient }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                {theme?.icon ?? SECTION_ICONS[current.title] ?? '📋'}
-              </div>
+  const difficultyConfig: Record<string, { color: string; icon: string }> = {
+    'Too easy': { color: '#22D3EE', icon: '😴' },
+    'Just right': { color: '#10b981', icon: '✅' },
+    'Too hard': { color: '#f87171', icon: '😤' },
+  }
+  const dc = difficultyConfig[data.difficulty] ?? { color: '#A855F7', icon: '💬' }
+
+  return (
+    <SlideWrap>
+      <div className="space-y-6">
+        <div>
+          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            className="text-xs font-bold uppercase tracking-[0.2em] mb-3" style={{ color: '#A855F7' }}>
+            Progress report
+          </motion.p>
+          <motion.h2 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+            className="font-black text-white tracking-tight leading-tight"
+            style={{ fontSize: 'clamp(2.4rem, 9.5vw, 3.6rem)' }}>
+            How the last<br />phase went.
+          </motion.h2>
+        </div>
+
+        <motion.div initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.22, type: 'spring', stiffness: 200, damping: 18 }}
+          className="rounded-3xl px-6 py-6 text-center"
+          style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)' }}>
+          <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Session consistency</p>
+          <p className="font-black tabular-nums leading-none mb-2"
+            style={{ fontSize: 'clamp(4rem, 16vw, 6.5rem)', background: 'linear-gradient(135deg,#A855F7,#22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {pct}%
+          </p>
+          <p className="text-white/55 text-base font-semibold">{data.adherence}</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
+          className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Physical feel', value: data.physicalFeel, color: '#A855F7', icon: '💪' },
+            { label: 'Time on plan', value: data.timeOnPlan, color: '#22D3EE', icon: '📅' },
+          ].map(({ label, value, color, icon }) => (
+            <div key={label} className="rounded-2xl px-4 py-5 text-center"
+              style={{ background: `${color}0d`, border: `1px solid ${color}22` }}>
+              <span className="text-2xl mb-2 block">{icon}</span>
+              <p className="font-bold text-white text-sm leading-tight">{value}</p>
+              <p className="text-white/35 text-[10px] uppercase tracking-wider mt-1">{label}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+          className="flex gap-3 px-4 py-4 rounded-2xl items-center"
+          style={{ background: `${dc.color}0d`, border: `1px solid ${dc.color}22` }}>
+          <span className="text-2xl flex-shrink-0">{dc.icon}</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: dc.color }}>Plan difficulty</p>
+            <p className="text-white font-bold text-sm">{data.difficulty}</p>
+          </div>
+        </motion.div>
+      </div>
+    </SlideWrap>
+  )
+}
+
+function ReevalReadySlide() {
+  return (
+    <SlideWrap>
+      <div className="text-center space-y-8 pt-2">
+        <motion.div
+          initial={{ scale: 0.1, opacity: 0, rotate: -12 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 14, delay: 0.08 }}
+          className="w-32 h-32 rounded-full mx-auto flex items-center justify-center"
+          style={{
+            fontSize: 60,
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.2))',
+            border: '1px solid rgba(168,85,247,0.45)',
+            boxShadow: '0 0 80px rgba(168,85,247,0.42), 0 0 130px rgba(168,85,247,0.16)',
+          }}
+        >
+          🚀
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] mb-4" style={{ color: '#A855F7' }}>Next phase</p>
+          <h2 className="font-black text-white tracking-tight leading-[1.06] mb-5"
+            style={{ fontSize: 'clamp(2.8rem, 12vw, 4.8rem)' }}>
+            Next phase<br />starts now.
+          </h2>
+          <p className="text-white/50 text-base leading-relaxed max-w-[280px] mx-auto">
+            Your evolved plan is built around who you are today. Time to put it to work.
+          </p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }}
+          className="grid grid-cols-2 gap-3">
+          {[
+            { icon: '📋', label: 'Evolved Plan', desc: 'Rebuilt from your feedback', color: '#A855F7' },
+            { icon: '🤖', label: 'KAI AI Coach', desc: 'Ask anything, anytime', color: '#22D3EE' },
+            { icon: '📈', label: 'Progress History', desc: 'Track every milestone', color: '#f59e0b' },
+            { icon: '🔄', label: 'Phase System', desc: 'Evolve again when ready', color: '#10b981' },
+          ].map(({ icon, label, desc, color }) => (
+            <div key={label}
+              className="flex flex-col items-start gap-2 px-4 py-4 rounded-2xl text-left"
+              style={{ background: `${color}0d`, border: `1px solid ${color}22` }}>
+              <span className="text-2xl">{icon}</span>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-                  {idx + 1} of {sections.length}
-                </p>
-                <p className="text-[11px] font-semibold text-white/70">{theme?.label ?? 'Analysis'}</p>
+                <p className="text-white font-bold text-xs">{label}</p>
+                <p className="text-white/40 text-[10px] mt-0.5">{desc}</p>
               </div>
             </div>
-          </div>
-          <h2 className="text-xl font-black text-white tracking-tight">{current.title}</h2>
+          ))}
+        </motion.div>
+      </div>
+    </SlideWrap>
+  )
+}
+
+function ReevalImmersiveReveal({
+  analysis,
+  data,
+  userName,
+  onDone,
+}: {
+  analysis: string
+  data: ReevaluationData
+  userName: string
+  onDone: () => void
+}) {
+  const sections = useMemo(() => parseAnalysisSections(sanitizePlan(analysis)), [analysis])
+
+  const SLIDE_CELEBRATION = 0
+  const SLIDE_PROGRESS = 1
+  const SLIDE_AI_START = 2
+  const SLIDE_READY = SLIDE_AI_START + sections.length
+  const TOTAL = SLIDE_READY + 1
+
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [dir, setDir] = useState(1)
+
+  function go(next: number) {
+    setDir(next > slideIdx ? 1 : -1)
+    setSlideIdx(next)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const isFirst = slideIdx === 0
+  const isLast = slideIdx === SLIDE_READY
+  const isAI = slideIdx >= SLIDE_AI_START && slideIdx < SLIDE_READY
+  const currentSection = isAI ? sections[slideIdx - SLIDE_AI_START] : null
+
+  const nextLabel = (() => {
+    if (isFirst) return 'See Progress Report'
+    if (slideIdx === SLIDE_PROGRESS) return sections.length ? 'View Analysis' : "What's Next"
+    if (slideIdx === SLIDE_READY - 1) return "What's Next"
+    return 'Next'
+  })()
+
+  return (
+    <>
+      <StickyNav
+        slideIdx={slideIdx}
+        total={TOTAL}
+        isFirst={isFirst}
+        isLast={isLast}
+        nextLabel={nextLabel}
+        doneLabel="Start Training"
+        onNext={() => go(slideIdx + 1)}
+        onBack={() => go(slideIdx - 1)}
+        onDone={onDone}
+      />
+
+      <div className="mb-8">
+        <div className="h-0.5 rounded-full overflow-hidden mb-6" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <motion.div className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, #A855F7, #22D3EE)' }}
+            animate={{ width: `${((slideIdx + 1) / TOTAL) * 100}%` }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
         </div>
 
-        {/* Content */}
-        <div className="overflow-hidden" style={{ minHeight: 160 }}>
-          <AnimatePresence mode="wait" custom={dir}>
-            <motion.div key={idx} custom={dir}
-              initial={{ opacity: 0, x: dir * 28 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: dir * -20, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-              className="px-6 pt-5 pb-2"
-            >
-              <ReactMarkdown components={enhancedAnalysisComponents}>{current.content}</ReactMarkdown>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Footer nav */}
-        <div className="px-6 py-5 flex items-center justify-between border-t border-white/6">
-          <button onClick={() => go(idx - 1)} disabled={idx === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 bg-white/5 text-white/50 disabled:opacity-0 hover:bg-white/10 hover:text-white/80 transition-all active:scale-95">
-            <HiChevronLeft className="w-4 h-4" /> Back
-          </button>
-          {isLast ? (
-            <button onClick={onViewPlan} className="btn-primary !px-6 !py-2.5 !text-sm">
-              View My Evolved Plan <HiArrowNarrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button onClick={() => go(idx + 1)} className="btn-primary !px-6 !py-2.5 !text-sm">
-              Next <HiChevronRight className="w-4 h-4" />
-            </button>
+        <div className="flex items-center justify-between mb-5">
+          <span className="text-[11px] font-semibold text-white/20 uppercase tracking-wider">
+            {slideIdx + 1} / {TOTAL}
+          </span>
+          {isAI && currentSection && (
+            <span className="text-xl">{SECTION_ICONS[currentSection.title] ?? '📋'}</span>
           )}
         </div>
+
+        <AnimatePresence mode="wait" custom={dir}>
+          <motion.div
+            key={slideIdx}
+            custom={dir}
+            initial={{ opacity: 0, y: dir > 0 ? 32 : -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: dir > 0 ? -20 : 32 }}
+            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+          >
+            {slideIdx === SLIDE_CELEBRATION && (
+              <ReevalCelebrationSlide data={data} userName={userName} />
+            )}
+            {slideIdx === SLIDE_PROGRESS && (
+              <ReevalProgressSlide data={data} />
+            )}
+            {isAI && currentSection && (
+              <AnalysisSectionSlide
+                section={currentSection}
+                formData={{
+                  goals: data.goals, equipment: data.equipment ?? [],
+                  workoutDays: data.workoutDays ?? [], sessionDuration: '',
+                  fitnessLevel: data.fitnessLevel, images: [], planName: '',
+                } as unknown as import('@/lib/gemini').WorkoutFormData}
+              />
+            )}
+            {slideIdx === SLIDE_READY && (
+              <ReevalReadySlide />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -1279,6 +1477,11 @@ export default function Results() {
   const handleViewPlan = () => {
     markOnboardingSeen(userId)
     navigate('/dashboard', { replace: true })
+  }
+
+  const handleViewEvolvedPlan = () => {
+    markOnboardingSeen(userId)
+    navigate('/workout', { replace: true })
   }
 
   if (!plan) {
@@ -1311,10 +1514,15 @@ export default function Results() {
       )}
 
       {/* Reevaluation flow */}
-      {reevalData && <ReevalSummary data={reevalData} />}
       {reevalData && reevalAnalysis && (
-        <ReevalAnalysisCard analysis={reevalAnalysis} onViewPlan={handleViewPlan} />
+        <ReevalImmersiveReveal
+          analysis={reevalAnalysis}
+          data={reevalData}
+          userName={userName}
+          onDone={handleViewEvolvedPlan}
+        />
       )}
+      {reevalData && !reevalAnalysis && <ReevalSummary data={reevalData} />}
     </main>
   )
 }

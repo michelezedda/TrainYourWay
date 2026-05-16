@@ -32,15 +32,19 @@ const LEVEL_COLOR: Record<string, string> = {
   beginner: '#4ade80', intermediate: '#facc15', advanced: '#f87171',
 }
 
-// Steps 2, 3, 4, 6, 7 are "question steps" with a progress bar.
-// Steps 0, 1, 5, 8 are cinematic transition slides.
-const QUESTION_STEPS = [2, 3, 4, 6, 7]
+// Steps 2,3,4,5,7,8,9,10,11 are question steps with a progress bar.
+// Steps 0,1,6,12 are cinematic/transition slides.
+const QUESTION_STEPS = [2, 3, 4, 5, 7, 8, 9, 10, 11]
 const SECTION_LABELS: Record<number, string> = {
-  2: 'Progress Check',
-  3: 'Body Update',
+  2: 'Time Check',
+  3: 'Consistency',
   4: 'Physical Report',
-  6: 'Schedule',
-  7: 'Adjustments',
+  5: 'Difficulty',
+  7: 'Body Update',
+  8: 'Schedule',
+  9: 'Adjustments',
+  10: 'Limitations',
+  11: 'Goals',
 }
 
 // ── Animations ─────────────────────────────────────────────────────────────────
@@ -100,21 +104,22 @@ function StepHeader({ tag, title, sub }: { tag?: string; title: string; sub?: st
       {tag && (
         <motion.p
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
-          className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#A855F7' }}
+          className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#A855F7' }}
         >
           {tag}
         </motion.p>
       )}
       <motion.h2
         initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="text-3xl font-black text-white tracking-tight"
+        className="font-black text-white tracking-tight leading-tight"
+        style={{ fontSize: 'clamp(2.4rem, 9.5vw, 3.6rem)' }}
       >
         {title}
       </motion.h2>
       {sub && (
         <motion.p
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
-          className="text-white/45 text-sm mt-1.5 leading-relaxed"
+          className="text-white/45 text-sm mt-2.5 leading-relaxed"
         >
           {sub}
         </motion.p>
@@ -128,28 +133,28 @@ function SelectCard({
 }: { icon: string; label: string; sublabel?: string; selected: boolean; onClick: () => void; delay?: number }) {
   return (
     <motion.button
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
       onClick={onClick}
-      className="flex items-center gap-3.5 w-full py-3.5 px-4 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left"
+      className="flex items-center gap-4 w-full py-5 px-5 rounded-2xl border transition-all duration-200 active:scale-[0.97] text-left"
       style={selected ? {
         background: 'rgba(168,85,247,0.13)',
         borderColor: 'rgba(168,85,247,0.5)',
-        boxShadow: '0 0 20px rgba(168,85,247,0.18)',
+        boxShadow: '0 0 24px rgba(168,85,247,0.18)',
       } : {
         background: 'rgba(255,255,255,0.04)',
         borderColor: 'rgba(255,255,255,0.09)',
       }}
     >
-      <span className="text-2xl leading-none flex-shrink-0">{icon}</span>
+      <span className="text-3xl leading-none flex-shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-sm leading-tight ${selected ? 'text-white' : 'text-white/70'}`}>{label}</p>
-        {sublabel && <p className="text-xs text-white/35 mt-0.5 leading-snug">{sublabel}</p>}
+        <p className={`font-bold text-base leading-tight ${selected ? 'text-white' : 'text-white/75'}`}>{label}</p>
+        {sublabel && <p className="text-sm text-white/35 mt-0.5 leading-snug">{sublabel}</p>}
       </div>
       <div
-        className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200"
-        style={selected ? { background: 'linear-gradient(135deg,#A855F7,#22D3EE)', boxShadow: '0 0 8px rgba(168,85,247,0.4)' } : { border: '1.5px solid rgba(255,255,255,0.2)' }}
+        className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200"
+        style={selected ? { background: 'linear-gradient(135deg,#A855F7,#22D3EE)', boxShadow: '0 0 10px rgba(168,85,247,0.4)' } : { border: '1.5px solid rgba(255,255,255,0.2)' }}
       >
-        {selected && <span className="text-white text-[9px] font-black leading-none">✓</span>}
+        {selected && <span className="text-white text-[10px] font-black leading-none">✓</span>}
       </div>
     </motion.button>
   )
@@ -223,11 +228,11 @@ export default function ReevaluateQuestionnaire() {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }
 
-  // Auto-advance on transition slides
+  // Auto-advance on transition slides (no Skip/Back — purely cinematic)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (step === 1) { const t = setTimeout(() => goToStep(2), 3600); return () => clearTimeout(t) }
-    if (step === 5) { const t = setTimeout(() => goToStep(6), 3200); return () => clearTimeout(t) }
+    if (step === 6) { const t = setTimeout(() => goToStep(7), 3200); return () => clearTimeout(t) }
   }, [step])
 
   const update = (patch: Partial<RevalForm>) => setForm(p => ({ ...p, ...patch }))
@@ -277,9 +282,11 @@ export default function ReevaluateQuestionnaire() {
     : ftInToCm(parseFloat(form.currentHeight) || 0, parseFloat(form.currentHeightIn) || 0)
 
   const canAdvance = (): boolean => {
-    if (step === 2) return !!(form.timeOnPlan && form.adherence)
-    if (step === 3) return !!(form.currentWeight.trim() && !weightInvalid && form.currentHeight.trim() && !heightInvalid)
-    if (step === 4) return !!(form.physicalFeel && form.difficulty)
+    if (step === 2) return !!form.timeOnPlan
+    if (step === 3) return !!form.adherence
+    if (step === 4) return !!form.physicalFeel
+    if (step === 5) return !!form.difficulty
+    if (step === 7) return !!(form.currentWeight.trim() && !weightInvalid && form.currentHeight.trim() && !heightInvalid)
     return true
   }
 
@@ -287,13 +294,13 @@ export default function ReevaluateQuestionnaire() {
 
   const handleBack = () => {
     if (step === 0) navigate('/workout')
-    else if (step === 2) goToStep(0)   // skip auto-advance step 1
-    else if (step === 6) goToStep(4)   // skip auto-advance step 5
+    else if (step === 2) goToStep(0)   // skip cinematic step 1
+    else if (step === 7) goToStep(5)   // skip cinematic step 6
     else goToStep(step - 1)
   }
 
   const handleNext = () => {
-    if (step < 8) goToStep(step + 1)
+    if (step < 12) goToStep(step + 1)
   }
 
   // ── Submit ───────────────────────────────────────────────────────────────────
@@ -326,11 +333,11 @@ export default function ReevaluateQuestionnaire() {
 
   // ── Derived UI state ─────────────────────────────────────────────────────────
 
-  const qIdx           = QUESTION_STEPS.indexOf(step)
+  const qIdx            = QUESTION_STEPS.indexOf(step)
   const showProgressBar = qIdx !== -1
-  const progressPct    = showProgressBar ? ((qIdx + 1) / QUESTION_STEPS.length) * 100 : 0
-  const insight        = buildInsight(form.adherence, form.difficulty, form.physicalFeel)
-  const levelColor     = LEVEL_COLOR[original.fitnessLevel] ?? '#c084fc'
+  const progressPct     = showProgressBar ? ((qIdx + 1) / QUESTION_STEPS.length) * 100 : 0
+  const insight         = buildInsight(form.adherence, form.difficulty, form.physicalFeel)
+  const levelColor      = LEVEL_COLOR[original.fitnessLevel] ?? '#c084fc'
 
   // ── Summary chips for launch slide ──────────────────────────────────────────
 
@@ -350,7 +357,7 @@ export default function ReevaluateQuestionnaire() {
 
       {/* Progress bar (question steps only) */}
       {showProgressBar && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-7">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{SECTION_LABELS[step]}</p>
             <p className="text-xs text-white/25">{Math.round(progressPct)}%</p>
@@ -381,7 +388,6 @@ export default function ReevaluateQuestionnaire() {
           {step === 0 && (
             <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center text-center py-10 space-y-8">
 
-              {/* Icon */}
               <motion.div
                 initial={{ scale: 0.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -394,7 +400,6 @@ export default function ReevaluateQuestionnaire() {
                 }}
               >
                 🔄
-                {/* Pulsing ring */}
                 <motion.div
                   className="absolute inset-0 rounded-3xl"
                   animate={{ opacity: [0.4, 0, 0.4], scale: [1, 1.18, 1] }}
@@ -403,7 +408,6 @@ export default function ReevaluateQuestionnaire() {
                 />
               </motion.div>
 
-              {/* Goal chips */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -424,7 +428,6 @@ export default function ReevaluateQuestionnaire() {
                 ))}
               </motion.div>
 
-              {/* Headline */}
               <div className="space-y-3 max-w-xs">
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
@@ -434,7 +437,8 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
-                  className="text-4xl font-black text-white tracking-tight leading-tight"
+                  className="font-black text-white tracking-tight leading-tight"
+                  style={{ fontSize: 'clamp(2.4rem, 9.5vw, 3.6rem)' }}
                 >
                   Ready for Phase 2,{' '}
                   <span style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -449,7 +453,6 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
               </div>
 
-              {/* CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }}
                 className="flex flex-col items-center gap-3 w-full max-w-xs"
@@ -468,7 +471,7 @@ export default function ReevaluateQuestionnaire() {
             </div>
           )}
 
-          {/* ── Step 1: Journey story (auto-advance) ──────────────────────── */}
+          {/* ── Step 1: Journey story (auto-advance, no controls) ──────────── */}
           {step === 1 && (
             <div className="min-h-[calc(100svh-6rem)] flex flex-col justify-center py-8 space-y-6">
 
@@ -481,7 +484,8 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
                 <motion.h2
                   initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
-                  className="text-3xl font-black text-white tracking-tight leading-tight"
+                  className="font-black text-white tracking-tight leading-tight"
+                  style={{ fontSize: 'clamp(2.2rem, 8.5vw, 3.2rem)' }}
                 >
                   Here's what you built with.
                 </motion.h2>
@@ -493,7 +497,6 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
               </div>
 
-              {/* Goals card */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
                 className="rounded-3xl p-5"
@@ -518,7 +521,6 @@ export default function ReevaluateQuestionnaire() {
                 </div>
               </motion.div>
 
-              {/* Stats grid */}
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: original.fitnessLevel, label: 'Level', color: levelColor },
@@ -539,7 +541,6 @@ export default function ReevaluateQuestionnaire() {
                 ))}
               </div>
 
-              {/* Equipment chips */}
               {equipment.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
@@ -560,10 +561,10 @@ export default function ReevaluateQuestionnaire() {
                 </motion.div>
               )}
 
-              {/* Auto-advance bar */}
+              {/* Auto-advance bar only - no skip/back controls */}
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-                className="flex flex-col items-center gap-3 pt-2"
+                className="flex flex-col items-center pt-2"
               >
                 <div className="w-52 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                   <motion.div
@@ -574,18 +575,12 @@ export default function ReevaluateQuestionnaire() {
                     style={{ background: 'linear-gradient(90deg,#A855F7,#22D3EE)' }}
                   />
                 </div>
-                <button
-                  onClick={() => goToStep(2)}
-                  className="text-white/35 text-sm hover:text-white/65 transition-colors"
-                >
-                  Skip intro
-                </button>
               </motion.div>
             </div>
           )}
 
-          {/* ── Steps 2–4, 6–7 inside GlassCard ──────────────────────────── */}
-          {[2, 3, 4, 6, 7].includes(step) && (
+          {/* ── Question steps inside GlassCard ──────────────────────────── */}
+          {QUESTION_STEPS.includes(step) && (
             <div
               className="rounded-3xl"
               style={{
@@ -597,73 +592,114 @@ export default function ReevaluateQuestionnaire() {
             >
               <div className="p-6 sm:p-8">
 
-                {/* ── Step 2: Consistency Check ─────────────────────────── */}
+                {/* ── Step 2: Time on plan ──────────────────────────────── */}
                 {step === 2 && (
                   <div className="space-y-7">
                     <StepHeader
                       tag="Progress Check"
-                      title="How did the last phase go?"
-                      sub="Be honest - this shapes how we evolve the plan."
+                      title="Time on this plan?"
+                      sub="How long have you been following this program?"
                     />
-
                     <div className="space-y-3">
-                      <motion.p
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                        className="text-xs font-bold uppercase tracking-wider text-white/40"
-                      >
-                        Time on this plan
-                      </motion.p>
-                      <div className="space-y-2.5">
-                        {[
-                          { v: 'Less than 1 week', icon: '📅', sub: 'Just getting started' },
-                          { v: '1-2 weeks',         icon: '🗓️', sub: 'Building early momentum' },
-                          { v: '2-4 weeks',         icon: '📆', sub: 'Finding your rhythm' },
-                          { v: '1+ month',          icon: '🏆', sub: 'Full cycle complete' },
-                        ].map(({ v, icon, sub }, i) => (
-                          <SelectCard
-                            key={v} icon={icon} label={v} sublabel={sub}
-                            selected={form.timeOnPlan === v} onClick={() => pick('timeOnPlan', v)}
-                            delay={0.22 + i * 0.06}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <motion.p
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
-                        className="text-xs font-bold uppercase tracking-wider text-white/40"
-                      >
-                        Session consistency
-                      </motion.p>
-                      <div className="space-y-2.5">
-                        {[
-                          { v: 'Every session', icon: '🔥', sub: 'Never missed a single one' },
-                          { v: 'Most sessions', icon: '✅', sub: 'Hit roughly 3 out of 4' },
-                          { v: 'About half',    icon: '⚡', sub: 'Life got in the way sometimes' },
-                          { v: 'Rarely',        icon: '🔄', sub: 'Struggled to show up regularly' },
-                        ].map(({ v, icon, sub }, i) => (
-                          <SelectCard
-                            key={v} icon={icon} label={v} sublabel={sub}
-                            selected={form.adherence === v} onClick={() => pick('adherence', v)}
-                            delay={0.36 + i * 0.06}
-                          />
-                        ))}
-                      </div>
+                      {[
+                        { v: '1 Month',   icon: '📅', sub: 'One full cycle done' },
+                        { v: '2 Months',  icon: '📆', sub: 'Solid foundation built' },
+                        { v: '3 Months',  icon: '🏆', sub: 'Full quarter completed' },
+                        { v: '4+ Months', icon: '🌟', sub: 'Long-term commitment' },
+                      ].map(({ v, icon, sub }, i) => (
+                        <SelectCard
+                          key={v} icon={icon} label={v} sublabel={sub}
+                          selected={form.timeOnPlan === v} onClick={() => pick('timeOnPlan', v)}
+                          delay={0.2 + i * 0.06}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* ── Step 3: Body Now ──────────────────────────────────── */}
+                {/* ── Step 3: Session consistency ───────────────────────── */}
                 {step === 3 && (
+                  <div className="space-y-7">
+                    <StepHeader
+                      tag="Consistency"
+                      title="How often did you train?"
+                      sub="Be honest - this shapes how we evolve the plan."
+                    />
+                    <div className="space-y-3">
+                      {[
+                        { v: 'Every session', icon: '🔥', sub: 'Never missed a single one' },
+                        { v: 'Most sessions', icon: '✅', sub: 'Hit roughly 3 out of 4' },
+                        { v: 'About half',    icon: '⚡', sub: 'Life got in the way sometimes' },
+                        { v: 'Rarely',        icon: '🔄', sub: 'Struggled to show up regularly' },
+                      ].map(({ v, icon, sub }, i) => (
+                        <SelectCard
+                          key={v} icon={icon} label={v} sublabel={sub}
+                          selected={form.adherence === v} onClick={() => pick('adherence', v)}
+                          delay={0.2 + i * 0.06}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 4: Physical progress ─────────────────────────── */}
+                {step === 4 && (
+                  <div className="space-y-7">
+                    <StepHeader
+                      tag="Physical Report"
+                      title="How did your body respond?"
+                      sub="Your honest assessment shapes the difficulty of your next plan."
+                    />
+                    <div className="space-y-3">
+                      {[
+                        { v: 'Much stronger',    icon: '💪', sub: 'Significantly more powerful and capable' },
+                        { v: 'Slightly improved',icon: '📈', sub: 'Noticeable but modest improvement' },
+                        { v: 'About the same',   icon: '🤷', sub: 'Maintaining, not much change' },
+                        { v: 'More fatigued',    icon: '😴', sub: 'Running low on energy and drive' },
+                      ].map(({ v, icon, sub }, i) => (
+                        <SelectCard
+                          key={v} icon={icon} label={v} sublabel={sub}
+                          selected={form.physicalFeel === v} onClick={() => pick('physicalFeel', v)}
+                          delay={0.2 + i * 0.06}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 5: Difficulty ────────────────────────────────── */}
+                {step === 5 && (
+                  <div className="space-y-7">
+                    <StepHeader
+                      tag="Difficulty"
+                      title="How hard was the plan?"
+                      sub="Overall intensity across all your sessions."
+                    />
+                    <div className="space-y-3">
+                      {[
+                        { v: 'Too easy',   icon: '😴', label: 'Too Easy',  sub: 'Need a harder challenge' },
+                        { v: 'Just right', icon: '✅', label: 'Just Right', sub: 'Hit the perfect sweet spot' },
+                        { v: 'Too hard',   icon: '😤', label: 'Too Hard',   sub: 'Regularly overwhelmed' },
+                      ].map(({ v, icon, label, sub }, i) => (
+                        <SelectCard
+                          key={v} icon={icon} label={label} sublabel={sub}
+                          selected={form.difficulty === v} onClick={() => pick('difficulty', v)}
+                          delay={0.2 + i * 0.07}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 7: Body update ───────────────────────────────── */}
+                {step === 7 && (
                   <div className="space-y-7">
                     <div className="flex items-start justify-between gap-4">
                       <StepHeader
                         tag="Body Update"
                         title="Where are you now?"
-                        sub="Updated stats help us fine-tune load, volume, and intensity."
+                        sub="Updated stats help fine-tune load, volume, and intensity."
                       />
-                      {/* Unit toggle */}
                       <div className="flex rounded-xl overflow-hidden border border-white/10 flex-shrink-0 mt-1">
                         {(['metric', 'imperial'] as const).map((u, i) => (
                           <button
@@ -722,7 +758,6 @@ export default function ReevaluateQuestionnaire() {
                       )}
                     </motion.div>
 
-                    {/* Contextual note */}
                     <motion.div
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.34 }}
                       className="rounded-2xl px-4 py-3 flex items-start gap-3"
@@ -736,74 +771,8 @@ export default function ReevaluateQuestionnaire() {
                   </div>
                 )}
 
-                {/* ── Step 4: Physical Report ───────────────────────────── */}
-                {step === 4 && (
-                  <div className="space-y-7">
-                    <StepHeader
-                      tag="Physical Report"
-                      title="How did your body respond?"
-                      sub="Your honest assessment directly shapes the difficulty of your next plan."
-                    />
-
-                    <div className="space-y-3">
-                      <motion.p
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }}
-                        className="text-xs font-bold uppercase tracking-wider text-white/40"
-                      >
-                        Physical progress since starting
-                      </motion.p>
-                      <div className="space-y-2.5">
-                        {[
-                          { v: 'Much stronger',    icon: '💪', sub: 'Significantly more powerful and capable' },
-                          { v: 'Slightly improved',icon: '📈', sub: 'Noticeable but modest improvement' },
-                          { v: 'About the same',   icon: '🤷', sub: 'Maintaining, not much change' },
-                          { v: 'More fatigued',    icon: '😴', sub: 'Running low on energy and drive' },
-                        ].map(({ v, icon, sub }, i) => (
-                          <SelectCard
-                            key={v} icon={icon} label={v} sublabel={sub}
-                            selected={form.physicalFeel === v} onClick={() => pick('physicalFeel', v)}
-                            delay={0.2 + i * 0.06}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <motion.p
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
-                        className="text-xs font-bold uppercase tracking-wider text-white/40"
-                      >
-                        Overall plan difficulty
-                      </motion.p>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { v: 'Too easy',   icon: '😴', label: 'Too Easy',  sub: 'Need a harder challenge' },
-                          { v: 'Just right', icon: '✅', label: 'Balanced',   sub: 'Perfect sweet spot' },
-                          { v: 'Too hard',   icon: '😤', label: 'Too Hard',   sub: 'Regularly overwhelmed' },
-                        ].map(({ v, icon, label, sub }, i) => (
-                          <motion.button
-                            key={v}
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 + i * 0.07 }}
-                            onClick={() => pick('difficulty', v)}
-                            className="flex flex-col items-center gap-1.5 py-5 px-2 rounded-2xl border transition-all duration-200 active:scale-[0.97]"
-                            style={form.difficulty === v ? {
-                              background: 'rgba(168,85,247,0.14)',
-                              borderColor: 'rgba(168,85,247,0.5)',
-                              boxShadow: '0 0 18px rgba(168,85,247,0.2)',
-                            } : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.09)' }}
-                          >
-                            <span className="text-3xl">{icon}</span>
-                            <p className={`text-xs font-bold text-center leading-tight mt-1 ${form.difficulty === v ? 'text-white' : 'text-white/60'}`}>{label}</p>
-                            <p className="text-[10px] text-white/28 text-center leading-tight mt-0.5">{sub}</p>
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Step 6: Schedule Update ───────────────────────────── */}
-                {step === 6 && (
+                {/* ── Step 8: Schedule ──────────────────────────────────── */}
+                {step === 8 && (
                   <div className="space-y-7">
                     <StepHeader
                       tag="Schedule"
@@ -850,87 +819,125 @@ export default function ReevaluateQuestionnaire() {
                     >
                       <span className="text-lg mt-0.5">📆</span>
                       <p className="text-xs text-white/40 leading-relaxed">
-                        Your session length and rest day placement stay the same unless you specify otherwise in the next step.
+                        Your session length and rest day placement stay the same unless you specify otherwise.
                       </p>
                     </motion.div>
                   </div>
                 )}
 
-                {/* ── Step 7: Final Adjustments ─────────────────────────── */}
-                {step === 7 && (
+                {/* ── Step 9: Exercises to remove ───────────────────────── */}
+                {step === 9 && (
                   <div className="space-y-7">
                     <StepHeader
-                      tag="Customise"
-                      title="Any final tweaks?"
-                      sub="All fields are optional. Only fill in what you want changed."
+                      tag="Adjustments"
+                      title="Exercises to swap out?"
+                      sub="Optional. Name anything you want removed or replaced."
                     />
-
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                       className="space-y-2"
                     >
-                      <label className="block text-xs font-bold uppercase tracking-wider text-white/40">
-                        Exercises to remove or replace
-                      </label>
                       <textarea
                         className="input-glass resize-none"
-                        rows={3}
+                        rows={5}
                         placeholder="e.g. Burpees - too intense on knees, Plank - need variety..."
                         value={form.exercisesToRemove}
                         onChange={e => update({ exercisesToRemove: e.target.value })}
                       />
                     </motion.div>
-
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}
+                      className="rounded-2xl px-4 py-3 flex items-start gap-3"
+                      style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.13)' }}
+                    >
+                      <span className="text-lg mt-0.5">✏️</span>
+                      <p className="text-xs text-white/40 leading-relaxed">
+                        Leave blank if you are happy with your current exercise selection.
+                      </p>
+                    </motion.div>
+                  </div>
+                )}
+
+                {/* ── Step 10: New injuries ─────────────────────────────── */}
+                {step === 10 && (
+                  <div className="space-y-7">
+                    <StepHeader
+                      tag="Limitations"
+                      title="Any new injuries?"
+                      sub="Optional. The AI will work around any physical limitations."
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                       className="space-y-2"
                     >
-                      <label className="block text-xs font-bold uppercase tracking-wider text-white/40">
-                        New injuries or limitations
-                      </label>
                       <textarea
                         className="input-glass resize-none"
-                        rows={2}
+                        rows={4}
                         placeholder="e.g. Shoulder strain - avoid overhead pressing..."
                         value={form.newInjuries}
                         onChange={e => update({ newInjuries: e.target.value })}
                       />
                     </motion.div>
-
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}
-                      className="space-y-3"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}
+                      className="rounded-2xl px-4 py-3 flex items-start gap-3"
+                      style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.13)' }}
                     >
-                      <label className="block text-xs font-bold uppercase tracking-wider text-white/40">
-                        Want to shift focus?
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {NEW_GOAL_OPTIONS.map(({ label, icon }, i) => {
-                          const active = form.newGoals.includes(label)
-                          return (
-                            <motion.button
-                              key={label}
-                              initial={{ opacity: 0, scale: 0.85 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.38 + i * 0.04 }}
-                              onClick={() => toggleGoal(label)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm font-medium border transition-all duration-200 active:scale-[0.97]"
-                              style={active ? {
-                                background: 'rgba(168,85,247,0.15)',
-                                borderColor: 'rgba(168,85,247,0.5)',
-                                color: '#e9d5ff',
-                                boxShadow: '0 0 14px rgba(168,85,247,0.18)',
-                              } : {
-                                background: 'rgba(255,255,255,0.05)',
-                                borderColor: 'rgba(255,255,255,0.1)',
-                                color: 'rgba(255,255,255,0.55)',
-                              }}
-                            >
-                              <span>{icon}</span> {label}
-                            </motion.button>
-                          )
-                        })}
-                      </div>
+                      <span className="text-lg mt-0.5">🩹</span>
+                      <p className="text-xs text-white/40 leading-relaxed">
+                        Leave blank if you have no new physical limitations since your last plan.
+                      </p>
+                    </motion.div>
+                  </div>
+                )}
+
+                {/* ── Step 11: Goal shift ───────────────────────────────── */}
+                {step === 11 && (
+                  <div className="space-y-7">
+                    <StepHeader
+                      tag="Goals"
+                      title="Shifting your focus?"
+                      sub="Optional. Select new goals to add or change your training direction."
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                      className="flex flex-wrap gap-2.5"
+                    >
+                      {NEW_GOAL_OPTIONS.map(({ label, icon }, i) => {
+                        const active = form.newGoals.includes(label)
+                        return (
+                          <motion.button
+                            key={label}
+                            initial={{ opacity: 0, scale: 0.85 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.24 + i * 0.04 }}
+                            onClick={() => toggleGoal(label)}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold border transition-all duration-200 active:scale-[0.97]"
+                            style={active ? {
+                              background: 'rgba(168,85,247,0.15)',
+                              borderColor: 'rgba(168,85,247,0.5)',
+                              color: '#e9d5ff',
+                              boxShadow: '0 0 14px rgba(168,85,247,0.18)',
+                            } : {
+                              background: 'rgba(255,255,255,0.05)',
+                              borderColor: 'rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.55)',
+                            }}
+                          >
+                            <span className="text-base">{icon}</span> {label}
+                          </motion.button>
+                        )
+                      })}
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+                      className="rounded-2xl px-4 py-3 flex items-start gap-3"
+                      style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.13)' }}
+                    >
+                      <span className="text-lg mt-0.5">🎯</span>
+                      <p className="text-xs text-white/40 leading-relaxed">
+                        Your original goals are kept unless you select replacements here.
+                      </p>
                     </motion.div>
                   </div>
                 )}
@@ -946,7 +953,7 @@ export default function ReevaluateQuestionnaire() {
                   <HiArrowNarrowLeft className="w-4 h-4" />
                   Back
                 </button>
-                {step < 7 ? (
+                {step < 11 ? (
                   <button
                     onClick={handleNext}
                     disabled={!canAdvance()}
@@ -956,8 +963,8 @@ export default function ReevaluateQuestionnaire() {
                     <HiArrowNarrowRight className="w-4 h-4" />
                   </button>
                 ) : (
-                  <button onClick={() => goToStep(8)} className="btn-primary">
-                    Review &amp; Evolve
+                  <button onClick={() => goToStep(12)} className="btn-primary">
+                    Review
                     <HiArrowNarrowRight className="w-4 h-4" />
                   </button>
                 )}
@@ -965,11 +972,10 @@ export default function ReevaluateQuestionnaire() {
             </div>
           )}
 
-          {/* ── Step 5: Personalized AI Insight (auto-advance) ────────────── */}
-          {step === 5 && (
+          {/* ── Step 6: Personalized AI Insight (auto-advance, no controls) ── */}
+          {step === 6 && (
             <div className="min-h-[calc(100svh-6rem)] flex flex-col items-center justify-center py-10 space-y-8">
 
-              {/* Insight icon */}
               <motion.div
                 initial={{ scale: 0.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -984,7 +990,6 @@ export default function ReevaluateQuestionnaire() {
                 {insight.icon}
               </motion.div>
 
-              {/* Tag + Headline */}
               <div className="text-center space-y-3 max-w-sm px-4">
                 <motion.p
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
@@ -995,8 +1000,13 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
                 <motion.h2
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-                  className="text-3xl font-black tracking-tight leading-tight"
-                  style={{ background: `linear-gradient(135deg,#fff 50%,${insight.color})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                  className="font-black tracking-tight leading-tight"
+                  style={{
+                    fontSize: 'clamp(2.2rem, 8.5vw, 3.2rem)',
+                    background: `linear-gradient(135deg,#fff 50%,${insight.color})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
                 >
                   {insight.headline}
                 </motion.h2>
@@ -1008,7 +1018,6 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
               </div>
 
-              {/* Animated stat */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.88 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1025,10 +1034,10 @@ export default function ReevaluateQuestionnaire() {
                 <p className="text-xs text-white/35 uppercase tracking-widest mt-1">{insight.statLabel}</p>
               </motion.div>
 
-              {/* Auto-advance bar + skip */}
+              {/* Auto-advance bar only - no skip/back controls */}
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.62 }}
-                className="flex flex-col items-center gap-3"
+                className="flex flex-col items-center"
               >
                 <div className="w-44 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                   <motion.div
@@ -1039,23 +1048,14 @@ export default function ReevaluateQuestionnaire() {
                     style={{ background: `linear-gradient(90deg,${insight.color},#A855F7)` }}
                   />
                 </div>
-                <div className="flex items-center gap-4">
-                  <button onClick={() => goToStep(4)} className="text-white/25 text-sm hover:text-white/50 transition-colors">
-                    ← Back
-                  </button>
-                  <button onClick={() => goToStep(6)} className="text-white/35 text-sm hover:text-white/65 transition-colors">
-                    Continue →
-                  </button>
-                </div>
               </motion.div>
             </div>
           )}
 
-          {/* ── Step 8: Launch screen ─────────────────────────────────────── */}
-          {step === 8 && (
+          {/* ── Step 12: Launch screen ────────────────────────────────────── */}
+          {step === 12 && (
             <div className="min-h-[calc(100svh-6rem)] flex flex-col justify-center py-10 space-y-7">
 
-              {/* Header */}
               <div className="text-center space-y-2">
                 <motion.p
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
@@ -1065,7 +1065,8 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
                 <motion.h2
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
-                  className="text-4xl font-black tracking-tight leading-tight"
+                  className="font-black tracking-tight leading-tight"
+                  style={{ fontSize: 'clamp(2.4rem, 9.5vw, 3.6rem)' }}
                 >
                   Everything the AI{' '}
                   <span style={{ background: 'linear-gradient(135deg,#A855F7,#22D3EE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -1080,7 +1081,6 @@ export default function ReevaluateQuestionnaire() {
                 </motion.p>
               </div>
 
-              {/* Summary cards */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
                 className="rounded-3xl p-5 space-y-3"
@@ -1106,7 +1106,6 @@ export default function ReevaluateQuestionnaire() {
                 </div>
               </motion.div>
 
-              {/* What changes callout */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }}
                 className="rounded-2xl p-4 flex items-start gap-3"
@@ -1121,7 +1120,6 @@ export default function ReevaluateQuestionnaire() {
                 </div>
               </motion.div>
 
-              {/* CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.54 }}
                 className="space-y-3"
@@ -1131,7 +1129,7 @@ export default function ReevaluateQuestionnaire() {
                 </button>
                 <div className="text-center">
                   <button onClick={handleBack} className="text-white/25 text-sm hover:text-white/50 transition-colors">
-                    ← Go back
+                    Go back
                   </button>
                 </div>
               </motion.div>
