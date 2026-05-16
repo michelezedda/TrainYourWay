@@ -199,6 +199,55 @@ const stepTransition = { duration: 0.24, ease: [0.4, 0, 0.2, 1] as [number, numb
 const TOTAL_STEPS = 15
 const STEP_LABELS = ['Your Name', 'Welcome', 'About You', 'Birthday', 'Metrics', 'Your Level', 'Goals', 'Your Plan', 'Equipment', 'Schedule', 'Your Diet', 'Restrictions', 'Space', 'Launch']
 
+// ── Recovery hint ──────────────────────────────────────────────────────────────
+function getLongestConsecutiveStreak(selectedDays: string[]): number {
+  if (selectedDays.length < 2) return selectedDays.length
+  const idx = new Set(selectedDays.map(d => DAY_FULL.indexOf(d)).filter(i => i >= 0))
+  let max = 0
+  for (const start of idx) {
+    let len = 0
+    while (len < 7 && idx.has((start + len) % 7)) len++
+    max = Math.max(max, len)
+  }
+  return max
+}
+
+function RecoveryHint({ streak, fitnessLevel }: { streak: number; fitnessLevel?: string }) {
+  if (streak < 3) return null
+  let message: string
+  if (streak >= 6) {
+    message = fitnessLevel === 'advanced'
+      ? "At this volume, sleep and nutrition carry as much weight as the sessions themselves. Make it count."
+      : "A schedule this dense works best with intentional recovery. Even a short walk on rest days beats no rest."
+  } else if (streak >= 4) {
+    message = fitnessLevel === 'beginner'
+      ? "Four consecutive days is a real commitment. Rest days are where growth actually happens."
+      : "Training this many days in a row is demanding. One rest day mid-week can lift performance across all sessions."
+  } else {
+    message = fitnessLevel === 'beginner'
+      ? "As you're building your routine, a rest day between sessions helps your body adapt without overloading."
+      : "A recovery day between sessions is where muscles repair and grow. You'll train harder for it."
+  }
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
+      className="flex gap-3 px-4 py-3.5 rounded-2xl"
+      style={{ background: 'rgba(168,85,247,0.07)', border: '1px solid rgba(168,85,247,0.18)' }}
+    >
+      <span className="text-base flex-shrink-0 mt-0.5">💡</span>
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(168,85,247,0.7)' }}>
+          Coach tip
+        </p>
+        <p className="text-xs text-white/55 leading-relaxed">{message}</p>
+      </div>
+    </motion.div>
+  )
+}
+
 // ── StepHeader ────────────────────────────────────────────────────────────────
 function StepHeader({ tag, title, sub }: { tag?: string; title: string; sub?: string }) {
   return (
@@ -1153,6 +1202,16 @@ export default function Questionnaire() {
                               : `${form.workoutDays.length} day${form.workoutDays.length !== 1 ? 's' : ''} selected`
                             }
                           </p>
+                          <AnimatePresence>
+                            {getLongestConsecutiveStreak(form.workoutDays) >= 3 && (
+                              <div className="mt-2.5">
+                                <RecoveryHint
+                                  streak={getLongestConsecutiveStreak(form.workoutDays)}
+                                  fitnessLevel={form.fitnessLevel}
+                                />
+                              </div>
+                            )}
+                          </AnimatePresence>
                         </motion.div>
 
                         {/* Session duration - large cards */}
