@@ -4,22 +4,27 @@ import { HiChevronLeft, HiArrowNarrowRight, HiPlus } from 'react-icons/hi'
 import { useNavigate, Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
 import ExerciseModal from '@/components/ExerciseModal'
-import {
-  parseAnalysisSections,
-  analysisComponents,
-  WorkoutDayView,
-  SECTION_ICONS,
-} from '@/components/PlanView'
+import { parseAnalysisSections, WorkoutDayView } from '@/components/PlanView'
 import { buildPlanComponents } from '@/lib/planComponents'
 import { extractPlanFromImage, analyzeImportedPlan, improveImportedPlan } from '@/lib/gemini'
 import { getNutritionProfile } from '@/lib/nutrition'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 
-type Step = 'upload' | 'extracting' | 'preview' | 'saving' | 'analyzing' | 'analysis' | 'improving' | 'success'
+type Step =
+  | 'upload'
+  | 'extracting'
+  | 'preview'
+  | 'saving'
+  | 'analyzing'
+  | 'analysis'
+  | 'improving'
+  | 'improvement-reveal'
+  | 'success'
 
-// ── Phase messages ─────────────────────────────────────────────────────────────
+// ── Cinematic phase messages ───────────────────────────────────────────────────
 
 const EXTRACT_PHASES = [
   { icon: '📸', label: 'Reading your photos...' },
@@ -47,7 +52,50 @@ const SAVE_PHASES = [
   { icon: '✅', label: 'Almost done...' },
 ]
 
-// ── Profile context ────────────────────────────────────────────────────────────
+// ── Analysis section design tokens ────────────────────────────────────────────
+
+const ANALYSIS_THEME: Record<string, { icon: string; tag: string; accent: string }> = {
+  'Plan Assessment':          { icon: '🎯', tag: 'Plan overview',          accent: '#22D3EE' },
+  'Suitability for Your Goals': { icon: '📊', tag: 'Goal alignment',      accent: '#A855F7' },
+  'What Works Well':          { icon: '✅', tag: 'Strengths',              accent: '#10b981' },
+  'What Could Be Better':     { icon: '🔧', tag: 'Optimization areas',    accent: '#f59e0b' },
+  'Verdict':                  { icon: '⚡', tag: 'Coach recommendation',  accent: '#ec4899' },
+}
+
+const ANALYSIS_TIPS: Record<string, string> = {
+  'Plan Assessment': 'Structure determines sustainability. A plan you understand is one you will actually follow.',
+  'Suitability for Your Goals': 'Alignment between your plan and your goals is the single biggest driver of results.',
+  'What Works Well': 'Building on existing strengths is smarter and more motivating than rebuilding from scratch.',
+  'What Could Be Better': 'Small structural improvements compound over weeks into measurably better outcomes.',
+  'Verdict': 'The best plan is the one calibrated to who you are right now, not who you want to be.',
+}
+
+const IMPROVEMENT_ACCENTS = ['#A855F7', '#22D3EE', '#10b981', '#f59e0b', '#ec4899']
+
+// ── Enhanced markdown renderer for analysis slides ────────────────────────────
+
+const analysisMarkdown: Components = {
+  h2: ({ children }) => (
+    <h2 className="text-sm font-bold text-white mt-5 mb-2 first:mt-0 flex items-center gap-2">
+      <span className="w-1 h-4 rounded-full flex-shrink-0"
+        style={{ background: 'linear-gradient(180deg, #A855F7, #22D3EE)' }} />
+      {children}
+    </h2>
+  ),
+  p: ({ children }) => (
+    <p className="leading-[1.8] mb-4" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15 }}>{children}</p>
+  ),
+  ul: ({ children }) => <ul className="space-y-3 mb-4">{children}</ul>,
+  li: ({ children }) => (
+    <li className="flex gap-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15 }}>
+      <span className="w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ background: '#A855F7' }} />
+      <span>{children}</span>
+    </li>
+  ),
+  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
 
 function buildProfileContext(): string {
   const profile = getNutritionProfile()
@@ -59,6 +107,137 @@ function buildProfileContext(): string {
   if (profile.dietType) lines.push(`- Diet: ${profile.dietType}`)
   if (profile.allergies.length > 0) lines.push(`- Allergies: ${profile.allergies.join(', ')}`)
   return lines.join('\n')
+}
+
+function parseWhatChanged(plan: string): string[] {
+  const section = plan.match(/## What Changed([\s\S]*?)(?=\n## |$)/i)?.[1] ?? ''
+  return section
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.startsWith('-'))
+    .map(l => l.replace(/^-\s*/, '').trim())
+    .filter(Boolean)
+}
+
+function getImprovementIcon(text: string): string {
+  const t = text.toLowerCase()
+  if (/recovery|rest day|recover/.test(t)) return '🔄'
+  if (/volume|overtraining|overload/.test(t)) return '📊'
+  if (/progression|progress/.test(t)) return '📈'
+  if (/balance|balanced|distribut|imbalance/.test(t)) return '⚖️'
+  if (/muscle|strength|hypertrophy/.test(t)) return '💪'
+  if (/schedule|spacing|timing|frequency/.test(t)) return '📅'
+  if (/equipment|dumbbell|barbell|machine/.test(t)) return '🏋️'
+  if (/intensity|effort|load/.test(t)) return '⚡'
+  if (/cardio|endurance|aerobic/.test(t)) return '🏃'
+  if (/personal|tailor|custom|profile/.test(t)) return '🎯'
+  if (/warm|cool|mobil|flexib/.test(t)) return '🧘'
+  return '✨'
+}
+
+// ── Slide layout primitives ───────────────────────────────────────────────────
+
+function SlideWrap({ children }: { children: React.ReactNode }) {
+  return <div className="pb-52" style={{ minHeight: '72vh' }}>{children}</div>
+}
+
+function ImportStickyNav({
+  slideIdx, total, isFirst, isLast,
+  nextLabel, doneLabel, secondaryLabel,
+  onNext, onBack, onDone, onSecondary,
+}: {
+  slideIdx: number; total: number; isFirst: boolean; isLast: boolean
+  nextLabel?: string; doneLabel: string; secondaryLabel?: string
+  onNext: () => void; onBack: () => void; onDone: () => void; onSecondary?: () => void
+}) {
+  return (
+    <div className="fixed inset-x-0 md:left-56 z-40 px-4 md:px-8 bottom-28 md:bottom-6">
+      <div className="max-w-lg mx-auto">
+        <div
+          className="rounded-3xl px-4 pt-3 pb-4"
+          style={{
+            background: 'rgba(3,0,20,0.92)',
+            backdropFilter: 'blur(32px)',
+            WebkitBackdropFilter: 'blur(32px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 -8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(168,85,247,0.07)',
+          }}
+        >
+          <div className="flex justify-center gap-1 mb-3">
+            {Array.from({ length: total }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === slideIdx ? 20 : 5,
+                  height: 5,
+                  background: i === slideIdx
+                    ? 'linear-gradient(90deg, #A855F7, #22D3EE)'
+                    : i < slideIdx ? 'rgba(168,85,247,0.42)' : 'rgba(255,255,255,0.1)',
+                }}
+              />
+            ))}
+          </div>
+
+          {isLast && secondaryLabel ? (
+            <div className="space-y-2">
+              <button
+                onClick={onDone}
+                className="w-full h-12 rounded-2xl font-black text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
+                  color: '#fff',
+                  boxShadow: '0 4px 24px rgba(168,85,247,0.5)',
+                }}
+              >
+                {doneLabel} <HiArrowNarrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onSecondary}
+                className="w-full h-10 rounded-2xl text-sm font-bold transition-all active:scale-[0.97]"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                {secondaryLabel}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {!isFirst && (
+                <button
+                  onClick={onBack}
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <HiChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+              {isLast ? (
+                <button
+                  onClick={onDone}
+                  className="flex-1 h-12 rounded-2xl font-black text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #A855F7, #22D3EE)',
+                    color: '#fff',
+                    boxShadow: '0 4px 24px rgba(168,85,247,0.5)',
+                  }}
+                >
+                  {doneLabel} <HiArrowNarrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={onNext}
+                  className="flex-1 h-12 rounded-2xl font-black text-sm transition-all active:scale-[0.97]"
+                  style={{ background: 'linear-gradient(135deg, #A855F7, #22D3EE)', color: '#fff' }}
+                >
+                  {nextLabel ?? 'Next'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── CinematicLoader ────────────────────────────────────────────────────────────
@@ -130,15 +309,7 @@ function CinematicLoader({ phases }: { phases: { icon: string; label: string }[]
 
 // ── ImageCard ──────────────────────────────────────────────────────────────────
 
-function ImageCard({
-  src,
-  index,
-  onRemove,
-}: {
-  src: string
-  index: number
-  onRemove: () => void
-}) {
+function ImageCard({ src, index, onRemove }: { src: string; index: number; onRemove: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.88, y: 12 }}
@@ -166,19 +337,13 @@ function ImageCard({
 
 // ── ConfirmReplaceModal ────────────────────────────────────────────────────────
 
-function ConfirmReplaceModal({
-  onConfirm,
-  onCancel,
-}: {
-  onConfirm: () => void
-  onCancel: () => void
-}) {
+function ConfirmReplaceModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-32 sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
       style={{ background: 'rgba(5,5,16,0.88)', backdropFilter: 'blur(16px)' }}
       onClick={onCancel}
     >
@@ -224,7 +389,7 @@ function ConfirmReplaceModal({
   )
 }
 
-// ── SuccessScreen ──────────────────────────────────────────────────────────────
+// ── Success screen (save-only flow) ───────────────────────────────────────────
 
 function SuccessScreen({ onStart }: { onStart: () => void }) {
   return (
@@ -270,159 +435,382 @@ function SuccessScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-// ── AnalysisSlideReader ────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ANALYSIS REVEAL
+// ══════════════════════════════════════════════════════════════════════════════
 
-function AnalysisSlideReader({
-  sections,
-  onKeep,
-  onImprove,
-  hasProfile,
-}: {
-  sections: ReturnType<typeof parseAnalysisSections>
-  onKeep: () => void
-  onImprove: () => void
-  hasProfile: boolean
-}) {
-  const [idx, setIdx] = useState(0)
-  const [dir, setDir] = useState(1)
-
-  const go = (next: number) => {
-    setDir(next > idx ? 1 : -1)
-    setIdx(next)
-  }
-
-  const section = sections[idx]
-  if (!section) return null
-  const isLast = idx === sections.length - 1
-
+function AnalysisHeroSlide({ sectionCount }: { sectionCount: number }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-white/30">Analysis</span>
-        <div className="flex gap-1.5">
-          {sections.map((_, i) => (
-            <button key={i} onClick={() => go(i)}>
-              <span
-                className="block rounded-full h-1.5 transition-all duration-300"
-                style={{ width: i === idx ? 20 : 6, background: i === idx ? '#A855F7' : 'rgba(255,255,255,0.18)' }}
-              />
-            </button>
-          ))}
-        </div>
-        <span className="text-xs text-white/30 tabular-nums">{idx + 1} / {sections.length}</span>
-      </div>
-
-      <AnimatePresence mode="wait">
+    <SlideWrap>
+      <div className="flex flex-col items-center text-center space-y-8 pt-6">
         <motion.div
-          key={idx}
-          initial={{ opacity: 0, x: dir > 0 ? 24 : -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: dir > 0 ? -18 : 18, scale: 0.97 }}
-          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="rounded-3xl p-6"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+          initial={{ scale: 0.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 14, delay: 0.06 }}
+          className="w-32 h-32 rounded-3xl flex items-center justify-center"
+          style={{
+            fontSize: 64,
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18))',
+            border: '1px solid rgba(168,85,247,0.45)',
+            boxShadow: '0 0 80px rgba(168,85,247,0.38), 0 0 130px rgba(168,85,247,0.14)',
+          }}
         >
-          <div className="flex items-center gap-3 mb-5">
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
-            >
-              {SECTION_ICONS[section.title] ?? '📋'}
-            </div>
-            <h3 className="text-white font-black text-lg tracking-tight leading-tight">{section.title}</h3>
-          </div>
-          <div className="text-white/60 text-sm leading-relaxed">
-            <ReactMarkdown components={analysisComponents}>{section.content}</ReactMarkdown>
-          </div>
+          🧠
         </motion.div>
-      </AnimatePresence>
 
-      <div className="flex items-center gap-3">
-        {idx > 0 && (
-          <button
-            onClick={() => go(idx - 1)}
-            className="px-5 py-3 rounded-2xl text-sm font-bold text-white/55 transition-all hover:bg-white/5"
-            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+        <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] mb-4" style={{ color: '#A855F7' }}>
+            Analysis complete
+          </p>
+          <h1
+            className="font-black text-white tracking-tight leading-[1.06] mb-4"
+            style={{ fontSize: 'clamp(2.4rem, 10vw, 4.2rem)' }}
           >
-            Back
-          </button>
-        )}
-        <div className="flex-1" />
-        {!isLast ? (
-          <button
-            onClick={() => go(idx + 1)}
-            className="px-7 py-3 rounded-2xl text-sm font-black text-white flex items-center gap-2"
-            style={{
-              background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.14))',
-              border: '1px solid rgba(168,85,247,0.25)',
-            }}
-          >
-            Next <HiArrowNarrowRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              onClick={onKeep}
-              className="px-5 py-3 rounded-2xl text-sm font-bold text-white/55 hover:bg-white/5 transition-all"
-              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              Keep as-is
-            </button>
-            {hasProfile && (
-              <button
-                onClick={onImprove}
-                className="px-6 py-3 rounded-2xl text-sm font-black text-white flex items-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #A855F7 0%, #7c3aed 100%)' }}
-              >
-                Improve it <HiArrowNarrowRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        )}
+            Your plan<br />is reviewed.
+          </h1>
+          <p className="text-white/45 text-base leading-relaxed max-w-[260px] mx-auto">
+            Your AI coach analyzed {sectionCount} key areas of your uploaded program.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="flex gap-4 items-center"
+        >
+          {[
+            { label: 'Areas reviewed', value: String(sectionCount) },
+            { label: 'Powered by', value: 'AI coach' },
+          ].map(({ label, value }, i) => (
+            <div key={label} className={`text-center ${i > 0 ? 'border-l border-white/[0.08] pl-4' : ''}`}>
+              <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.6rem)' }}>
+                {value}
+              </p>
+              <p className="text-white/30 text-[9px] uppercase tracking-wider mt-1">{label}</p>
+            </div>
+          ))}
+        </motion.div>
       </div>
-
-      {!hasProfile && (
-        <p className="text-white/25 text-xs text-center">
-          Complete the{' '}
-          <Link to="/questionnaire" className="text-purple-400 underline">questionnaire</Link>{' '}
-          to unlock personalized improvements.
-        </p>
-      )}
-    </div>
+    </SlideWrap>
   )
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
+function AnalysisInsightSlide({ section }: { section: { title: string; content: string } }) {
+  const theme = ANALYSIS_THEME[section.title] ?? { icon: '📋', tag: 'Insight', accent: '#A855F7' }
+  const tip   = ANALYSIS_TIPS[section.title]
+  const { accent } = theme
+
+  return (
+    <SlideWrap>
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-4"
+            style={{
+              background: `linear-gradient(135deg, ${accent}28, ${accent}10)`,
+              border: `1px solid ${accent}38`,
+            }}
+          >
+            {theme.icon}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-3" style={{ color: accent }}>
+            {theme.tag}
+          </p>
+          <h2
+            className="font-black text-white tracking-tight leading-tight"
+            style={{ fontSize: 'clamp(2rem, 8vw, 3.2rem)' }}
+          >
+            {section.title}
+          </h2>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="px-5 py-5">
+            <ReactMarkdown components={analysisMarkdown}>{section.content}</ReactMarkdown>
+          </div>
+        </motion.div>
+
+        {tip && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex gap-3 px-4 py-4 rounded-2xl"
+            style={{ background: `${accent}0e`, border: `1px solid ${accent}28` }}
+          >
+            <span className="text-lg flex-shrink-0">💡</span>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: accent }}>
+                Coach insight
+              </p>
+              <p className="text-white/65 text-sm leading-relaxed">{tip}</p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </SlideWrap>
+  )
+}
+
+function ImportAnalysisReveal({
+  sections, hasProfile, onKeep, onImprove,
+}: {
+  sections: { title: string; content: string }[]
+  hasProfile: boolean
+  onKeep: () => void
+  onImprove: () => void
+}) {
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [dir, setDir]           = useState(1)
+
+  const total  = 1 + sections.length
+  const isLast = slideIdx === total - 1
+
+  const go = (next: number) => { setDir(next > slideIdx ? 1 : -1); setSlideIdx(next) }
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={slideIdx}
+          initial={{ opacity: 0, x: dir > 0 ? 28 : -28 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: dir > 0 ? -18 : 18, scale: 0.98 }}
+          transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {slideIdx === 0
+            ? <AnalysisHeroSlide sectionCount={sections.length} />
+            : <AnalysisInsightSlide section={sections[slideIdx - 1]} />
+          }
+        </motion.div>
+      </AnimatePresence>
+
+      <ImportStickyNav
+        slideIdx={slideIdx}
+        total={total}
+        isFirst={slideIdx === 0}
+        isLast={isLast}
+        nextLabel="Next insight"
+        doneLabel={hasProfile ? 'Improve My Plan' : 'Keep My Plan'}
+        secondaryLabel={hasProfile && isLast ? 'Keep My Plan' : undefined}
+        onNext={() => go(slideIdx + 1)}
+        onBack={() => go(slideIdx - 1)}
+        onDone={hasProfile ? onImprove : onKeep}
+        onSecondary={hasProfile ? onKeep : undefined}
+      />
+    </>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPROVEMENT REVEAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ImprovementHeroSlide({ itemCount }: { itemCount: number }) {
+  return (
+    <SlideWrap>
+      <div className="flex flex-col items-center text-center space-y-8 pt-6">
+        <motion.div
+          initial={{ scale: 0.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 14, delay: 0.06 }}
+          className="w-32 h-32 rounded-3xl flex items-center justify-center"
+          style={{
+            fontSize: 64,
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18))',
+            border: '1px solid rgba(168,85,247,0.45)',
+            boxShadow: '0 0 80px rgba(168,85,247,0.38), 0 0 130px rgba(168,85,247,0.14)',
+          }}
+        >
+          🚀
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] mb-4" style={{ color: '#22D3EE' }}>
+            Your AI coach evolved your plan
+          </p>
+          <h1
+            className="font-black text-white tracking-tight leading-[1.06] mb-4"
+            style={{ fontSize: 'clamp(2.4rem, 10vw, 4.2rem)' }}
+          >
+            Plan<br />upgraded.
+          </h1>
+          <p className="text-white/45 text-base leading-relaxed max-w-[260px] mx-auto">
+            {itemCount > 0
+              ? `${itemCount} targeted improvement${itemCount !== 1 ? 's' : ''} were made to your program.`
+              : 'Your uploaded plan has been tailored to your profile and goals.'
+            }
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex gap-2"
+        >
+          {[{ label: 'Personalized', icon: '🎯' }, { label: 'Optimized', icon: '⚡' }, { label: 'Yours', icon: '🏆' }].map(({ label, icon }) => (
+            <span
+              key={label}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold"
+              style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', color: '#c084fc' }}
+            >
+              {icon} {label}
+            </span>
+          ))}
+        </motion.div>
+      </div>
+    </SlideWrap>
+  )
+}
+
+function ImprovementItemSlide({ item, index }: { item: string; index: number }) {
+  const icon   = getImprovementIcon(item)
+  const accent = IMPROVEMENT_ACCENTS[index % IMPROVEMENT_ACCENTS.length]
+
+  // Split on first capital-letter sentence boundary after a full stop
+  const splitIdx = item.search(/(?<=[.!?])\s+[A-Z]/)
+  const headline = splitIdx > 0 ? item.slice(0, splitIdx + 1) : item
+  const detail   = splitIdx > 0 ? item.slice(splitIdx + 1) : ''
+
+  return (
+    <SlideWrap>
+      <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-4"
+            style={{
+              background: `linear-gradient(135deg, ${accent}28, ${accent}10)`,
+              border: `1px solid ${accent}38`,
+            }}
+          >
+            {icon}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-3" style={{ color: accent }}>
+            Improvement {index + 1}
+          </p>
+          <h2
+            className="font-black text-white tracking-tight leading-tight"
+            style={{ fontSize: 'clamp(1.8rem, 7.5vw, 2.8rem)' }}
+          >
+            {headline}
+          </h2>
+        </motion.div>
+
+        {detail && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="rounded-3xl px-5 py-5"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <p className="text-white/65 text-base leading-relaxed">{detail}</p>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-3 px-4 py-3.5 rounded-2xl"
+          style={{ background: `${accent}0e`, border: `1px solid ${accent}28` }}
+        >
+          <span className="text-sm flex-shrink-0 mt-0.5">⚡</span>
+          <p className="text-white/55 text-sm leading-relaxed">
+            This change is calibrated to your specific fitness profile and goals.
+          </p>
+        </motion.div>
+      </div>
+    </SlideWrap>
+  )
+}
+
+function ImprovementReveal({ items, onStart }: { items: string[]; onStart: () => void }) {
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [dir, setDir]           = useState(1)
+
+  const slideItems = items.length > 0 ? items : ['Your plan has been tailored to your profile and goals.']
+  const total      = 1 + slideItems.length
+  const isLast     = slideIdx === total - 1
+
+  const go = (next: number) => { setDir(next > slideIdx ? 1 : -1); setSlideIdx(next) }
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={slideIdx}
+          initial={{ opacity: 0, x: dir > 0 ? 28 : -28 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: dir > 0 ? -18 : 18, scale: 0.98 }}
+          transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {slideIdx === 0
+            ? <ImprovementHeroSlide itemCount={items.length} />
+            : <ImprovementItemSlide item={slideItems[slideIdx - 1]} index={slideIdx - 1} />
+          }
+        </motion.div>
+      </AnimatePresence>
+
+      <ImportStickyNav
+        slideIdx={slideIdx}
+        total={total}
+        isFirst={slideIdx === 0}
+        isLast={isLast}
+        nextLabel="See next improvement"
+        doneLabel="Start Training"
+        onNext={() => go(slideIdx + 1)}
+        onBack={() => go(slideIdx - 1)}
+        onDone={onStart}
+      />
+    </>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ══════════════════════════════════════════════════════════════════════════════
 
 export default function ImportPlan() {
-  const navigate = useNavigate()
+  const navigate    = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [step, setStep] = useState<Step>('upload')
-  const [images, setImages] = useState<string[]>([])
-  const [extractedPlan, setExtractedPlan] = useState('')
+  const [step, setStep]                         = useState<Step>('upload')
+  const [images, setImages]                     = useState<string[]>([])
+  const [extractedPlan, setExtractedPlan]       = useState('')
   const [analysisSections, setAnalysisSections] = useState<ReturnType<typeof parseAnalysisSections>>([])
-  const [error, setError] = useState<string | null>(null)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [pendingAction, setPendingAction] = useState<'save' | 'improve' | null>(null)
+  const [whatChangedItems, setWhatChangedItems] = useState<string[]>([])
+  const [error, setError]                       = useState<string | null>(null)
+  const [showConfirm, setShowConfirm]           = useState(false)
+  const [pendingAction, setPendingAction]       = useState<'save' | 'improve' | null>(null)
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
 
   const profileContext = buildProfileContext()
-  const hasProfile = !!profileContext
+  const hasProfile     = !!profileContext
 
   const previewComponents = useMemo(() => buildPlanComponents(setSelectedExercise), [])
 
   // ── File handling ─────────────────────────────────────────────────────────────
 
   const addFiles = (files: FileList | File[]) => {
-    const arr = Array.from(files).filter(f => f.type.startsWith('image/'))
-    arr.slice(0, 3 - images.length).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setImages(prev => prev.length < 3 ? [...prev, reader.result as string] : prev)
-      }
-      reader.readAsDataURL(file)
-    })
+    Array.from(files)
+      .filter(f => f.type.startsWith('image/'))
+      .slice(0, 3 - images.length)
+      .forEach(file => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          setImages(prev => prev.length < 3 ? [...prev, reader.result as string] : prev)
+        }
+        reader.readAsDataURL(file)
+      })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,15 +832,9 @@ export default function ImportPlan() {
     const userId = getUserId()
     await db.transact(
       db.tx.workoutPlans[planId].update({
-        userId,
-        userName: 'Imported Plan',
-        fitnessLevel: '',
-        goals: '[]',
-        equipment: '[]',
-        constraints: 'imported',
-        plan: planText,
-        createdAt: Date.now(),
-        parentPlanId: '',
+        userId, userName: 'Imported Plan', fitnessLevel: '',
+        goals: '[]', equipment: '[]', constraints: 'imported',
+        plan: planText, createdAt: Date.now(), parentPlanId: '',
       }),
     )
     return planId
@@ -472,13 +854,13 @@ export default function ImportPlan() {
     }
   }
 
-  const requestSave = () => { setPendingAction('save'); setShowConfirm(true) }
+  const requestSave    = () => { setPendingAction('save');    setShowConfirm(true) }
   const requestImprove = () => { setPendingAction('improve'); setShowConfirm(true) }
 
   const handleConfirmed = () => {
     setShowConfirm(false)
-    if (pendingAction === 'save') void doSave()
-    else if (pendingAction === 'improve') void doImprove()
+    if (pendingAction === 'save')    void doSave()
+    if (pendingAction === 'improve') void doImprove()
   }
 
   const doSave = async (planText = extractedPlan) => {
@@ -511,8 +893,10 @@ export default function ImportPlan() {
     setError(null)
     try {
       const improved = await improveImportedPlan(extractedPlan, profileContext)
+      const items    = parseWhatChanged(improved)
       await savePlan(improved)
-      setStep('success')
+      setWhatChangedItems(items)
+      setStep('improvement-reveal')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to improve plan')
       setStep('analysis')
@@ -522,21 +906,34 @@ export default function ImportPlan() {
   // ── Loading steps ─────────────────────────────────────────────────────────────
 
   if (step === 'extracting') return <CinematicLoader phases={EXTRACT_PHASES} />
-  if (step === 'analyzing') return <CinematicLoader phases={ANALYZE_PHASES} />
-  if (step === 'improving') return <CinematicLoader phases={IMPROVE_PHASES} />
-  if (step === 'saving') return <CinematicLoader phases={SAVE_PHASES} />
+  if (step === 'analyzing')  return <CinematicLoader phases={ANALYZE_PHASES} />
+  if (step === 'improving')  return <CinematicLoader phases={IMPROVE_PHASES} />
+  if (step === 'saving')     return <CinematicLoader phases={SAVE_PHASES} />
 
-  // ── Success ───────────────────────────────────────────────────────────────────
+  // ── Success (save-only path) ──────────────────────────────────────────────────
 
   if (step === 'success') {
     return <SuccessScreen onStart={() => navigate('/workout', { replace: true })} />
   }
 
-  // ── Analysis ──────────────────────────────────────────────────────────────────
+  // ── Improvement reveal (improve path) ────────────────────────────────────────
+
+  if (step === 'improvement-reveal') {
+    return (
+      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6">
+        <ImprovementReveal
+          items={whatChangedItems}
+          onStart={() => navigate('/workout', { replace: true })}
+        />
+      </main>
+    )
+  }
+
+  // ── Analysis reveal ───────────────────────────────────────────────────────────
 
   if (step === 'analysis') {
     return (
-      <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav">
+      <>
         <AnimatePresence>
           {showConfirm && (
             <ConfirmReplaceModal onConfirm={handleConfirmed} onCancel={() => setShowConfirm(false)} />
@@ -545,44 +942,31 @@ export default function ImportPlan() {
         {selectedExercise && (
           <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
         )}
-
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => setStep('preview')} className="text-white/40 hover:text-white transition-colors">
-            <HiChevronLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#A855F7' }}>
-              AI Analysis
-            </p>
-            <h1 className="text-2xl font-black text-white tracking-tight">Your Plan Report</h1>
-          </div>
-        </div>
-
-        {error && (
-          <div
-            className="mb-5 p-3.5 rounded-2xl text-sm text-red-300"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}
-          >
-            {error}
-          </div>
-        )}
-
-        {analysisSections.length > 0 ? (
-          <AnalysisSlideReader
-            sections={analysisSections}
-            onKeep={requestSave}
-            onImprove={requestImprove}
-            hasProfile={hasProfile}
-          />
-        ) : (
-          <div
-            className="rounded-2xl p-5 text-white/40 text-sm"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            No analysis sections found.
-          </div>
-        )}
-      </main>
+        <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6">
+          {analysisSections.length > 0 ? (
+            <ImportAnalysisReveal
+              sections={analysisSections}
+              hasProfile={hasProfile}
+              onKeep={requestSave}
+              onImprove={requestImprove}
+            />
+          ) : (
+            <div
+              className="rounded-2xl p-5 text-white/40 text-sm"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              No analysis sections found.
+              {!hasProfile && (
+                <p className="mt-3 text-xs">
+                  Complete the{' '}
+                  <Link to="/questionnaire" className="text-purple-400 underline">questionnaire</Link>{' '}
+                  to unlock personalized improvements.
+                </p>
+              )}
+            </div>
+          )}
+        </main>
+      </>
     )
   }
 
@@ -605,9 +989,7 @@ export default function ImportPlan() {
             <HiChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#A855F7' }}>
-              Preview
-            </p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#A855F7' }}>Preview</p>
             <h1 className="text-2xl font-black text-white tracking-tight">Your Imported Plan</h1>
           </div>
         </div>
@@ -659,7 +1041,6 @@ export default function ImportPlan() {
 
   // ── Upload ────────────────────────────────────────────────────────────────────
 
-  const canExtract = images.length > 0
   const canAddMore = images.length < 3
 
   return (
@@ -697,7 +1078,6 @@ export default function ImportPlan() {
         )}
       </AnimatePresence>
 
-      {/* Upload zone or image grid */}
       <AnimatePresence mode="wait">
         {images.length === 0 ? (
           <motion.div
@@ -745,12 +1125,13 @@ export default function ImportPlan() {
             className="mb-6 space-y-3"
           >
             <div
-              className={`grid gap-3 ${images.length === 1
-                ? 'grid-cols-1 max-w-[200px] mx-auto'
-                : images.length === 2
+              className={`grid gap-3 ${
+                images.length === 1
+                  ? 'grid-cols-1 max-w-[200px] mx-auto'
+                  : images.length === 2
                   ? 'grid-cols-2'
                   : 'grid-cols-3'
-                }`}
+              }`}
             >
               <AnimatePresence>
                 {images.map((src, i) => (
@@ -777,9 +1158,8 @@ export default function ImportPlan() {
         )}
       </AnimatePresence>
 
-      {/* Extract CTA */}
       <AnimatePresence>
-        {canExtract && (
+        {images.length > 0 && (
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -794,7 +1174,6 @@ export default function ImportPlan() {
         )}
       </AnimatePresence>
 
-      {/* How it works */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
