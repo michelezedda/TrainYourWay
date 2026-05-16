@@ -80,6 +80,7 @@ export default function AuthGuard() {
       <Route path="/wellness/meditate"      element={<Session />} />
       <Route path="/wellness/sleep"         element={<Session />} />
       <Route path="/wellness/session/:type" element={<Session />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }

@@ -984,7 +984,7 @@ export function WorkoutDayView({
                 <div className="mb-4 not-prose">
                   <CoachingBanner
                     tip={getSessionTip(schedule[currentDayName] ?? '')}
-                    dismissKey={`session-${currentDayName}-${currentDayIdx}`}
+                    dismissKey={`session-${currentDayName}-${selectedDay}`}
                   />
                 </div>
                 <ReactMarkdown components={planComponents}>{parsedDay}</ReactMarkdown>

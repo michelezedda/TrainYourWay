@@ -345,6 +345,14 @@ export default function Dashboard() {
             color2="#ec4899"
           />
           <MiniRing
+            ringId="ring-protein"
+            pct={proteinScore}
+            title="Protein"
+            subtitle={`${todayProtein}g / ${targets.protein}g`}
+            color1="#de4a4a"
+            color2="#ef8686"
+          />
+          <MiniRing
             ringId="ring-week"
             pct={weekWorkouts / Math.max(1, weeklyWorkoutDays)}
             title="Workouts"
@@ -359,14 +367,6 @@ export default function Dashboard() {
             subtitle={`${liters}L today`}
             color1="#06b6d4"
             color2="#22D3EE"
-          />
-          <MiniRing
-            ringId="ring-protein"
-            pct={proteinScore}
-            title="Protein"
-            subtitle={`${todayProtein}g / ${targets.protein}g`}
-            color1="#de4a4a"
-            color2="#ef8686"
           />
         </div>
       </div>

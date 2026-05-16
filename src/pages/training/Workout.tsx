@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { HiPencil, HiUpload, HiRefresh, HiChevronDown } from 'react-icons/hi'
+import { HiPencil, HiUpload, HiRefresh, HiChevronDown, HiLockClosed } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -552,20 +552,28 @@ export default function Workout() {
               <PlanName planId={latestPlan.id} name={latestPlan.userName} />
               <p className="text-white/35 text-xs mt-1">{formatDateShort(latestPlan.createdAt)}</p>
             </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               <button
                 onClick={handleEvolve}
                 disabled={!canEvolve}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all active:scale-[0.97]"
                 style={canEvolve
                   ? { background: 'linear-gradient(135deg,#A855F7,#22D3EE)', color: '#fff' }
-                  : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'not-allowed' }
+                  : { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.06)', cursor: 'not-allowed', opacity: 0.55 }
                 }
                 title={canEvolve ? 'Evolve your plan' : `Unlocks in ${daysUntilEvolve} days`}
               >
-                <HiRefresh className="w-3.5 h-3.5" />
+                {canEvolve
+                  ? <HiRefresh className="w-3.5 h-3.5" />
+                  : <HiLockClosed className="w-3 h-3" />
+                }
                 {canEvolve ? 'Evolve' : `${daysUntilEvolve}d`}
               </button>
+              {!canEvolve && (
+                <p className="text-[10px] text-white/25 text-right leading-tight">
+                  Evolves every 4 weeks
+                </p>
+              )}
             </div>
           </div>
 
