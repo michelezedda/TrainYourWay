@@ -120,7 +120,7 @@ function readSetsMap(): Record<string, boolean[]> {
   } catch { return {} }
 }
 
-function readFiredMap(): Record<string, boolean> {
+export function readFiredMap(): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(`tyw-fired-${computeWeekKey()}`)
     return raw ? JSON.parse(raw) as Record<string, boolean> : {}

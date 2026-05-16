@@ -6,7 +6,7 @@ import { id } from '@instantdb/react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ExerciseModal from '@/components/ExerciseModal'
 import InjuryTriage from '@/components/InjuryTriage'
-import { WorkoutDayView, getWeeklyWorkoutDays } from '@/components/PlanView'
+import { WorkoutDayView, getWeeklyWorkoutDays, readFiredMap } from '@/components/PlanView'
 import { buildPlanComponents } from '@/lib/planComponents'
 import { generateDayWorkout } from '@/lib/gemini'
 import { getWeights, setWeight } from '@/lib/exerciseWeights'
@@ -397,13 +397,7 @@ export default function Workout() {
 
   const today = useMemo(todayString, [])
 
-  const weekWorkouts = useMemo(() => {
-    const d = new Date()
-    const diff = (d.getDay() - weekStart + 7) % 7
-    d.setDate(d.getDate() - diff)
-    const weekStartStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    return completions.filter(c => c.date >= weekStartStr && c.date <= today).length
-  }, [completions, weekStart, today])
+  const weekWorkouts = useMemo(() => Object.keys(readFiredMap()).length, [])
 
   const weeklyTarget = useMemo(() => {
     if (!latestPlan) return 0

@@ -3,12 +3,11 @@ import { HiArrowNarrowRight } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ExerciseModal from '@/components/ExerciseModal'
-import { getWeeklyWorkoutDays } from '@/components/PlanView'
+import { getWeeklyWorkoutDays, readFiredMap } from '@/components/PlanView'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { useMood, MOODS } from '@/context/MoodContext'
-import { useLocale } from '@/context/LocaleContext'
 
 const DAILY_GOAL = 8
 const ML_PER_GLASS = 250
@@ -224,7 +223,6 @@ export default function Dashboard() {
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const { mood, selectMood } = useMood()
-  const { weekStart } = useLocale()
   const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
   const [waterCelebrating, setWaterCelebrating] = useState(false)
 
@@ -265,17 +263,9 @@ export default function Dashboard() {
 
   const workoutDates = useMemo(() => [...new Set(completions.map(e => e.date))], [completions])
 
-  // Workouts done since the start of this week (respects locale weekStart: 0=Sun, 1=Mon)
-  const weekWorkouts = useMemo(() => {
-    const now = new Date()
-    const day = now.getDay()
-    const offset = weekStart === 1 ? (day === 0 ? 6 : day - 1) : day
-    const weekStartDate = new Date(now)
-    weekStartDate.setDate(now.getDate() - offset)
-    weekStartDate.setHours(0, 0, 0, 0)
-    const weekStartStr = toDateStr(weekStartDate)
-    return workoutDates.filter(d => d >= weekStartStr && d <= today).length
-  }, [workoutDates, today, weekStart])
+  // Workouts done this week: count plan-days fired in localStorage (one entry per
+  // completed plan-day, not limited to one per calendar date like the DB).
+  const weekWorkouts = useMemo(() => Object.keys(readFiredMap()).length, [])
 
   const proteinScore = useMemo(
     () => targets.protein > 0 ? Math.min(1, todayProtein / targets.protein) : 0,
