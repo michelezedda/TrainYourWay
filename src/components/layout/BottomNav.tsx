@@ -56,7 +56,7 @@ const LEFT_NAV = [
 ]
 
 const RIGHT_NAV = [
-  { to: '/chat', label: 'Kai', Icon: ChatIcon },
+  { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
   { to: '/me', label: 'Settings', Icon: PersonIcon },
 ]
 
@@ -66,7 +66,8 @@ const ALL_NAV = [
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
   { to: '/chat', label: 'Kai', Icon: ChatIcon },
-  { to: '/me', label: 'Settings', Icon: PersonIcon }, { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
+  { to: '/me', label: 'Settings', Icon: PersonIcon },
+  { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
   { to: '/community', label: 'Community', Icon: CommunityIcon },
   { to: '/machine', label: 'Machine Guide', Icon: MachineIcon },
 ]
