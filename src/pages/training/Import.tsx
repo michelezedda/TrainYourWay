@@ -178,7 +178,7 @@ function ConfirmReplaceModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-32 sm:pb-0"
       style={{ background: 'rgba(5,5,16,0.88)', backdropFilter: 'blur(16px)' }}
       onClick={onCancel}
     >
@@ -398,17 +398,17 @@ export default function ImportPlan() {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [step, setStep]               = useState<Step>('upload')
-  const [images, setImages]           = useState<string[]>([])
+  const [step, setStep] = useState<Step>('upload')
+  const [images, setImages] = useState<string[]>([])
   const [extractedPlan, setExtractedPlan] = useState('')
   const [analysisSections, setAnalysisSections] = useState<ReturnType<typeof parseAnalysisSections>>([])
-  const [error, setError]             = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingAction, setPendingAction] = useState<'save' | 'improve' | null>(null)
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
 
   const profileContext = buildProfileContext()
-  const hasProfile     = !!profileContext
+  const hasProfile = !!profileContext
 
   const previewComponents = useMemo(() => buildPlanComponents(setSelectedExercise), [])
 
@@ -472,7 +472,7 @@ export default function ImportPlan() {
     }
   }
 
-  const requestSave    = () => { setPendingAction('save');    setShowConfirm(true) }
+  const requestSave = () => { setPendingAction('save'); setShowConfirm(true) }
   const requestImprove = () => { setPendingAction('improve'); setShowConfirm(true) }
 
   const handleConfirmed = () => {
@@ -522,9 +522,9 @@ export default function ImportPlan() {
   // ── Loading steps ─────────────────────────────────────────────────────────────
 
   if (step === 'extracting') return <CinematicLoader phases={EXTRACT_PHASES} />
-  if (step === 'analyzing')  return <CinematicLoader phases={ANALYZE_PHASES} />
-  if (step === 'improving')  return <CinematicLoader phases={IMPROVE_PHASES} />
-  if (step === 'saving')     return <CinematicLoader phases={SAVE_PHASES} />
+  if (step === 'analyzing') return <CinematicLoader phases={ANALYZE_PHASES} />
+  if (step === 'improving') return <CinematicLoader phases={IMPROVE_PHASES} />
+  if (step === 'saving') return <CinematicLoader phases={SAVE_PHASES} />
 
   // ── Success ───────────────────────────────────────────────────────────────────
 
@@ -745,13 +745,12 @@ export default function ImportPlan() {
             className="mb-6 space-y-3"
           >
             <div
-              className={`grid gap-3 ${
-                images.length === 1
-                  ? 'grid-cols-1 max-w-[200px] mx-auto'
-                  : images.length === 2
+              className={`grid gap-3 ${images.length === 1
+                ? 'grid-cols-1 max-w-[200px] mx-auto'
+                : images.length === 2
                   ? 'grid-cols-2'
                   : 'grid-cols-3'
-              }`}
+                }`}
             >
               <AnimatePresence>
                 {images.map((src, i) => (
