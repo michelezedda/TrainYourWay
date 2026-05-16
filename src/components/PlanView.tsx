@@ -541,6 +541,25 @@ export function WorkoutDayView({
   const allDone  = exerciseKeys.length > 0 && exerciseKeys.every(k => doneMap[`${currentDayName}:${k}`] === true)
   const doneCount = Object.entries(doneMap).filter(([k, v]) => k.startsWith(`${currentDayName}:`) && v).length
 
+  // Which workout days (non-rest, non-blocked) have ALL exercises marked done.
+  // Used to style day selector tabs with a completed visual state.
+  const completedDays = useMemo(() => {
+    const set = new Set<string>()
+    for (let i = 0; i < 7; i++) {
+      const day = DAY_NAMES[i]
+      const lbl = schedule[day] ?? ''
+      if (!lbl || /rest/i.test(lbl)) continue
+      const hasOvr = !!(dayWorkoutOverrides?.[day])
+      if ((blockedDays?.includes(day) ?? false) && !hasOvr) continue
+      const ci = dayToChunkIdx[i]
+      const raw = ci !== undefined ? (dayChunks[ci] ?? '') : ''
+      const body = dayWorkoutOverrides?.[day] ?? raw.replace(/^### Day \d+:[^\n]*\n?/, '').trim()
+      const keys = extractExerciseKeys(body)
+      if (keys.length > 0 && keys.every(k => doneMap[`${day}:${k}`] === true)) set.add(day)
+    }
+    return set
+  }, [doneMap, schedule, dayChunks, dayWorkoutOverrides, blockedDays, dayToChunkIdx])
+
   // Fire celebration exactly once per day per week.
   // completionFiredRef is restored from localStorage so the modal never re-fires
   // after a page refresh or navigation.
@@ -646,61 +665,89 @@ export function WorkoutDayView({
   return (
     <WorkoutProgressContext.Provider value={contextValue}>
       <div>
-        {/* ── Day selector: mobile (horizontal scroll, unchanged) ── */}
+        {/* ── Day selector: mobile (horizontal scroll) ── */}
         <div className="flex md:hidden gap-2 mb-5 overflow-x-auto pb-1 no-scrollbar">
           {DAY_NAMES.map((day, i) => {
-            const label        = schedule[day] ?? ''
-            const isRestDay    = !label || /rest/i.test(label)
-            const hasOvr       = !!(dayWorkoutOverrides?.[day])
-            const isDayBlocked = (blockedDays?.includes(day) ?? false) && !hasOvr
-            const isSel        = selectedDay === i
-            const shortLabel   = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 10)
+            const label          = schedule[day] ?? ''
+            const isRestDay      = !label || /rest/i.test(label)
+            const hasOvr         = !!(dayWorkoutOverrides?.[day])
+            const isDayBlocked   = (blockedDays?.includes(day) ?? false) && !hasOvr
+            const isSel          = selectedDay === i
+            const isDayCompleted = completedDays.has(day)
+            const shortLabel     = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 10)
             return (
               <button
                 key={day}
                 onClick={() => setSelectedDay(i)}
-                className={`w-[76px] flex-shrink-0 flex flex-col items-center gap-1 py-4 rounded-2xl border transition-all duration-200 active:scale-95 ${
-                  isSel && isDayBlocked
-                    ? 'border-red-500/60 bg-red-500/20'
-                    : isSel && isRestDay && !hasOvr
-                    ? 'border-white/20 bg-white/8'
-                    : isSel
-                    ? 'border-purple-500/50 bg-purple-500/15'
-                    : isDayBlocked
-                    ? 'border-red-500/30 bg-red-500/8'
-                    : isRestDay && !hasOvr
-                    ? 'border-white/6 bg-transparent'
-                    : 'border-white/14 bg-white/5 hover:bg-white/10'
-                }`}
+                className="w-[76px] flex-shrink-0 flex flex-col items-center gap-1 py-4 rounded-2xl border transition-all duration-200 active:scale-95"
+                style={(() => {
+                  if (isSel && isDayBlocked)
+                    return { borderColor: 'rgba(239,68,68,0.6)', background: 'rgba(239,68,68,0.2)' }
+                  if (isSel && isRestDay && !hasOvr)
+                    return { borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)' }
+                  if (isSel && isDayCompleted)
+                    return {
+                      background: 'linear-gradient(145deg, rgba(34,197,94,0.22), rgba(22,163,74,0.1))',
+                      borderColor: 'rgba(34,197,94,0.55)',
+                      boxShadow: '0 0 18px rgba(34,197,94,0.22), inset 0 1px 0 rgba(34,197,94,0.12)',
+                    }
+                  if (isSel)
+                    return { borderColor: 'rgba(168,85,247,0.5)', background: 'rgba(168,85,247,0.15)' }
+                  if (isDayBlocked)
+                    return { borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)' }
+                  if (isRestDay && !hasOvr)
+                    return { borderColor: 'rgba(255,255,255,0.06)', background: 'transparent' }
+                  if (isDayCompleted)
+                    return { borderColor: 'rgba(34,197,94,0.28)', background: 'rgba(34,197,94,0.07)' }
+                  return { borderColor: 'rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)' }
+                })()}
               >
-                <span className={`text-[11px] font-bold uppercase tracking-wide ${
-                  isSel && isDayBlocked      ? 'text-red-200'
-                  : isSel && isRestDay       ? 'text-white/50'
-                  : isSel                    ? 'text-purple-200'
-                  : isDayBlocked             ? 'text-red-400/80'
-                  : isRestDay && !hasOvr     ? 'text-white/25'
-                                             : 'text-white/75'
-                }`}>
+                <span
+                  className="text-[11px] font-bold uppercase tracking-wide"
+                  style={{
+                    color: isSel && isDayBlocked      ? 'rgba(254,202,202,1)'
+                         : isSel && isRestDay         ? 'rgba(255,255,255,0.5)'
+                         : isSel && isDayCompleted     ? 'rgba(220,252,231,1)'
+                         : isSel                      ? 'rgba(233,213,255,1)'
+                         : isDayBlocked               ? 'rgba(248,113,113,0.8)'
+                         : isRestDay && !hasOvr        ? 'rgba(255,255,255,0.25)'
+                         : isDayCompleted             ? 'rgba(74,222,128,0.8)'
+                                                      : 'rgba(255,255,255,0.75)',
+                  }}
+                >
                   {DAY_SHORT[i]}
                 </span>
-                <span className={`text-[10px] leading-tight text-center w-full px-1.5 truncate ${
-                  isSel && isDayBlocked  ? 'text-red-300/70'
-                  : isSel && isRestDay   ? 'text-white/30'
-                  : isSel                ? 'text-purple-300/80'
-                  : isDayBlocked         ? 'text-red-400/50'
-                  : isRestDay && !hasOvr ? 'text-white/18'
-                                         : 'text-white/40'
-                }`}>
+                <span
+                  className="text-[10px] leading-tight text-center w-full px-1.5 truncate"
+                  style={{
+                    color: isSel && isDayBlocked   ? 'rgba(252,165,165,0.7)'
+                         : isSel && isRestDay      ? 'rgba(255,255,255,0.3)'
+                         : isSel && isDayCompleted  ? 'rgba(134,239,172,0.85)'
+                         : isSel                   ? 'rgba(216,180,254,0.8)'
+                         : isDayBlocked            ? 'rgba(248,113,113,0.5)'
+                         : isRestDay && !hasOvr     ? 'rgba(255,255,255,0.18)'
+                         : isDayCompleted          ? 'rgba(134,239,172,0.55)'
+                                                   : 'rgba(255,255,255,0.4)',
+                  }}
+                >
                   {shortLabel}
                 </span>
-                <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                  isSel && isDayBlocked    ? 'bg-red-400'
-                  : isSel && isRestDay     ? 'bg-white/35'
-                  : isSel                  ? 'bg-purple-400'
-                  : isDayBlocked           ? 'bg-red-500/40'
-                  : isRestDay && !hasOvr   ? 'bg-white/10'
-                                           : 'bg-white/30'
-                }`} />
+                <span
+                  className="rounded-full mt-0.5 transition-all duration-300"
+                  style={{
+                    width:  isSel && isDayCompleted ? 8 : 6,
+                    height: isSel && isDayCompleted ? 8 : 6,
+                    background: isSel && isDayBlocked    ? 'rgba(248,113,113,1)'
+                              : isSel && isRestDay       ? 'rgba(255,255,255,0.35)'
+                              : isSel && isDayCompleted   ? 'rgba(74,222,128,1)'
+                              : isSel                    ? 'rgba(192,132,252,1)'
+                              : isDayBlocked             ? 'rgba(239,68,68,0.4)'
+                              : isRestDay && !hasOvr     ? 'rgba(255,255,255,0.1)'
+                              : isDayCompleted           ? 'rgba(74,222,128,0.55)'
+                                                         : 'rgba(255,255,255,0.3)',
+                    boxShadow: isSel && isDayCompleted ? '0 0 6px rgba(34,197,94,0.5)' : 'none',
+                  }}
+                />
               </button>
             )
           })}
@@ -709,65 +756,90 @@ export function WorkoutDayView({
         {/* ── Day selector: desktop/tablet (2-row grid, 4 cols) ── */}
         <div className="hidden md:grid md:grid-cols-4 gap-3 mb-5">
           {DAY_NAMES.map((day, i) => {
-            const label        = schedule[day] ?? ''
-            const isRestDay    = !label || /rest/i.test(label)
-            const hasOvr       = !!(dayWorkoutOverrides?.[day])
-            const isDayBlocked = (blockedDays?.includes(day) ?? false) && !hasOvr
-            const isSel        = selectedDay === i
-            const shortLabel   = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 16)
+            const label          = schedule[day] ?? ''
+            const isRestDay      = !label || /rest/i.test(label)
+            const hasOvr         = !!(dayWorkoutOverrides?.[day])
+            const isDayBlocked   = (blockedDays?.includes(day) ?? false) && !hasOvr
+            const isSel          = selectedDay === i
+            const isDayCompleted = completedDays.has(day)
+            const shortLabel     = hasOvr ? 'Custom' : isRestDay ? 'Rest' : isDayBlocked ? 'Off' : label.split(/[-,]/)[0].trim().slice(0, 16)
             return (
               <button
                 key={day}
                 onClick={() => setSelectedDay(i)}
-                className={`flex flex-col items-center gap-1.5 py-5 rounded-2xl border transition-all duration-200 active:scale-[0.97] ${
-                  !isSel
-                    ? isDayBlocked
-                      ? 'border-red-500/30 bg-red-500/8'
-                      : isRestDay && !hasOvr
-                      ? 'border-white/6 bg-transparent hover:bg-white/[0.03]'
-                      : 'border-white/14 bg-white/5 hover:bg-white/10'
-                    : 'border-transparent'
-                }`}
-                style={isSel ? (
-                  isDayBlocked
-                    ? { background: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.55)', boxShadow: '0 0 14px rgba(239,68,68,0.12)' }
-                    : isRestDay && !hasOvr
-                    ? { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.18)' }
-                    : {
-                        background: 'linear-gradient(135deg,rgba(168,85,247,0.22),rgba(34,211,238,0.13))',
-                        borderColor: 'rgba(168,85,247,0.5)',
-                        boxShadow: '0 0 22px rgba(168,85,247,0.18)',
-                      }
-                ) : {}}
+                className="flex flex-col items-center gap-1.5 py-5 rounded-2xl border transition-all duration-200 active:scale-[0.97]"
+                style={(() => {
+                  if (isSel && isDayBlocked)
+                    return { background: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.55)', boxShadow: '0 0 14px rgba(239,68,68,0.12)' }
+                  if (isSel && isRestDay && !hasOvr)
+                    return { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.18)' }
+                  if (isSel && isDayCompleted)
+                    return {
+                      background: 'linear-gradient(135deg, rgba(34,197,94,0.24), rgba(22,163,74,0.12))',
+                      borderColor: 'rgba(34,197,94,0.55)',
+                      boxShadow: '0 0 24px rgba(34,197,94,0.22)',
+                    }
+                  if (isSel)
+                    return {
+                      background: 'linear-gradient(135deg,rgba(168,85,247,0.22),rgba(34,211,238,0.13))',
+                      borderColor: 'rgba(168,85,247,0.5)',
+                      boxShadow: '0 0 22px rgba(168,85,247,0.18)',
+                    }
+                  if (isDayBlocked)
+                    return { borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)' }
+                  if (isRestDay && !hasOvr)
+                    return { borderColor: 'rgba(255,255,255,0.06)', background: 'transparent' }
+                  if (isDayCompleted)
+                    return { borderColor: 'rgba(34,197,94,0.28)', background: 'rgba(34,197,94,0.07)' }
+                  return { borderColor: 'rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)' }
+                })()}
               >
-                <span className={`text-sm font-black uppercase tracking-wider ${
-                  isSel && isDayBlocked      ? 'text-red-200'
-                  : isSel && isRestDay       ? 'text-white/55'
-                  : isSel                    ? 'text-purple-100'
-                  : isDayBlocked             ? 'text-red-400/70'
-                  : isRestDay && !hasOvr     ? 'text-white/25'
-                                             : 'text-white/80'
-                }`}>
+                <span
+                  className="text-sm font-black uppercase tracking-wider"
+                  style={{
+                    color: isSel && isDayBlocked      ? 'rgba(254,202,202,1)'
+                         : isSel && isRestDay         ? 'rgba(255,255,255,0.55)'
+                         : isSel && isDayCompleted     ? 'rgba(220,252,231,1)'
+                         : isSel                      ? 'rgba(243,232,255,1)'
+                         : isDayBlocked               ? 'rgba(248,113,113,0.7)'
+                         : isRestDay && !hasOvr        ? 'rgba(255,255,255,0.25)'
+                         : isDayCompleted             ? 'rgba(74,222,128,0.75)'
+                                                      : 'rgba(255,255,255,0.8)',
+                  }}
+                >
                   {DAY_SHORT[i]}
                 </span>
-                <span className={`text-xs leading-snug text-center px-2 truncate w-full ${
-                  isSel && isDayBlocked  ? 'text-red-300/70'
-                  : isSel && isRestDay   ? 'text-white/30'
-                  : isSel                ? 'text-purple-200/90'
-                  : isDayBlocked         ? 'text-red-400/50'
-                  : isRestDay && !hasOvr ? 'text-white/20'
-                                         : 'text-white/50'
-                }`}>
+                <span
+                  className="text-xs leading-snug text-center px-2 truncate w-full"
+                  style={{
+                    color: isSel && isDayBlocked   ? 'rgba(252,165,165,0.7)'
+                         : isSel && isRestDay      ? 'rgba(255,255,255,0.3)'
+                         : isSel && isDayCompleted  ? 'rgba(134,239,172,0.88)'
+                         : isSel                   ? 'rgba(233,213,255,0.9)'
+                         : isDayBlocked            ? 'rgba(248,113,113,0.5)'
+                         : isRestDay && !hasOvr     ? 'rgba(255,255,255,0.2)'
+                         : isDayCompleted          ? 'rgba(134,239,172,0.55)'
+                                                   : 'rgba(255,255,255,0.5)',
+                  }}
+                >
                   {shortLabel}
                 </span>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  isSel && isDayBlocked    ? 'bg-red-400'
-                  : isSel && isRestDay     ? 'bg-white/35'
-                  : isSel                  ? 'bg-purple-400'
-                  : isDayBlocked           ? 'bg-red-500/40'
-                  : isRestDay && !hasOvr   ? 'bg-white/10'
-                                           : 'bg-white/25'
-                }`} />
+                <span
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width:  isSel && isDayCompleted ? 9 : 6,
+                    height: isSel && isDayCompleted ? 9 : 6,
+                    background: isSel && isDayBlocked    ? 'rgba(248,113,113,1)'
+                              : isSel && isRestDay       ? 'rgba(255,255,255,0.35)'
+                              : isSel && isDayCompleted   ? 'rgba(74,222,128,1)'
+                              : isSel                    ? 'rgba(192,132,252,1)'
+                              : isDayBlocked             ? 'rgba(239,68,68,0.4)'
+                              : isRestDay && !hasOvr     ? 'rgba(255,255,255,0.1)'
+                              : isDayCompleted           ? 'rgba(74,222,128,0.55)'
+                                                         : 'rgba(255,255,255,0.25)',
+                    boxShadow: isSel && isDayCompleted ? '0 0 8px rgba(34,197,94,0.55)' : 'none',
+                  }}
+                />
               </button>
             )
           })}
@@ -777,10 +849,14 @@ export function WorkoutDayView({
         <GlassCard padding={false} className="overflow-hidden mb-4">
           {/* Day header */}
           <div
-            className={`flex items-center justify-between px-5 py-4 border-b ${isBlocked ? 'border-red-500/20' : 'border-white/8'}`}
+            className={`flex items-center justify-between px-5 py-4 border-b ${
+              isBlocked ? 'border-red-500/20' : allDone ? 'border-green-500/20' : 'border-white/8'
+            }`}
             style={{
               background: isBlocked
                 ? 'rgba(239,68,68,0.06)'
+                : allDone
+                ? 'rgba(34,197,94,0.05)'
                 : isRest
                 ? 'rgba(255,255,255,0.02)'
                 : 'rgba(168,85,247,0.05)',
