@@ -107,6 +107,14 @@ function getStoredFiredRef(): Record<string, boolean> {
   } catch { return {} }
 }
 
+function getStoredSetsMap(): Record<string, boolean[]> {
+  const wk = localStorage.getItem('tyw-workout-week') ?? ''
+  try {
+    const stored = localStorage.getItem(`tyw-sets-map-${wk}`)
+    return stored ? JSON.parse(stored) as Record<string, boolean[]> : {}
+  } catch { return {} }
+}
+
 // Extract exercise keys from raw day body (before transformExercises).
 // Must produce the same key format that ExerciseTableCard derives internally.
 function extractExerciseKeys(rawText: string): string[] {
@@ -392,6 +400,12 @@ export function WorkoutDayView({
   // Ref mirrors doneMap so stable callbacks can read the latest value without deps.
   const doneMapRef = useRef(doneMap)
   doneMapRef.current = doneMap
+
+  // Per-exercise per-set completion: "DayName:exerciseKey" → boolean[]
+  // Persists individual set states so partial progress survives page navigation.
+  const [setsMap, setSetsMap] = useState<Record<string, boolean[]>>(getStoredSetsMap)
+  const setsMapRef = useRef(setsMap)
+  setsMapRef.current = setsMap
   const [showCelebration, setShowCelebration] = useState(false)
   // Holds the optimistic week count shown in the celebration modal (+1 vs DB, which
   // hasn't updated yet when the modal opens).
@@ -421,12 +435,29 @@ export function WorkoutDayView({
     return doneMapRef.current[`${currentDayNameRef.current}:${key}`] === true
   }, [])
 
-  // Memoized context value: both callbacks are stable so this never changes,
-  // preventing ExerciseTableCard instances from re-rendering on doneMap updates.
+  // Called by ExerciseTableCard whenever its setsDone array changes.
+  const handleSetsDone = useCallback((key: string, setsDone: boolean[]) => {
+    const fullKey = `${currentDayNameRef.current}:${key}`
+    setSetsMap(prev => {
+      const existing = prev[fullKey]
+      if (existing && existing.length === setsDone.length && existing.every((v, i) => v === setsDone[i])) return prev
+      return { ...prev, [fullKey]: setsDone }
+    })
+  }, [])
+
+  // Stable getter for per-exercise set states — returns undefined if no entry yet.
+  const getInitialSetsDone = useCallback((key: string): boolean[] | undefined => {
+    return setsMapRef.current[`${currentDayNameRef.current}:${key}`]
+  }, [])
+
+  // Memoized context value: all callbacks are stable so this never changes,
+  // preventing ExerciseTableCard instances from re-rendering on map updates.
   const contextValue = useMemo(() => ({
     onExerciseDone: handleExerciseDone,
     getInitialDone,
-  }), [handleExerciseDone, getInitialDone])
+    onSetsDone: handleSetsDone,
+    getInitialSetsDone,
+  }), [handleExerciseDone, getInitialDone, handleSetsDone, getInitialSetsDone])
 
   useEffect(() => {
     setSelectedDay(getDefaultDayIdx(schedule))
@@ -495,6 +526,9 @@ export function WorkoutDayView({
       setDoneMap(cur =>
         Object.fromEntries(Object.entries(cur).filter(([k]) => !k.startsWith(prefix)))
       )
+      setSetsMap(cur =>
+        Object.fromEntries(Object.entries(cur).filter(([k]) => !k.startsWith(prefix)))
+      )
       delete completionFiredRef.current[currentDayName]
       setContentKey(k => k + 1)
     }
@@ -506,6 +540,7 @@ export function WorkoutDayView({
   useEffect(() => {
     if (!planMountedRef.current) { planMountedRef.current = true; return }
     setDoneMap({})
+    setSetsMap({})
     setShowCelebration(false)
     completionFiredRef.current = {}
     dayBodySnapshotRef.current = {}
@@ -513,6 +548,7 @@ export function WorkoutDayView({
     if (wk) {
       localStorage.removeItem(`tyw-done-map-${wk}`)
       localStorage.removeItem(`tyw-fired-${wk}`)
+      localStorage.removeItem(`tyw-sets-map-${wk}`)
     }
   }, [plan])
 
@@ -528,9 +564,11 @@ export function WorkoutDayView({
       if (storedWk) {
         localStorage.removeItem(`tyw-done-map-${storedWk}`)
         localStorage.removeItem(`tyw-fired-${storedWk}`)
+        localStorage.removeItem(`tyw-sets-map-${storedWk}`)
       }
       localStorage.setItem('tyw-workout-week', wk)
       setDoneMap({})
+      setSetsMap({})
       completionFiredRef.current = {}
       dayBodySnapshotRef.current = {}
     }
@@ -543,6 +581,13 @@ export function WorkoutDayView({
     if (!wk) return
     localStorage.setItem(`tyw-done-map-${wk}`, JSON.stringify(doneMap))
   }, [doneMap])
+
+  // Persist individual set states across page navigation (same week).
+  useEffect(() => {
+    const wk = localStorage.getItem('tyw-workout-week')
+    if (!wk) return
+    localStorage.setItem(`tyw-sets-map-${wk}`, JSON.stringify(setsMap))
+  }, [setsMap])
 
   const handleGenerateWorkout = async () => {
     if (!onGenerateDayWorkout) return

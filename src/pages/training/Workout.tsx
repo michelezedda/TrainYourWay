@@ -165,7 +165,7 @@ export default function Workout() {
 
   const latestPlan = chain[chain.length - 1]
   const previousVersions = chain.slice(0, -1).reverse()
-  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt <= FOUR_WEEKS_MS : false
+  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
   const daysUntilEvolve = latestPlan && !canEvolve
     ? Math.ceil((FOUR_WEEKS_MS - (Date.now() - latestPlan.createdAt)) / (24 * 60 * 60 * 1000))
     : 0

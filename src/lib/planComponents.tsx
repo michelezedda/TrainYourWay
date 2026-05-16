@@ -13,6 +13,8 @@ import { useLocale } from '@/context/LocaleContext'
 export const WorkoutProgressContext = createContext<{
   onExerciseDone?: (key: string, done: boolean) => void
   getInitialDone?: (key: string) => boolean
+  onSetsDone?: (key: string, setsDone: boolean[]) => void
+  getInitialSetsDone?: (key: string) => boolean[] | undefined
 }>({})
 
 // ── Plan text utilities ───────────────────────────────────────────────────────
@@ -221,7 +223,7 @@ interface ExerciseTableCardProps {
 function ExerciseTableCard({
   name, meta, tip, exerciseKey, weight, onWeightChange, onGuideClick,
 }: ExerciseTableCardProps) {
-  const { onExerciseDone, getInitialDone } = useContext(WorkoutProgressContext)
+  const { onExerciseDone, getInitialDone, onSetsDone, getInitialSetsDone } = useContext(WorkoutProgressContext)
   const { unit } = useLocale()
 
   const [localWeight, setLocalWeight] = useState(weight)
@@ -247,9 +249,11 @@ function ExerciseTableCard({
     ? parseSetsInfo(metaParts['sets'])
     : { count: 0, reps: '' }
 
-  // Hydrate from parent's per-day doneMap so switching days and returning
-  // restores exercise completion without leaking state across days.
+  // Hydrate individual set states from the persisted sets map first (most granular).
+  // Falls back to exercise-level done so fully-complete exercises still restore correctly.
   const [setsDone, setSetsDone] = useState<boolean[]>(() => {
+    const persisted = getInitialSetsDone?.(exerciseKey)
+    if (persisted && persisted.length === setsCount) return persisted
     const init = getInitialDone?.(exerciseKey) ?? false
     return Array(Math.max(setsCount, 0)).fill(init)
   })
@@ -261,14 +265,21 @@ function ExerciseTableCard({
 
   const tipText = tip.replace(/^Form tip:\s*/i, '').trim()
 
-  // Skip the initial mount report: the card either starts fresh (no prior state)
-  // or was hydrated FROM the parent's doneMap, so reporting on mount would be
-  // a no-op at best and could overwrite valid parent state at worst.
+  // Skip the initial mount report: the card is hydrated FROM the parent's maps,
+  // so reporting on mount would be a no-op at best and could overwrite valid
+  // parent state at worst.
   const isMountedRef = useRef(false)
   useEffect(() => {
     if (!isMountedRef.current) { isMountedRef.current = true; return }
     onExerciseDone?.(exerciseKey, isDone)
   }, [isDone, exerciseKey, onExerciseDone])
+
+  // Persist individual set states whenever they change (separate mount guard).
+  const setsMountedRef = useRef(false)
+  useEffect(() => {
+    if (!setsMountedRef.current) { setsMountedRef.current = true; return }
+    onSetsDone?.(exerciseKey, setsDone)
+  }, [setsDone, exerciseKey, onSetsDone])
 
   const startRestTimer = (totalSecs: number) => {
     if (timerRef.current) clearInterval(timerRef.current)
