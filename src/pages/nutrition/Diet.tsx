@@ -8,6 +8,7 @@ import { getNutritionProfile, saveNutritionProfile, calculateTargets, type Daily
 import { estimateFoodMacros, type FoodMacros } from '@/lib/gemini'
 import { type Unit } from '@/lib/units'
 import { useLocale } from '@/context/LocaleContext'
+import { motion } from 'framer-motion'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const
 type Meal = (typeof MEALS)[number]
@@ -476,13 +477,23 @@ export default function Diet() {
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       {/* Header */}
-      <div className="mb-5">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-5"
+      >
         <h1 className="text-2xl font-black gradient-text">Diet</h1>
         <p className="text-white/40 text-sm mt-0.5">Track your meals and macros.</p>
-      </div>
+      </motion.div>
 
       {/* Date navigator */}
-      <div className="flex items-center gap-2 mb-5">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05 }}
+        className="flex items-center gap-2 mb-5"
+      >
         <button
           onClick={() => goToDate(shiftDate(selectedDate, -1))}
           className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0"
@@ -510,7 +521,7 @@ export default function Diet() {
         >
           <HiChevronRight className="w-5 h-5 text-white/60" />
         </button>
-      </div>
+      </motion.div>
 
       {/* No profile prompt */}
       {!profile && profileQueryData !== undefined && (
@@ -524,7 +535,13 @@ export default function Diet() {
         </div>
       )}
 
-      <MacroSummary targets={targets} totals={totals} />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.12 }}
+      >
+        <MacroSummary targets={targets} totals={totals} />
+      </motion.div>
 
       {/* No-target totals fallback */}
       {!targets && entries.length > 0 && (
@@ -547,7 +564,12 @@ export default function Diet() {
       )}
 
       {/* Meal sections */}
-      <div className="space-y-3 pb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="space-y-3 pb-10"
+      >
         {MEALS.map(meal => {
           const mealEntries = entries.filter(e => e.meal.toLowerCase() === meal.toLowerCase())
           const mealKcal    = mealEntries.reduce((a, e) => a + (e.kcal || 0), 0)
@@ -719,7 +741,7 @@ export default function Diet() {
             </div>
           )
         })}
-      </div>
+      </motion.div>
     </main>
   )
 }

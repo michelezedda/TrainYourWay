@@ -148,7 +148,12 @@ export default function Wellness() {
       <div className="relative">
 
         {/* Header */}
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6"
+        >
           <div className="flex items-center justify-between mb-1">
             <div>
               <p className="text-white/35 text-xs font-medium uppercase tracking-wider">{getGreeting()}{userName ? `, ${userName}` : ''}</p>
@@ -165,7 +170,7 @@ export default function Wellness() {
             )}
           </div>
           <p className="text-white/35 text-sm">Your space for mental recovery and growth.</p>
-        </div>
+        </motion.div>
 
         {/* Mood check-in */}
         <motion.div
@@ -213,7 +218,12 @@ export default function Wellness() {
         </motion.div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2.5 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.12 }}
+          className="grid grid-cols-3 gap-2.5 mb-6"
+        >
           {[
             { label: 'Day streak', value: String(streak), icon: '🔥', color: '#FBBF24' },
             { label: 'Sessions this week', value: String(weekSessions.length), icon: '🧘', color: '#22D3EE' },
@@ -226,10 +236,15 @@ export default function Wellness() {
               <p className="text-white/30 text-[10px] leading-tight">{label}</p>
             </div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Recommended session */}
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mb-6"
+        >
           <p className="text-white/35 text-xs font-semibold uppercase tracking-wider mb-3">Recommended for now</p>
           <Link to={rec.to} className="block rounded-3xl overflow-hidden active:scale-[0.98] transition-all"
             style={{ background: `linear-gradient(135deg, ${rec.color} 0%, rgba(0,0,0,0) 100%)`, border: `1px solid ${rec.border}` }}>
@@ -248,10 +263,15 @@ export default function Wellness() {
               </div>
             </div>
           </Link>
-        </div>
+        </motion.div>
 
         {/* Session grid */}
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.28 }}
+          className="mb-6"
+        >
           <p className="text-white/35 text-xs font-semibold uppercase tracking-wider mb-3">All sessions</p>
           <div className="grid grid-cols-2 gap-2.5">
             {SESSION_CARDS.map(card => (
@@ -269,19 +289,29 @@ export default function Wellness() {
               </Link>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Today's affirmation */}
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.32 }}
+          className="mb-6"
+        >
           <p className="text-white/35 text-xs font-semibold uppercase tracking-wider mb-3">Today's affirmation</p>
           <div className="rounded-3xl px-5 py-5"
             style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(34,211,238,0.07) 100%)', border: '1px solid rgba(99,102,241,0.2)' }}>
             <span className="text-2xl block mb-3">✨</span>
             <p className="text-white font-semibold text-base leading-relaxed italic">"{affirmation}"</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent sessions */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.38 }}
+        >
         {recentSessions.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
@@ -312,6 +342,7 @@ export default function Wellness() {
             <p className="text-white/30 text-xs mt-1 leading-relaxed">Complete your first session to start building your streak.</p>
           </div>
         )}
+        </motion.div>
 
       </div>
     </main>

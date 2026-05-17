@@ -8,6 +8,7 @@ import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { useLocale } from '@/context/LocaleContext'
 import { clearAllLocalData } from '@/lib/clearUserData'
+import { motion } from 'framer-motion'
 
 const AVATAR_KEY = 'tyw_avatar'
 
@@ -151,12 +152,22 @@ export default function Personal() {
 
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
-      <div className="mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-6"
+      >
         <h1 className="text-2xl font-black gradient-text">Settings</h1>
         <p className="text-white/40 text-sm mt-0.5">Manage your profile and account.</p>
-      </div>
+      </motion.div>
 
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05 }}
+        className="space-y-6"
+      >
 
         {/* Profile */}
         <div>
@@ -372,7 +383,7 @@ export default function Personal() {
           <HiQuestionMarkCircle className="w-4 h-4" />
           Need help or have feedback?
         </Link>
-      </div>
+      </motion.div>
 
       {/* Start Over confirmation modal */}
       {showStartOverConfirm && (

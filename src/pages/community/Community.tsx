@@ -4,6 +4,7 @@ import { getUserId } from '@/lib/userId'
 import { useLocale } from '@/context/LocaleContext'
 import { getNickname } from '@/lib/nickname'
 import { GRADE_COLOR } from '@/lib/healthScore'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type Tab = 'finds' | 'leaderboard'
 
@@ -127,13 +128,24 @@ export default function Community() {
 
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
-      <div className="mb-5">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-5"
+      >
         <h1 className="text-3xl font-black tracking-tight gradient-text">Community</h1>
         <p className="text-white/40 text-sm mt-1">Healthy finds and top streaks.</p>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 p-1 rounded-2xl mb-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05 }}
+        className="flex gap-1.5 p-1 rounded-2xl mb-4"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
         {(['finds', 'leaderboard'] as Tab[]).map(t => (
           <button
             key={t}
@@ -147,9 +159,25 @@ export default function Community() {
             {t === 'finds' ? '🌿 Finds' : '🏆 Leaderboard'}
           </button>
         ))}
-      </div>
+      </motion.div>
 
-      {tab === 'finds' ? <FindsTab /> : <LeaderboardTab />}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.12 }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+          >
+            {tab === 'finds' ? <FindsTab /> : <LeaderboardTab />}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
     </main>
   )
 }

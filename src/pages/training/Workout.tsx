@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { HiPencil, HiUpload, HiRefresh, HiChevronDown, HiLockClosed } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
@@ -506,7 +506,12 @@ export default function Workout() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between mb-5"
+      >
         <div>
           <h1 className="text-3xl font-black tracking-tight gradient-text">My Plan</h1>
           <p className="text-white/40 text-sm mt-1 font-medium">
@@ -535,14 +540,19 @@ export default function Workout() {
             Import
           </Link>
         </div>
-      </div>
+      </motion.div>
 
       {injuryState?.active && (
         <InjuryBanner injuryState={injuryState} advice={injuryAdvice} onRecovered={handleRecovered} />
       )}
 
       {/* Current plan card */}
-      <div className="glass-card p-0 mb-4 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05 }}
+        className="glass-card p-0 mb-4 overflow-hidden"
+      >
         <div className="p-5">
           <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider mb-2">
             {chain.length > 1 ? `Evolution ${chain.length - 1}` : 'Current Plan'}
@@ -638,17 +648,28 @@ export default function Workout() {
             />
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <VersionHistoryList
-        versions={previousVersions}
-        expandedId={expandedVersionId}
-        onToggle={toggleVersionExpanded}
-        onExerciseClick={setSelectedExercise}
-        formatDateShort={formatDateShort}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        <VersionHistoryList
+          versions={previousVersions}
+          expandedId={expandedVersionId}
+          onToggle={toggleVersionExpanded}
+          onExerciseClick={setSelectedExercise}
+          formatDateShort={formatDateShort}
+        />
+      </motion.div>
 
-      <div className="pt-4 border-t border-white/[0.08] pb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.28 }}
+        className="pt-4 border-t border-white/[0.08] pb-10"
+      >
         <StartOverSection
           chainLength={chain.length}
           confirming={confirmStartOver}
@@ -657,7 +678,7 @@ export default function Workout() {
           onConfirm={() => void handleStartOver()}
           onCancel={() => setConfirmStartOver(false)}
         />
-      </div>
+      </motion.div>
     </main>
   )
 }
