@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef } from 'react'
 import { usePageTitle } from '@/lib/pageMeta'
 import { HiPencil, HiChevronRight, HiLogout, HiTrash, HiCamera } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
