@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { db } from '@/lib/db'
 import Dashboard from '@/pages/dashboard/Dashboard'
@@ -43,14 +42,6 @@ export default function AuthGuard() {
     workoutPlans: { $: { where: { userId: user?.id ?? '' } } },
   })
 
-  // Clear dashboard animation flag on logout so next login re-animates.
-  const prevUserRef = useRef(user)
-  useEffect(() => {
-    if (prevUserRef.current && !user) {
-      sessionStorage.removeItem('tyw-dash-animated')
-    }
-    prevUserRef.current = user
-  }, [user])
 
   // Wait for both auth state and plan data before making any routing decision.
   if (isLoading || (user && plansLoading)) return <Spinner />

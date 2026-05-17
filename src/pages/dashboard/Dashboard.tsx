@@ -1,5 +1,5 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate as motionAnimate } from 'framer-motion'
 import { HiArrowNarrowRight } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
@@ -72,11 +72,16 @@ function MiniRing({ pct, title, subtitle, ringId, color1, color2 }: MiniRingProp
   const r = (SIZE - STROKE) / 2
   const circ = 2 * Math.PI * r
   const [animPct, setAnimPct] = useState(0)
+  const mv = useMotionValue(0)
+  const displayPct = useTransform(mv, v => `${Math.round(v)}%`)
 
   useEffect(() => {
-    const t = setTimeout(() => setAnimPct(Math.min(1, pct)), 80)
+    const t = setTimeout(() => {
+      setAnimPct(Math.min(1, pct))
+      motionAnimate(mv, pct * 100, { duration: 1, ease: [0.34, 1.2, 0.64, 1] })
+    }, 80)
     return () => clearTimeout(t)
-  }, [pct])
+  }, [pct, mv])
 
   const filled = circ * animPct
 
@@ -103,9 +108,9 @@ function MiniRing({ pct, title, subtitle, ringId, color1, color2 }: MiniRingProp
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[13px] font-black text-white tabular-nums leading-none">
-            {Math.round(animPct * 100)}%
-          </span>
+          <motion.span className="text-[13px] font-black text-white tabular-nums leading-none">
+            {displayPct}
+          </motion.span>
         </div>
       </div>
       <div className="text-center">
@@ -233,12 +238,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
 
-  const [shouldAnimate] = useState(() => {
-    const seen = sessionStorage.getItem('tyw-dash-animated')
-    if (!seen) { sessionStorage.setItem('tyw-dash-animated', '1'); return true }
-    return false
-  })
-
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const { mood, selectMood } = useMood()
   const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
@@ -343,7 +342,7 @@ export default function Dashboard() {
     <motion.main
       className="w-full md:max-w-2xl lg:max-w-4xl md:mx-auto px-4 pt-6 pb-nav space-y-3.5"
       variants={containerVariants}
-      initial={shouldAnimate ? 'hidden' : false}
+      initial="hidden"
       animate="visible"
     >
       {selectedExercise && (
