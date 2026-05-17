@@ -638,7 +638,7 @@ export default function Dashboard() {
           viewport={{ once: false, amount: 0.6 }}
           transition={{ type: 'spring', stiffness: 280, damping: 14, mass: 0.85 }}
         >
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-1">
             <svg width="64" height="64" viewBox="0 0 100 100" fill="none">
               <defs>
                 <radialGradient id="dashLogoGrad" cx="32%" cy="26%" r="72%">
@@ -654,7 +654,7 @@ export default function Dashboard() {
                 fill="white"
               />
             </svg>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center">
               <span className="text-[2.8rem] font-black tracking-tight gradient-text">UPLYFT</span>
             </div>
           </div>
