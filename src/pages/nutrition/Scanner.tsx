@@ -52,7 +52,7 @@ const NOVA_EXPLANATION: Record<number, string> = {
 // ── Intro screen data ─────────────────────────────────────────────────────────
 
 const FEATURE_CARDS = [
-  { icon: '🏆', label: 'NutriScore A-E', desc: 'Science-backed grade for every product' },
+  { icon: '🏆', label: 'Nutritional Score A-E', desc: 'Science-backed grade for every product' },
   { icon: '📊', label: 'Macro Breakdown', desc: 'Calories, protein, carbs, fat per 100g' },
   { icon: '🚨', label: 'Allergen Check', desc: 'Flags your personal restrictions' },
   { icon: '🎯', label: 'Goal Match', desc: 'See if it fits your nutrition goals' },
@@ -177,7 +177,7 @@ function IntroScreen({
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
       >
         <div className="px-5 pt-4 pb-3 border-b border-white/6">
-          <p className="text-white font-bold text-sm">What is NutriScore?</p>
+          <p className="text-white font-bold text-sm">What is Nutritional Score?</p>
           <p className="text-white/40 text-xs mt-0.5">A to E grading system based on nutritional quality</p>
         </div>
         <div className="px-4 py-4 space-y-2">

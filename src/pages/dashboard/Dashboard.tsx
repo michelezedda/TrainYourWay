@@ -318,7 +318,7 @@ export default function Dashboard() {
     try {
       const days = JSON.parse(latestPlan.workoutDays ?? '[]') as string[]
       if (days.length > 0) return days.length
-    } catch {}
+    } catch { }
     return latestPlan.plan ? getWeeklyWorkoutDays(latestPlan.plan) : 0
   }, [latestPlan])
 
@@ -412,95 +412,95 @@ export default function Dashboard() {
 
       {/* Today's Workout Card */}
       <motion.div variants={itemVariants}>
-      {latestPlan ? (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Today's Workout</p>
-          </div>
-          {todayWorkout ? (
-            <>
-              <p className="text-sm font-bold text-white/85 mb-3">{todayWorkout.dayName}</p>
-              {todayWorkout.exercises[0] === 'Rest Day' ? (
-                <p className="text-sm text-white/38 mb-4">Active recovery or rest - recharge today.</p>
-              ) : todayWorkout.exercises.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {todayWorkout.exercises.map((ex, i) => (
-                    <div key={i} className="flex items-center gap-2.5">
-                      <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                        style={{ background: 'rgba(168,85,247,0.14)', color: '#c084fc' }}
-                      >
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-white/65">{ex}</span>
-                    </div>
-                  ))}
-                  {todayWorkout.exercises.length === 4 && (
-                    <p className="text-[11px] text-white/28 pl-7">+ more exercises in full plan</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-white/38 mb-4">Check the full plan for today's details.</p>
-              )}
-            </>
-          ) : (
-            <div className="mb-4">
-              <p className="text-sm text-white/38">Rest day - recover and recharge.</p>
+        {latestPlan ? (
+          <div className="glass-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Today's Workout</p>
             </div>
-          )}
-          <div className="flex gap-2 mt-4">
-            <Link to="/workout" className="flex-1">
+            {todayWorkout ? (
+              <>
+                <p className="text-sm font-bold text-white/85 mb-3">{todayWorkout.dayName}</p>
+                {todayWorkout.exercises[0] === 'Rest Day' ? (
+                  <p className="text-sm text-white/38 mb-4">Active recovery or rest - recharge today.</p>
+                ) : todayWorkout.exercises.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {todayWorkout.exercises.map((ex, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                          style={{ background: 'rgba(168,85,247,0.14)', color: '#c084fc' }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="text-sm text-white/65">{ex}</span>
+                      </div>
+                    ))}
+                    {todayWorkout.exercises.length === 4 && (
+                      <p className="text-[11px] text-white/28 pl-7">+ more exercises in full plan</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/38 mb-4">Check the full plan for today's details.</p>
+                )}
+              </>
+            ) : (
+              <div className="mb-4">
+                <p className="text-sm text-white/38">Rest day - recover and recharge.</p>
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              <Link to="/workout" className="flex-1">
+                <button
+                  className="w-full py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
+                  style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }}
+                >
+                  View Plan
+                </button>
+              </Link>
               <button
-                className="w-full py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
-                style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }}
+                onClick={handleEvolve}
+                disabled={!canEvolve}
+                className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed"
+                style={canEvolve
+                  ? { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
+                  : { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.06)', opacity: 0.5 }
+                }
               >
-                View Plan
+                Evolve
               </button>
-            </Link>
-            <button
-              onClick={handleEvolve}
-              disabled={!canEvolve}
-              className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed"
-              style={canEvolve
-                ? { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
-                : { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.06)', opacity: 0.5 }
-              }
-            >
-              Evolve
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* No-plan CTA */
-        <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid rgba(168,85,247,0.22)' }}>
-          <div
-            className="px-6 pt-8 pb-6 text-center"
-            style={{ background: 'linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.06) 100%)' }}
-          >
-            <div
-              className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center text-3xl"
-              style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}
-            >
-              🏋️
             </div>
-            <h2 className="text-2xl font-black text-white tracking-tight mb-2">Build your first plan</h2>
-            <p className="text-sm text-white/45 leading-relaxed mb-6 max-w-xs mx-auto font-medium">
-              Answer a few questions about your goals and equipment. Get a personalised plan in seconds.
-            </p>
-            <Link to="/questionnaire" className="btn-primary w-full flex items-center justify-center gap-2 mb-3">
-              Generate My Plan
-              <HiArrowNarrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/import"
-              className="block w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-[0.98]"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.09)' }}
-            >
-              Import an existing plan
-            </Link>
           </div>
-        </div>
-      )}
+        ) : (
+          /* No-plan CTA */
+          <div className="rounded-3xl overflow-hidden" style={{ border: '1px solid rgba(168,85,247,0.22)' }}>
+            <div
+              className="px-6 pt-8 pb-6 text-center"
+              style={{ background: 'linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.06) 100%)' }}
+            >
+              <div
+                className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center text-3xl"
+                style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15))', border: '1px solid rgba(168,85,247,0.3)' }}
+              >
+                🏋️
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tight mb-2">Build your first plan</h2>
+              <p className="text-sm text-white/45 leading-relaxed mb-6 max-w-xs mx-auto font-medium">
+                Answer a few questions about your goals and equipment. Get a personalised plan in seconds.
+              </p>
+              <Link to="/questionnaire" className="btn-primary w-full flex items-center justify-center gap-2 mb-3">
+                Generate My Plan
+                <HiArrowNarrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/import"
+                className="block w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-[0.98]"
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.09)' }}
+              >
+                Import an existing plan
+              </Link>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Mood + Hydration: stacked on mobile, side-by-side on md */}
@@ -626,10 +626,14 @@ export default function Dashboard() {
       {/* Feature Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
         <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
-        <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
+        <FeatureCard to="/machine" emoji="🏋️" label="Machine Scanner" sub="Photo any machine" accent="34,211,238" />
         <FeatureCard to="/wellness" emoji="🧠" label="Mindspace" sub="Mental wellness" accent="99,102,241" />
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
       </motion.div>
+
+      <div className="flex justify-center items-center pb-10">
+        <img src="/public/uplift.png" alt="uplift logo" className="w-[200px]" />
+      </div>
     </motion.main>
   )
 }

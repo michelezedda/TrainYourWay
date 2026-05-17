@@ -93,8 +93,8 @@ export default function MachineGuide() {
   return (
     <main className="w-full md:max-w-2xl md:mx-auto px-4 pt-6 pb-nav animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight gradient-text">Machine Guide</h1>
-        <p className="text-white/40 text-sm mt-1">Photo any gym machine for step-by-step instructions.</p>
+        <h1 className="text-3xl font-black tracking-tight gradient-text">Machine Scanner</h1>
+        <p className="text-white/40 text-sm mt-1">Take a photo of any gym machine for step-by-step instructions.</p>
       </div>
 
       {/* Idle / error */}

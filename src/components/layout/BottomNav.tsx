@@ -60,10 +60,9 @@ const ALL_NAV = [
   { to: '/workout', label: 'Workout', Icon: DumbbellIcon },
   { to: '/diet', label: 'Diet', Icon: ForkIcon },
   { to: '/wellness', label: 'Mindspace', Icon: MindIcon },
-  { to: '/me', label: 'Settings', Icon: PersonIcon },
   { to: '/scanner', label: 'Food Scan', Icon: ScanIcon },
+  { to: '/machine', label: 'Machine Scanner', Icon: MachineIcon },
   { to: '/community', label: 'Community', Icon: CommunityIcon },
-  { to: '/machine', label: 'Machine Guide', Icon: MachineIcon },
 ]
 
 export default function BottomNav() {
@@ -200,7 +199,27 @@ export default function BottomNav() {
           })}
         </nav>
 
-        <p className="px-3 text-[10px] text-white/15">v0.1</p>
+        {/* Settings — anchored at bottom, separated from primary nav */}
+        <div className="mt-2">
+          {(() => {
+            const active = isActive('/me')
+            return (
+              <Link
+                to="/me"
+                className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 active:scale-[0.97]"
+                style={active
+                  ? { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
+                  : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }
+                }
+              >
+                <PersonIcon active={active} />
+                <span className="text-sm font-medium">Settings</span>
+              </Link>
+            )
+          })()}
+          <div className="mx-3 mt-3 mb-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+          <p className="px-3 text-[10px] text-white/15">© UPLYFT v0.1</p>
+        </div>
       </aside>
     </>
   )
