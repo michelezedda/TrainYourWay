@@ -4,7 +4,7 @@ import { HiArrowNarrowLeft } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { saveSession, formatDuration } from '@/lib/wellness'
 
-// ── Session content ───────────────────────────────────────────────────────────
+// ── Session definitions ───────────────────────────────────────────────────────
 
 interface SessionDef {
   type: 'meditation' | 'sleep'
@@ -31,7 +31,7 @@ const SESSIONS: Record<string, SessionDef> = {
         'Close your eyes gently. Let your hands rest.',
         'Notice the weight of your body. Breathe naturally.',
         'With each breath out, let the tension ease.',
-        'Your mind will wander. That\'s fine. Gently return.',
+        "Your mind will wander. That's fine. Gently return.",
         'You have nowhere to be right now. Only here.',
         'Soften your jaw. Your shoulders. Your hands.',
         'Notice the sounds around you without reacting.',
@@ -48,7 +48,7 @@ const SESSIONS: Record<string, SessionDef> = {
         'Notice any tight spots without trying to fix them.',
         'Send a breath to wherever feels heavy.',
         'Return to the rhythm. In and out.',
-        'Let thoughts pass like clouds. You\'re the sky.',
+        "Let thoughts pass like clouds. You're the sky.",
         'Rest here for as long as you need.',
       ],
     ],
@@ -63,7 +63,7 @@ const SESSIONS: Record<string, SessionDef> = {
     durationOptions: [5, 10, 15, 20, 30],
     scripts: [
       [
-        'It\'s time to let the day go. You did enough.',
+        "It's time to let the day go. You did enough.",
         'Lie down comfortably. Let your body feel heavy.',
         'Close your eyes. There is nothing you need to do.',
         'Breathe in slowly... and out even slower.',
@@ -77,7 +77,7 @@ const SESSIONS: Record<string, SessionDef> = {
       [
         'Breathe in for 4... and out for 8.',
         'Again. In... and out, slow and complete.',
-        'Your mind is slowing. That\'s perfect.',
+        "Your mind is slowing. That's perfect.",
         'Picture a calm, dark sky full of quiet stars.',
         'You are sinking deeper into the mattress.',
         'Each breath takes you a little further down.',
@@ -88,23 +88,74 @@ const SESSIONS: Record<string, SessionDef> = {
       ],
     ],
   },
+  reset: {
+    type: 'meditation',
+    title: 'Quick Reset',
+    desc: 'A 3-minute mental refresh.',
+    icon: '⚡',
+    accent: '#10B981',
+    accentRgb: '16,185,129',
+    durationOptions: [3, 5],
+    scripts: [
+      [
+        'Close your eyes. Take one slow breath.',
+        'Feel your feet flat on the floor. Grounded.',
+        'Let your shoulders drop away from your ears.',
+        'Breathe in... and release.',
+        'Notice the room around you. You are here.',
+        'You are present. Capable. Okay.',
+        'One more breath in slowly... and out.',
+        'Open your eyes when ready.',
+      ],
+    ],
+  },
+  stress: {
+    type: 'meditation',
+    title: 'Stress Relief',
+    desc: 'Release tension, breathe deeply.',
+    icon: '🌿',
+    accent: '#F59E0B',
+    accentRgb: '245,158,11',
+    durationOptions: [5, 10, 15],
+    scripts: [
+      [
+        'Notice where the stress is sitting in your body.',
+        'Breathe into that tight spot. Gently.',
+        'As you exhale, imagine the tension leaving.',
+        'Your jaw. Your shoulders. Your hands. Soften.',
+        "You don't have to solve anything right now.",
+        'This moment is yours. Just breathe.',
+        'The pressure is temporary. You are not it.',
+        'Let the next breath be a little slower.',
+        'And the next even slower still.',
+        'Rest here. You are okay.',
+      ],
+    ],
+  },
 }
 
-// ── Ambient audio drone (sleep only) ─────────────────────────────────────────
+// ── Soundscape engine ─────────────────────────────────────────────────────────
 
-function startAmbientDrone(audioCtx: AudioContext): () => void {
+type SoundscapeId = 'drone' | 'rain' | 'ocean' | 'bowls'
+
+const SOUNDSCAPES: { id: SoundscapeId; label: string; icon: string }[] = [
+  { id: 'drone', label: 'Drone', icon: '♬' },
+  { id: 'rain', label: 'Rain', icon: '🌧' },
+  { id: 'ocean', label: 'Ocean', icon: '🌊' },
+  { id: 'bowls', label: 'Bowls', icon: '🎵' },
+]
+
+function createDronescape(audioCtx: AudioContext): () => void {
   const master = audioCtx.createGain()
   master.gain.setValueAtTime(0, audioCtx.currentTime)
   master.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + 5)
   master.connect(audioCtx.destination)
 
-  // F2 / F3 / C4 - pure, non-dissonant intervals for calming effect
   const config: Array<{ freq: number; gain: number }> = [
     { freq: 87.3, gain: 0.55 },
     { freq: 174.6, gain: 0.30 },
     { freq: 261.6, gain: 0.15 },
   ]
-
   const oscillators = config.map(({ freq, gain: gainVal }) => {
     const osc = audioCtx.createOscillator()
     const g = audioCtx.createGain()
@@ -126,6 +177,150 @@ function startAmbientDrone(audioCtx: AudioContext): () => void {
   }
 }
 
+function createRainscape(audioCtx: AudioContext): () => void {
+  const master = audioCtx.createGain()
+  master.gain.setValueAtTime(0, audioCtx.currentTime)
+  master.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 3)
+  master.connect(audioCtx.destination)
+
+  const bufLen = audioCtx.sampleRate * 2
+  const buffer = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1
+
+  const source = audioCtx.createBufferSource()
+  source.buffer = buffer
+  source.loop = true
+
+  const filter = audioCtx.createBiquadFilter()
+  filter.type = 'bandpass'
+  filter.frequency.value = 2800
+  filter.Q.value = 0.35
+
+  source.connect(filter)
+  filter.connect(master)
+  source.start()
+
+  return () => {
+    master.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2)
+    setTimeout(() => { try { source.stop(); master.disconnect() } catch (_e) {} }, 2500)
+  }
+}
+
+function createOceanscape(audioCtx: AudioContext): () => void {
+  const master = audioCtx.createGain()
+  master.gain.setValueAtTime(0, audioCtx.currentTime)
+  master.gain.linearRampToValueAtTime(0.14, audioCtx.currentTime + 4)
+  master.connect(audioCtx.destination)
+
+  const bufLen = audioCtx.sampleRate * 4
+  const buffer = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1
+
+  const source = audioCtx.createBufferSource()
+  source.buffer = buffer
+  source.loop = true
+
+  const filter = audioCtx.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.value = 900
+
+  const lfo = audioCtx.createOscillator()
+  const lfoGain = audioCtx.createGain()
+  lfo.frequency.value = 0.11
+  lfoGain.gain.value = 500
+  lfo.connect(lfoGain)
+  lfoGain.connect(filter.frequency)
+  lfo.start()
+
+  source.connect(filter)
+  filter.connect(master)
+  source.start()
+
+  return () => {
+    master.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.5)
+    setTimeout(() => { try { source.stop(); lfo.stop(); master.disconnect() } catch (_e) {} }, 3000)
+  }
+}
+
+function createBowlscape(audioCtx: AudioContext): () => void {
+  const master = audioCtx.createGain()
+  master.gain.setValueAtTime(0, audioCtx.currentTime)
+  master.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 2)
+  master.connect(audioCtx.destination)
+
+  const freqs = [146.8, 220.0, 293.7, 440.0]
+
+  const playBowlAt = (freq: number, startAt: number, dur: number) => {
+    try {
+      const osc = audioCtx.createOscillator()
+      const g = audioCtx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      g.gain.setValueAtTime(0, startAt)
+      g.gain.linearRampToValueAtTime(0.85, startAt + 0.07)
+      g.gain.exponentialRampToValueAtTime(0.001, startAt + dur)
+      osc.connect(g)
+      g.connect(master)
+      osc.start(startAt)
+      osc.stop(startAt + dur + 0.5)
+    } catch (_e) {}
+  }
+
+  const playPair = () => {
+    if (audioCtx.state === 'closed') return
+    const shuffled = [...freqs].sort(() => Math.random() - 0.5)
+    const t = audioCtx.currentTime
+    playBowlAt(shuffled[0], t, 8)
+    playBowlAt(shuffled[1], t + 2.5, 7)
+  }
+
+  playPair()
+  const timerId = setInterval(playPair, 12000)
+
+  return () => {
+    clearInterval(timerId)
+    master.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2)
+    setTimeout(() => { try { master.disconnect() } catch (_e) {} }, 3000)
+  }
+}
+
+// ── Floating particles ────────────────────────────────────────────────────────
+
+function FloatingParticles({ accentRgb }: { accentRgb: string }) {
+  const pts = [
+    { x: 22, dur: 8, delay: 0 },
+    { x: 38, dur: 11, delay: 2.1 },
+    { x: 52, dur: 9, delay: 0.7 },
+    { x: 66, dur: 13, delay: 3.5 },
+    { x: 78, dur: 10, delay: 1.8 },
+  ]
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+      {pts.map((p, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: 2 + (i % 2),
+            height: 2 + (i % 2),
+            left: `${p.x}%`,
+            top: '58%',
+            background: `rgba(${accentRgb},0.55)`,
+          }}
+          animate={{
+            y: [0, -(100 + i * 30)],
+            opacity: [0, 0.65, 0],
+            x: [0, i % 2 === 0 ? 14 : -14],
+          }}
+          transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 type View = 'setup' | 'session' | 'done'
@@ -138,41 +333,46 @@ export default function WellnessSession() {
   const def = SESSIONS[resolvedType] ?? SESSIONS.meditation
 
   const [view, setView] = useState<View>('setup')
-  const [durationSecs, setDurationSecs] = useState(def.durationOptions[1] * 60)
+  const [durationSecs, setDurationSecs] = useState((def.durationOptions[1] ?? def.durationOptions[0]) * 60)
   const [scriptIdx] = useState(() => Math.floor(Math.random() * def.scripts.length))
   const [lineIdx, setLineIdx] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [musicOn, setMusicOn] = useState(false)
+  const [activeSoundscape, setActiveSoundscape] = useState<SoundscapeId | null>(null)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
-  const stopDroneRef = useRef<(() => void) | null>(null)
+  const stopSoundRef = useRef<(() => void) | null>(null)
 
   const script = def.scripts[scriptIdx]
   const lineInterval = Math.floor(durationSecs / script.length)
 
   const stopAmbient = useCallback(() => {
-    if (stopDroneRef.current) {
-      stopDroneRef.current()
-      stopDroneRef.current = null
+    if (stopSoundRef.current) {
+      stopSoundRef.current()
+      stopSoundRef.current = null
     }
-    setMusicOn(false)
+    setActiveSoundscape(null)
   }, [])
 
-  const toggleMusic = useCallback(() => {
-    if (musicOn) {
-      stopAmbient()
-    } else {
-      try {
-        const ctx = audioCtxRef.current ?? new AudioContext()
-        audioCtxRef.current = ctx
-        if (ctx.state === 'suspended') void ctx.resume()
-        stopDroneRef.current = startAmbientDrone(ctx)
-        setMusicOn(true)
-      } catch (_e) {}
+  const setSoundscape = useCallback((id: SoundscapeId | null) => {
+    if (stopSoundRef.current) {
+      stopSoundRef.current()
+      stopSoundRef.current = null
     }
-  }, [musicOn, stopAmbient])
+    setActiveSoundscape(null)
+    if (id === null) return
+    try {
+      const ctx = audioCtxRef.current ?? new AudioContext()
+      audioCtxRef.current = ctx
+      if (ctx.state === 'suspended') void ctx.resume()
+      if (id === 'drone') stopSoundRef.current = createDronescape(ctx)
+      else if (id === 'rain') stopSoundRef.current = createRainscape(ctx)
+      else if (id === 'ocean') stopSoundRef.current = createOceanscape(ctx)
+      else if (id === 'bowls') stopSoundRef.current = createBowlscape(ctx)
+      setActiveSoundscape(id)
+    } catch (_e) {}
+  }, [])
 
   useEffect(() => {
     if (view !== 'session' || paused) return
@@ -193,7 +393,6 @@ export default function WellnessSession() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [view, paused, durationSecs, lineInterval, script.length, def.type, stopAmbient])
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => { stopAmbient() }
   }, [stopAmbient])
@@ -242,14 +441,17 @@ export default function WellnessSession() {
             {def.icon}
           </div>
           <p className="text-white/50 text-sm text-center max-w-xs leading-relaxed px-6 relative z-10">
-            {def.type === 'meditation'
-              ? "Find a quiet spot. Sit comfortably or lie down. Close your eyes when you're ready."
-              : "Get into bed. Dim your lights. Let go of the day."}
+            {def.type === 'sleep'
+              ? 'Get into bed. Dim your lights. Let go of the day.'
+              : 'Find a quiet spot. Sit comfortably or lie down. Ambient sound available during session.'}
           </p>
         </div>
 
         <p className="text-xs font-bold uppercase tracking-widest text-white/30 mb-3">Session length</p>
-        <div className={`grid gap-2 mb-8 ${def.durationOptions.length >= 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        <div
+          className="grid gap-2 mb-8"
+          style={{ gridTemplateColumns: `repeat(${def.durationOptions.length}, 1fr)` }}
+        >
           {def.durationOptions.map(mins => (
             <button
               key={mins}
@@ -341,11 +543,12 @@ export default function WellnessSession() {
       className="min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden relative"
       style={{ background: `radial-gradient(ellipse at 50% 30%, rgba(${accentRgb},0.09) 0%, transparent 65%)` }}
     >
-      {/* Ambient glow layer */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: `radial-gradient(ellipse 80% 80% at 50% 50%, rgba(${accentRgb},0.04) 0%, transparent 100%)` }}
       />
+
+      <FloatingParticles accentRgb={accentRgb} />
 
       {/* Top progress bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -381,46 +584,36 @@ export default function WellnessSession() {
           <span className="text-white/55 text-sm font-mono tabular-nums">{mm}:{ss}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Ambient music toggle - sleep sessions only */}
-          {def.type === 'sleep' && (
-            <button
-              onClick={toggleMusic}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all"
-              style={{
-                background: musicOn ? `rgba(${accentRgb},0.2)` : 'rgba(255,255,255,0.06)',
-                border: musicOn ? `1px solid rgba(${accentRgb},0.4)` : '1px solid rgba(255,255,255,0.1)',
-                color: musicOn ? accent : 'rgba(255,255,255,0.4)',
-                fontSize: 16,
-              }}
-              title={musicOn ? 'Turn off ambient sound' : 'Turn on ambient sound'}
-            >
-              ♫
-            </button>
-          )}
-          <button
-            onClick={() => setPaused(p => !p)}
-            className="px-4 py-2 rounded-2xl text-sm font-medium"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)' }}
-          >
-            {paused ? 'Resume' : 'Pause'}
-          </button>
-        </div>
+        <button
+          onClick={() => setPaused(p => !p)}
+          className="px-4 py-2 rounded-2xl text-sm font-medium"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)' }}
+        >
+          {paused ? 'Resume' : 'Pause'}
+        </button>
       </div>
 
-      {/* Icon orb with pulsing ambient ring */}
-      <div className="relative flex items-center justify-center mb-14">
+      {/* Layered orb */}
+      <div className="relative flex items-center justify-center mb-10">
         <motion.div
           className="absolute rounded-full pointer-events-none"
-          animate={{ scale: [1, 1.18, 1], opacity: [0.45, 0.75, 0.45] }}
+          animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.6, 0.35] }}
           transition={{ duration: 3.5, ease: 'easeInOut', repeat: Infinity }}
           style={{
             width: 260, height: 260,
             background: `radial-gradient(circle, rgba(${accentRgb},0.15) 0%, transparent 70%)`,
           }}
         />
-        <div
+        <motion.div
+          className="absolute rounded-full pointer-events-none"
+          animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.45, 0.2] }}
+          transition={{ duration: 5, ease: 'easeInOut', repeat: Infinity, delay: 1.2 }}
+          style={{ width: 196, height: 196, border: `1px solid rgba(${accentRgb},0.22)` }}
+        />
+        <motion.div
           className="w-32 h-32 rounded-full flex items-center justify-center text-5xl relative z-10"
+          animate={{ opacity: [0.92, 1, 0.92] }}
+          transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
           style={{
             background: `radial-gradient(circle at 35% 35%, rgba(${accentRgb},0.22), rgba(${accentRgb},0.06))`,
             border: `1.5px solid rgba(${accentRgb},0.25)`,
@@ -428,11 +621,11 @@ export default function WellnessSession() {
           }}
         >
           {def.icon}
-        </div>
+        </motion.div>
       </div>
 
       {/* Guided text */}
-      <div className="text-center max-w-sm px-4 mb-14 min-h-[80px] flex flex-col items-center justify-center">
+      <div className="text-center max-w-sm px-4 mb-10 min-h-[80px] flex flex-col items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.p
             key={lineIdx}
@@ -440,7 +633,7 @@ export default function WellnessSession() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
-            className="text-white/72 text-xl leading-relaxed font-light text-center"
+            className="text-white/75 text-xl leading-relaxed font-light text-center"
             style={{ fontStyle: 'italic' }}
           >
             {script[lineIdx]}
@@ -449,7 +642,7 @@ export default function WellnessSession() {
       </div>
 
       {/* Progress dots */}
-      <div className="flex gap-1.5 items-center">
+      <div className="flex gap-1.5 items-center mb-6">
         {script.map((_, i) => (
           <motion.div
             key={i}
@@ -460,6 +653,51 @@ export default function WellnessSession() {
           />
         ))}
       </div>
+
+      {/* Soundscape picker */}
+      <div className="flex items-center gap-2 mb-5">
+        <button
+          aria-label="No sound"
+          onClick={() => setSoundscape(null)}
+          className="flex flex-col items-center justify-center gap-0.5 w-[50px] py-2.5 rounded-xl transition-all"
+          style={activeSoundscape === null
+            ? { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.22)' }
+            : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }
+          }
+        >
+          <span className="text-xs font-bold" style={{ color: activeSoundscape === null ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.28)' }}>
+            off
+          </span>
+        </button>
+        {SOUNDSCAPES.map(sc => (
+          <button
+            key={sc.id}
+            aria-label={sc.label}
+            onClick={() => setSoundscape(activeSoundscape === sc.id ? null : sc.id)}
+            className="flex flex-col items-center justify-center gap-0.5 w-[50px] py-2.5 rounded-xl transition-all"
+            style={activeSoundscape === sc.id
+              ? { background: `rgba(${accentRgb},0.18)`, border: `1px solid rgba(${accentRgb},0.4)` }
+              : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }
+            }
+          >
+            <span style={{ fontSize: 15, lineHeight: 1 }}>{sc.icon}</span>
+            <span
+              className="text-[10px] font-medium"
+              style={{ color: activeSoundscape === sc.id ? accent : 'rgba(255,255,255,0.28)' }}
+            >
+              {sc.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => { if (intervalRef.current) clearInterval(intervalRef.current); stopAmbient(); navigate('/wellness') }}
+        className="text-sm font-medium"
+        style={{ color: 'rgba(255,255,255,0.22)' }}
+      >
+        End session early
+      </button>
     </main>
   )
 }

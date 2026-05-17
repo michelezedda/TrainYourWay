@@ -42,6 +42,16 @@ const SESSION_CARDS = [
     color: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.25)', accent: '#FBBF24',
     to: '/wellness/affirmations',
   },
+  {
+    id: 'reset', icon: '⚡', label: 'Quick Reset', desc: '3-min mental refresh',
+    color: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)', accent: '#10B981',
+    to: '/wellness/session/reset',
+  },
+  {
+    id: 'stress', icon: '🌿', label: 'Stress Relief', desc: 'Release tension',
+    color: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', accent: '#F59E0B',
+    to: '/wellness/session/stress',
+  },
 ]
 
 const AFFIRMATIONS = [
@@ -95,6 +105,7 @@ function getRecommendation(weekSessions: WellnessSession[]): typeof SESSION_CARD
   const h = new Date().getHours()
   const types = weekSessions.map(s => s.type)
   if (h >= 21 || h < 6) return SESSION_CARDS.find(s => s.id === 'sleep')!
+  if (h >= 12 && h <= 14) return SESSION_CARDS.find(s => s.id === 'reset')!
   if (h <= 9 && !types.includes('breathing')) return SESSION_CARDS.find(s => s.id === 'breathing')!
   if (!types.includes('journal')) return SESSION_CARDS.find(s => s.id === 'journal')!
   if (!types.includes('breathing')) return SESSION_CARDS.find(s => s.id === 'breathing')!
@@ -141,10 +152,18 @@ export default function Wellness() {
 
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -top-40 -right-20 w-96 h-96 rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-20 -left-20 w-80 h-80 rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <motion.div
+          className="absolute -top-40 -right-20 w-96 h-96 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }}
+          animate={{ scale: [1, 1.12, 1.04, 1], x: [0, 12, -6, 0] }}
+          transition={{ duration: 22, ease: 'easeInOut', repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-20 -left-20 w-80 h-80 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)', filter: 'blur(60px)' }}
+          animate={{ scale: [1, 1.08, 1.14, 1], x: [0, -10, 8, 0] }}
+          transition={{ duration: 28, ease: 'easeInOut', repeat: Infinity, delay: 4 }}
+        />
       </div>
 
       <div className="relative">

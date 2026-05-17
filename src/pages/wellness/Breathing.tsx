@@ -11,6 +11,7 @@ interface Phase {
   instruction: string
   duration: number
   targetScale: number
+  isExpand: boolean
 }
 
 interface Pattern {
@@ -36,8 +37,8 @@ const PATTERNS: Pattern[] = [
     accent: '#22D3EE',
     accentRgb: '34,211,238',
     phases: [
-      { label: 'Inhale', instruction: 'Breathe in slowly through your nose', duration: 4, targetScale: 1 },
-      { label: 'Exhale', instruction: 'Let it go, fully and gently', duration: 6, targetScale: 0.28 },
+      { label: 'Inhale', instruction: 'Breathe in slowly through your nose', duration: 4, targetScale: 1, isExpand: true },
+      { label: 'Exhale', instruction: 'Let it go, fully and gently', duration: 6, targetScale: 0.28, isExpand: false },
     ],
   },
   {
@@ -49,10 +50,10 @@ const PATTERNS: Pattern[] = [
     accent: '#818CF8',
     accentRgb: '129,140,248',
     phases: [
-      { label: 'Inhale', instruction: 'Fill your lungs completely', duration: 4, targetScale: 1 },
-      { label: 'Hold', instruction: 'Hold at the top, stay still', duration: 4, targetScale: 1 },
-      { label: 'Exhale', instruction: 'Release slowly, all the way out', duration: 4, targetScale: 0.28 },
-      { label: 'Hold', instruction: 'Rest here at the bottom', duration: 4, targetScale: 0.28 },
+      { label: 'Inhale', instruction: 'Fill your lungs completely', duration: 4, targetScale: 1, isExpand: true },
+      { label: 'Hold', instruction: 'Hold at the top, stay still', duration: 4, targetScale: 1, isExpand: true },
+      { label: 'Exhale', instruction: 'Release slowly, all the way out', duration: 4, targetScale: 0.28, isExpand: false },
+      { label: 'Hold', instruction: 'Rest here at the bottom', duration: 4, targetScale: 0.28, isExpand: false },
     ],
   },
   {
@@ -64,16 +65,50 @@ const PATTERNS: Pattern[] = [
     accent: '#6366F1',
     accentRgb: '99,102,241',
     phases: [
-      { label: 'Inhale', instruction: 'Breathe in through your nose', duration: 4, targetScale: 1 },
-      { label: 'Hold', instruction: 'Hold the breath, be still', duration: 7, targetScale: 1 },
-      { label: 'Exhale', instruction: 'Exhale fully through your mouth', duration: 8, targetScale: 0.28 },
+      { label: 'Inhale', instruction: 'Breathe in through your nose', duration: 4, targetScale: 1, isExpand: true },
+      { label: 'Hold', instruction: 'Hold the breath, be still', duration: 7, targetScale: 1, isExpand: true },
+      { label: 'Exhale', instruction: 'Exhale fully through your mouth', duration: 8, targetScale: 0.28, isExpand: false },
     ],
   },
 ]
 
-type View = 'setup' | 'session' | 'done'
+// ── Floating particles ────────────────────────────────────────────────────────
 
-// ── Component ─────────────────────────────────────────────────────────────────
+function FloatingParticles({ accentRgb }: { accentRgb: string }) {
+  const pts = [
+    { x: 30, dur: 7, delay: 0.5 },
+    { x: 44, dur: 9, delay: 2.2 },
+    { x: 56, dur: 8, delay: 1.0 },
+    { x: 68, dur: 11, delay: 3.1 },
+  ]
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+      {pts.map((p, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: 2,
+            height: 2,
+            left: `${p.x}%`,
+            bottom: '38%',
+            background: `rgba(${accentRgb},0.45)`,
+          }}
+          animate={{
+            y: [0, -(70 + i * 28)],
+            opacity: [0, 0.55, 0],
+            x: [i % 2 === 0 ? 8 : -8, i % 2 === 0 ? 20 : -20],
+          }}
+          transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+type View = 'setup' | 'session' | 'done'
 
 export default function WellnessBreathing() {
   const navigate = useNavigate()
@@ -83,6 +118,7 @@ export default function WellnessBreathing() {
   const [durationSecs, setDurationSecs] = useState(180)
 
   const [phaseIdx, setPhaseIdx] = useState(0)
+  const [phaseElapsed, setPhaseElapsed] = useState(0)
   const [totalElapsed, setTotalElapsed] = useState(0)
   const [paused, setPaused] = useState(false)
   const [scale, setScale] = useState(0.28)
@@ -93,6 +129,11 @@ export default function WellnessBreathing() {
   const currentPhase = pattern.phases[phaseIdx]
   const { accent, accentRgb } = pattern
   const progress = totalElapsed / durationSecs
+
+  // Reset phase elapsed when phase changes
+  useEffect(() => {
+    setPhaseElapsed(0)
+  }, [phaseIdx])
 
   const nextPhase = useCallback(() => {
     setPhaseIdx(prev => {
@@ -120,6 +161,7 @@ export default function WellnessBreathing() {
       })
 
       phaseTime += 1
+      setPhaseElapsed(phaseTime)
 
       if (phaseTime >= currentPhase.duration) {
         phaseTime = 0
@@ -134,6 +176,7 @@ export default function WellnessBreathing() {
 
   const startSession = () => {
     setPhaseIdx(0)
+    setPhaseElapsed(0)
     setTotalElapsed(0)
     setCycleCount(0)
     setPaused(false)
@@ -310,8 +353,13 @@ export default function WellnessBreathing() {
   const mm = String(Math.floor(remainingSecs / 60)).padStart(2, '0')
   const ss = String(remainingSecs % 60).padStart(2, '0')
 
-  // CSS transition matched to the full phase duration for natural breathing rhythm
-  const orbTransition = `transform ${currentPhase.duration}s cubic-bezier(0.4,0,0.6,1)`
+  // Organic easing: ease-out for expand, ease-in for contract
+  const phaseEasing = currentPhase.isExpand
+    ? `cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+    : `cubic-bezier(0.55, 0.05, 0.68, 0.19)`
+  const orbTransition = `transform ${currentPhase.duration}s ${phaseEasing}`
+
+  const phaseProgress = phaseElapsed / currentPhase.duration
 
   return (
     <main
@@ -328,7 +376,9 @@ export default function WellnessBreathing() {
         }}
       />
 
-      {/* Top progress bar */}
+      <FloatingParticles accentRgb={accentRgb} />
+
+      {/* Top overall progress bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <motion.div
           className="h-full"
@@ -371,8 +421,19 @@ export default function WellnessBreathing() {
         </button>
       </div>
 
-      {/* Breathing orb - 3 concentric layers all scaled together */}
-      <div className="relative flex items-center justify-center mb-14">
+      {/* Breathing orb - 4 concentric layers */}
+      <div className="relative flex items-center justify-center mb-12">
+        {/* Aurora outer ring - independent slow pulse */}
+        <motion.div
+          className="absolute rounded-full pointer-events-none"
+          animate={{ scale: [1, 1.06, 0.98, 1], opacity: [0.12, 0.2, 0.1, 0.12] }}
+          transition={{ duration: 12, ease: 'easeInOut', repeat: Infinity }}
+          style={{
+            width: 340, height: 340,
+            background: `radial-gradient(circle, rgba(${accentRgb},0.08) 0%, transparent 65%)`,
+            filter: 'blur(8px)',
+          }}
+        />
         {/* Outer halo */}
         <div
           className="absolute rounded-full pointer-events-none"
@@ -388,7 +449,7 @@ export default function WellnessBreathing() {
           className="absolute rounded-full pointer-events-none"
           style={{
             width: 210, height: 210,
-            border: `1px solid rgba(${accentRgb},0.14)`,
+            border: `1px solid rgba(${accentRgb},0.18)`,
             transform: `scale(${scale})`,
             transition: orbTransition,
           }}
@@ -437,12 +498,22 @@ export default function WellnessBreathing() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-white/22 text-xs tracking-wide"
+            className="text-white/22 text-xs tracking-wide mb-4"
           >
             {cycleCount} cycle{cycleCount !== 1 ? 's' : ''} completed
           </motion.p>
         )}
       </AnimatePresence>
+
+      {/* Phase progress bar - bottom of screen */}
+      <div className="fixed bottom-0 left-0 right-0 h-[3px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <motion.div
+          className="h-full"
+          style={{ background: `linear-gradient(90deg, rgba(${accentRgb},0.35), ${accent})` }}
+          animate={{ width: `${phaseProgress * 100}%` }}
+          transition={{ duration: 1, ease: 'linear' }}
+        />
+      </div>
     </main>
   )
 }
