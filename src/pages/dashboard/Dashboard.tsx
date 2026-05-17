@@ -1,7 +1,7 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { HiArrowNarrowRight } from 'react-icons/hi'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ExerciseModal from '@/components/ExerciseModal'
 import { getWeeklyWorkoutDays, readFiredMap } from '@/components/PlanView'
@@ -13,6 +13,7 @@ import { useMood, MOODS } from '@/context/MoodContext'
 
 const DAILY_GOAL = 8
 const ML_PER_GLASS = 250
+const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -229,6 +230,7 @@ const itemVariants = {
 export default function Dashboard() {
   const today = toDateStr(new Date())
   const userId = getUserId()
+  const navigate = useNavigate()
 
 
   const [shouldAnimate] = useState(() => {
@@ -252,14 +254,12 @@ export default function Dashboard() {
   const { data } = db.useQuery({
     workoutPlans: { $: { where: { userId } } },
     mealEntries: { $: { where: { userId } } },
-    workoutCompletions: { $: { where: { userId } } },
     waterLogs: { $: { where: { userId } } },
     userProfiles: { $: { where: { userId } } },
   })
 
   const allPlans = (data?.workoutPlans ?? []) as Array<{ id: string; plan: string; userName: string; fitnessLevel: string; goals: string; equipment: string; createdAt: number; workoutDays?: string }>
   const mealEntries = (data?.mealEntries ?? []) as Array<{ date: string; kcal?: number; protein?: number; carbs?: number; fat?: number }>
-  const completions = (data?.workoutCompletions ?? []) as Array<{ date: string }>
   const waterLogs = (data?.waterLogs ?? []) as Array<{ id: string; date: string; glasses: number }>
   const userProfile = ((data?.userProfiles ?? []) as Array<{ id: string; name?: string }>)[0]
 
@@ -277,7 +277,6 @@ export default function Dashboard() {
   const todayCarbs = useMemo(() => Math.round(todayMeals.reduce((s, e) => s + (e.carbs ?? 0), 0)), [todayMeals])
   const todayFat = useMemo(() => Math.round(todayMeals.reduce((s, e) => s + (e.fat ?? 0), 0)), [todayMeals])
 
-  const workoutDates = useMemo(() => [...new Set(completions.map(e => e.date))], [completions])
 
   // Workouts done this week: count plan-days fired in localStorage (one entry per
   // completed plan-day, not limited to one per calendar date like the DB).
@@ -291,8 +290,6 @@ export default function Dashboard() {
   const todayWaterLog = waterLogs.find(w => w.date === today)
   const glasses = todayWaterLog?.glasses ?? 0
   const liters = ((glasses * ML_PER_GLASS) / 1000).toFixed(1)
-  const alreadyLoggedToday = workoutDates.includes(today)
-
   const setGlasses = async (next: number) => {
     const clamped = Math.max(0, Math.min(next, 16))
     if (todayWaterLog) {
@@ -311,11 +308,6 @@ export default function Dashboard() {
     void setGlasses(next)
   }
 
-  const logWorkout = async () => {
-    if (alreadyLoggedToday || todayIsRest) return
-    await db.transact(db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() }))
-  }
-
   const todayWorkout = useMemo(
     () => latestPlan?.plan ? getTodayWorkout(latestPlan.plan) : null,
     [latestPlan?.plan],
@@ -330,7 +322,21 @@ export default function Dashboard() {
     return latestPlan.plan ? getWeeklyWorkoutDays(latestPlan.plan) : 0
   }, [latestPlan])
 
-  const todayIsRest = !!latestPlan && (!todayWorkout || todayWorkout.exercises[0] === 'Rest Day')
+  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
+
+  const handleEvolve = () => {
+    if (!canEvolve || !latestPlan) return
+    navigate('/reevaluate', {
+      state: {
+        planId: latestPlan.id,
+        originalPlan: latestPlan.plan,
+        userName: latestPlan.userName,
+        fitnessLevel: latestPlan.fitnessLevel ?? '',
+        goals: latestPlan.goals ?? '[]',
+        equipment: latestPlan.equipment ?? '[]',
+      },
+    })
+  }
 
 
   return (
@@ -452,17 +458,15 @@ export default function Dashboard() {
               </button>
             </Link>
             <button
-              onClick={() => void logWorkout()}
-              disabled={alreadyLoggedToday || todayIsRest}
+              onClick={handleEvolve}
+              disabled={!canEvolve}
               className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed"
-              style={alreadyLoggedToday
-                ? { background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.22)' }
-                : todayIsRest
-                  ? { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.07)' }
-                  : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
+              style={canEvolve
+                ? { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
+                : { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.06)', opacity: 0.5 }
               }
             >
-              {alreadyLoggedToday ? '✓ Logged' : todayIsRest ? 'Rest Day' : 'Evolve'}
+              Evolve
             </button>
           </div>
         </div>
