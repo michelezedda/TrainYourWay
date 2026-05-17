@@ -15,6 +15,7 @@ import { getUserId } from '@/lib/userId'
 import { type InjuryState, getInjuryState, saveInjuryState, clearInjuryState, getInjuryAdvice } from '@/lib/injuryStore'
 import { useLocale } from '@/context/LocaleContext'
 import { calcWeeklyStreak } from '@/lib/streaks'
+import { todayStr, parseJsonList, parseJsonRecord } from '@/lib/utils'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -40,18 +41,7 @@ const LEVEL_STYLE: Record<string, { bg: string; color: string; border: string }>
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
 
-function parseList(json: string): string[] {
-  try { return JSON.parse(json) as string[] } catch { return [] }
-}
 
-function parseRecord(json: string): Record<string, string> {
-  try { return JSON.parse(json) as Record<string, string> } catch { return {} }
-}
-
-function todayString(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 /** Walks the parentPlanId chain to return plans in chronological order (root first). */
 function buildPlanChain(plans: Plan[]): Plan[] {
@@ -71,7 +61,7 @@ function buildPlanChain(plans: Plan[]): Plan[] {
 
 /** Days that are NOT in the user's stored schedule (shown as blocked in the UI). */
 function getBlockedDays(workoutDays: string | undefined): string[] {
-  const stored = parseList(workoutDays ?? '[]')
+  const stored = parseJsonList(workoutDays ?? '[]')
   if (stored.length === 0) return []
   return ALL_WEEK_DAYS.filter(d => !stored.includes(d))
 }
@@ -395,13 +385,13 @@ export default function Workout() {
   const latestPlan = chain[chain.length - 1]
   const previousVersions = chain.slice(0, -1).reverse()
 
-  const today = useMemo(todayString, [])
+  const today = useMemo(todayStr, [])
 
   const weekWorkouts = useMemo(() => Object.keys(readFiredMap()).length, [])
 
   const weeklyTarget = useMemo(() => {
     if (!latestPlan) return 0
-    const days = parseList(latestPlan.workoutDays ?? '[]')
+    const days = parseJsonList(latestPlan.workoutDays ?? '[]')
     return days.length > 0 ? days.length : getWeeklyWorkoutDays(latestPlan.plan)
   }, [latestPlan])
 
@@ -486,8 +476,8 @@ export default function Workout() {
 
   // ── Derived from current plan ─────────────────────────────────────────────────
 
-  const goals = parseList(latestPlan.goals ?? '[]')
-  const dayOverrides = parseRecord(latestPlan.dayOverrides ?? '{}')
+  const goals = parseJsonList(latestPlan.goals ?? '[]')
+  const dayOverrides = parseJsonRecord(latestPlan.dayOverrides ?? '{}')
   const blockedDays = getBlockedDays(latestPlan.workoutDays)
   const lvl = LEVEL_STYLE[latestPlan.fitnessLevel] ?? null
   const injuryAdvice = injuryState ? getInjuryAdvice(injuryState) : null
@@ -627,7 +617,7 @@ export default function Workout() {
               dayOverrides={dayOverrides}
               onExerciseClick={setSelectedExercise}
               onUnblockDay={day => {
-                const current = parseList(latestPlan.workoutDays ?? '[]')
+                const current = parseJsonList(latestPlan.workoutDays ?? '[]')
                 void db.transact(db.tx.workoutPlans[latestPlan.id].update({
                   workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
                 }))
@@ -635,7 +625,7 @@ export default function Workout() {
               onGenerateDayWorkout={async day => {
                 const workoutText = await generateDayWorkout(latestPlan.plan, day)
                 const newOverrides = { ...dayOverrides, [day]: workoutText }
-                const current = parseList(latestPlan.workoutDays ?? '[]')
+                const current = parseJsonList(latestPlan.workoutDays ?? '[]')
                 void db.transact(db.tx.workoutPlans[latestPlan.id].update({
                   dayOverrides: JSON.stringify(newOverrides),
                   workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),

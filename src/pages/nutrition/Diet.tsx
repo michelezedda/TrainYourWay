@@ -8,6 +8,7 @@ import { getNutritionProfile, saveNutritionProfile, calculateTargets, type Daily
 import { estimateFoodMacros, type FoodMacros } from '@/lib/gemini'
 import { type Unit } from '@/lib/units'
 import { useLocale } from '@/context/LocaleContext'
+import { localDateStr, shiftDateStr } from '@/lib/utils'
 import { motion } from 'framer-motion'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const
@@ -97,15 +98,6 @@ function buildQuery(foodName: string, qty: string, kind: FoodKind, unit: Unit): 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function shiftDate(dateStr: string, n: number): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  d.setDate(d.getDate() + n)
-  return toDateStr(d)
-}
 
 
 type MealEntry = {
@@ -373,7 +365,7 @@ function ManualInput({ st, unit, onFoodSubmit, onQuantitySubmit, onBack, onChang
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Diet() {
-  const today = toDateStr(new Date())
+  const today = localDateStr()
   const [selectedDate, setSelectedDate] = useState(today)
   const [activeMeal, setActiveMeal]     = useState<Meal | null>(null)
   const [addState, setAddState]         = useState<Partial<Record<Meal, AddState>>>({})
@@ -495,7 +487,7 @@ export default function Diet() {
         className="flex items-center gap-2 mb-5"
       >
         <button
-          onClick={() => goToDate(shiftDate(selectedDate, -1))}
+          onClick={() => goToDate(shiftDateStr(selectedDate, -1))}
           className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0"
           style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
           aria-label="Previous day"
@@ -513,7 +505,7 @@ export default function Diet() {
           )}
         </div>
         <button
-          onClick={() => goToDate(shiftDate(selectedDate, 1))}
+          onClick={() => goToDate(shiftDateStr(selectedDate, 1))}
           disabled={isToday}
           className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 flex-shrink-0 disabled:opacity-30"
           style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}

@@ -337,7 +337,7 @@ export default function Landing() {
               </span>
             </h2>
             <p className="text-white/45 text-base leading-relaxed max-w-sm">
-              Personalized workout plans, AI coaching, auto-evolving programs, and smart nutrition — all in one place.
+              Personalized workout plans, AI coaching, auto-evolving programs, and smart nutrition - all in one place.
             </p>
           </motion.div>
 

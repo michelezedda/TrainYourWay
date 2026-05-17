@@ -117,7 +117,7 @@ USER PROFILE:
 - Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
 - Weight: ${dispW(data.weight, u)} | Height: ${dispH(data.height, u)} | BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
-${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
+${data.bodyType ? `- Body Type: ${data.bodyType} -${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Available Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? `, additional notes: ${data.equipmentNotes}` : ''}
 - Injuries / Limitations: ${data.injuries || 'None'}
 - Training: ${data.workoutDays.length} days/week on ${data.workoutDays.join(', ')}, ${data.sessionDuration} minutes/session
@@ -194,7 +194,7 @@ Rules:
 - Adapt intensity precisely to the ${data.fitnessLevel} level
 - Be specific: always include sets, reps (or time), and rest periods
 - Keep descriptions concise and actionable
-- All weights in the plan must use ${weightUnit} — never mix units
+- All weights in the plan must use ${weightUnit} -never mix units
 - Weight field rules (required on every exercise):
   · Bodyweight exercises → "Bodyweight"
   · Resistance band exercises → "Light band" / "Medium band" / "Heavy band"
@@ -213,7 +213,7 @@ USER PROFILE:
 - Age: ${data.age}${data.sex ? ` | Sex: ${data.sex}` : ''}
 - Weight: ${dispW(data.weight, u)}, Height: ${dispH(data.height, u)}, BMI: ${bmiLabel(data.weight, data.height)}
 - Fitness Level: ${data.fitnessLevel}
-${data.bodyType ? `- Body Type: ${data.bodyType} — ${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
+${data.bodyType ? `- Body Type: ${data.bodyType} -${bodyTypeNote(data.bodyType)}\n` : ''}- Goals: ${data.goals.join(', ')}
 - Equipment: ${data.equipment.join(', ')}${data.equipmentNotes ? ` (${data.equipmentNotes})` : ''}
 - Injuries or limitations: ${data.injuries || 'None'}
 - Schedule: ${data.workoutDays.length} days/week (${data.workoutDays.join(', ')}), ${data.sessionDuration}-minute sessions
@@ -358,17 +358,17 @@ TRAINER DIRECTIVES (apply all of them):
 4. Respect all new injuries. Remove or modify every affected movement.
 ${data.newGoals.length > 0 ? `5. Shift emphasis toward: ${data.newGoals.join(', ')}` : ''}
 6. Swap at minimum 3 exercises across the plan with fresh alternatives to prevent adaptation.
-7. Change EVERY set/rep/weight figure compared to the original — no figure may be identical to the original.
+7. Change EVERY set/rep/weight figure compared to the original -no figure may be identical to the original.
 8. Update rest periods where appropriate.
 9. Rewrite the Overview section to describe this evolved phase and how it differs from the previous one.
 10. Update the Progression Plan for the next 4-8 weeks beyond this phase.
 ${data.workoutDays?.length ? `11. Build the plan around exactly these training days: ${data.workoutDays.join(', ')}. All other days must be Rest in the Weekly Schedule.` : ''}
 
-THIS MUST BE A COMPLETE, FULLY WRITTEN PLAN — not a summary or a list of changes. Every training day must be written in full.
+THIS MUST BE A COMPLETE, FULLY WRITTEN PLAN -not a summary or a list of changes. Every training day must be written in full.
 
 Title: # ${data.userName}: Next Phase
 
-CRITICAL FORMAT — follow these exactly or the plan will not render:
+CRITICAL FORMAT -follow these exactly or the plan will not render:
 - Day sections MUST use: ### Day N: [Focus Area]
 - Swapped exercises MUST include *(new)* inside the bold name line only: **N. Exercise Name *(new)***
 - Exercise meta line MUST start with "Sets:": Sets: X × Y reps | Rest: Ns | Weight: [range or Bodyweight]
@@ -384,8 +384,8 @@ After the Nutrition Tips section, include:
 
 Rules:
 - Include Weight: field on every exercise (${weightUnit} range or example such as "${weightExample}", Bodyweight, or band level)
-- All weights in the plan must use ${weightUnit} — never mix units
-- Every change must be explicit — no vague "adjust as needed"
+- All weights in the plan must use ${weightUnit} -never mix units
+- Every change must be explicit -no vague "adjust as needed"
 - Write the full plan, do not truncate or skip any day`
 
   const completion = await groqComplete({
@@ -719,7 +719,7 @@ export interface MachineAnalysis {
 export async function analyzeMachineImage(imageDataUrl: string): Promise<MachineAnalysis> {
   const prompt = `You are an expert personal trainer and gym equipment specialist. Analyze this image of gym equipment.
 
-Respond ONLY with valid JSON — no markdown, no explanation, no code block — using exactly this structure:
+Respond ONLY with valid JSON -no markdown, no explanation, no code block -using exactly this structure:
 {
   "machineName": "Full name of the machine or equipment",
   "confidence": "high" | "medium" | "low",

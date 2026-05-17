@@ -315,7 +315,7 @@ export default function Support() {
           <>
             <div className="flex items-center gap-3 mb-4">
               <p className="text-white/35 text-xs flex-1">
-                {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} — {openCount} open
+                {tickets.length} ticket{tickets.length !== 1 ? 's' : ''}, {openCount} open
               </p>
             </div>
             <div className="space-y-3">

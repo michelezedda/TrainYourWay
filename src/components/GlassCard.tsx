@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
+
 interface GlassCardProps {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
   hover?: boolean
   padding?: boolean

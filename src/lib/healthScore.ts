@@ -102,10 +102,10 @@ export function scoreProduct(
   // Profile-based bonuses
   if (profile) {
     const goals = profile.goals.map(g => g.toLowerCase())
-    const wantsMuslce = goals.some(g => g.includes('muscle'))
+    const wantsMuscle = goals.some(g => g.includes('muscle'))
     const wantsLoss   = goals.some(g => g.includes('weight') || g.includes('fat'))
 
-    if (wantsMuslce && protein > 15) score += 0.5
+    if (wantsMuscle && protein > 15) score += 0.5
     if (wantsLoss && sugars < 5)     score += 0.5
     if (wantsLoss && kcal < 200)     score += 0.3
   }

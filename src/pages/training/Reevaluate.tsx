@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { type ReevaluationData } from '@/lib/gemini'
 import { getUnit, saveUnit, lbsToKg, kgToLbs, cmToFtIn, ftInToCm, type Unit } from '@/lib/units'
 import { HiArrowNarrowLeft, HiArrowNarrowRight } from 'react-icons/hi'
+import { parseJsonList } from '@/lib/utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -58,9 +59,6 @@ const stepTransition = { duration: 0.24, ease: [0.4, 0, 0.2, 1] as [number, numb
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function parseList(str: string): string[] {
-  try { return JSON.parse(str) as string[] } catch { return [] }
-}
 
 function parseStatsFromPlan(plan: string): { weight: string; height: string } {
   const m = plan.match(/\*\*Body Metrics:\*\*\s*Weight\s+([\d.]+)\s*kg\s*\|\s*Height\s+([\d.]+)\s*cm/)
@@ -267,8 +265,8 @@ export default function ReevaluateQuestionnaire() {
 
   if (!original) { navigate('/workout', { replace: true }); return null }
 
-  const goals     = parseList(original.goals)
-  const equipment = parseList(original.equipment)
+  const goals     = parseJsonList(original.goals)
+  const equipment = parseJsonList(original.equipment)
   const firstName = original.userName.split(' ')[0]
 
   const goToStep = (next: number) => {

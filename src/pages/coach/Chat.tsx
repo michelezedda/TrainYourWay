@@ -6,13 +6,10 @@ import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { sendChatMessage, type ChatMessage } from '@/lib/gemini'
+import { localDateStr } from '@/lib/utils'
 
 type WorkoutPlan = { id: string; plan: string; createdAt: number }
 type MealEntry = { id: string; meal: string; description: string; kcal: number }
-
-function toDateStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 // ── Suggestion data ────────────────────────────────────────────────────────────
 
@@ -283,7 +280,7 @@ export default function Chat() {
   const targets = profile ? calculateTargets(profile) : null
 
   const { data: plansData } = db.useQuery({ workoutPlans: { $: { where: { userId } } } })
-  const { data: mealsData } = db.useQuery({ mealEntries: { $: { where: { userId, date: toDateStr(new Date()) } } } })
+  const { data: mealsData } = db.useQuery({ mealEntries: { $: { where: { userId, date: localDateStr() } } } })
 
   const latestPlan = ((plansData?.workoutPlans ?? []) as WorkoutPlan[])
     .sort((a, b) => b.createdAt - a.createdAt)[0]?.plan ?? null

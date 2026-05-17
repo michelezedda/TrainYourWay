@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect, useContext, createContext } from 'react'
+import { useState, useRef, useEffect, useContext, createContext, type ReactNode } from 'react'
 import { HiInformationCircle, HiChevronDown } from 'react-icons/hi'
 import type { Components } from 'react-markdown'
-import type React from 'react'
 import { useLocale } from '@/context/LocaleContext'
 
 // ── Workout progress context ──────────────────────────────────────────────────
@@ -133,12 +132,12 @@ const staticCard = (children: unknown) => (
     style={{ background: 'rgba(255,255,255,0.03)' }}
   >
     <span className="text-white/30 flex-shrink-0 text-xs mt-1">·</span>
-    <span className="text-white/70">{children as React.ReactNode}</span>
+    <span className="text-white/70">{children as ReactNode}</span>
   </div>
 )
 
 const scheduleCard = (
-  label: React.ReactNode,
+  label: ReactNode,
   exerciseName: string,
   onClick: (name: string) => void,
 ) => (

@@ -10,14 +10,11 @@ import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { getNutritionProfile, calculateTargets } from '@/lib/nutrition'
 import { useMood, MOODS } from '@/context/MoodContext'
+import { localDateStr } from '@/lib/utils'
 
 const DAILY_GOAL = 8
 const ML_PER_GLASS = 250
 const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
-
-function toDateStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 function getGreeting(name: string | undefined): string {
   const h = new Date().getHours()
@@ -233,10 +230,11 @@ const itemVariants = {
 }
 
 export default function Dashboard() {
-  const today = toDateStr(new Date())
+  const today = localDateStr()
   const userId = getUserId()
   const navigate = useNavigate()
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const { mood, selectMood } = useMood()

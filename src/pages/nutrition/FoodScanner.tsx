@@ -12,14 +12,11 @@ import { getNutritionProfile } from '@/lib/nutrition'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { generateProductStory, shareOrDownload } from '@/lib/storyCanvas'
+import { todayStr } from '@/lib/utils'
 
 type PageState = 'intro' | 'idle' | 'loading' | 'result' | 'not-found' | 'error'
 type ResultTab = 'health' | 'nutrition' | 'details'
 
-function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 // ── Grade constants ───────────────────────────────────────────────────────────
 
