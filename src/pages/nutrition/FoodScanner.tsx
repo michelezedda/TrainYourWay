@@ -724,7 +724,7 @@ const RESULT_TABS: { id: ResultTab; label: string }[] = [
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function Scanner() {
+export default function FoodScanner() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
   const scanning = useRef(false)

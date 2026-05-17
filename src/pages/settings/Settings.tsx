@@ -37,7 +37,7 @@ function readAndResizeImage(file: File): Promise<string> {
   })
 }
 
-export default function Personal() {
+export default function Settings() {
   const userId = getUserId()
   const navigate = useNavigate()
 

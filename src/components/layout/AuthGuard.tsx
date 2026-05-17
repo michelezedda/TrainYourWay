@@ -10,9 +10,9 @@ import Diet from '@/pages/nutrition/Diet'
 import Import from '@/pages/training/Import'
 import Support from '@/pages/support/Support'
 import Settings from '@/pages/settings/Settings'
-import Scanner from '@/pages/nutrition/Scanner'
+import FoodScanner from '@/pages/nutrition/FoodScanner'
 import Community from '@/pages/community/Community'
-import MachineGuide from '@/pages/training/MachineGuide'
+import MachineScanner from '@/pages/training/MachineScanner'
 import Wellness from '@/pages/wellness/Wellness'
 import Breathing from '@/pages/wellness/Breathing'
 import Focus from '@/pages/wellness/Focus'
@@ -79,9 +79,9 @@ export default function AuthGuard() {
       <Route path="/import"                 element={<Import />} />
       <Route path="/support"                element={<Support />} />
       <Route path="/me"                     element={<Settings />} />
-      <Route path="/scanner"                element={<Scanner />} />
+      <Route path="/scanner"                element={<FoodScanner />} />
       <Route path="/community"              element={<Community />} />
-      <Route path="/machine"                element={<MachineGuide />} />
+      <Route path="/machine"                element={<MachineScanner />} />
       <Route path="/wellness"               element={<Wellness />} />
       <Route path="/wellness/breathing"     element={<Breathing />} />
       <Route path="/wellness/focus"         element={<Focus />} />

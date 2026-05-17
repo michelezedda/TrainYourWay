@@ -65,7 +65,7 @@ const ALL_NAV = [
   { to: '/community', label: 'Community', Icon: CommunityIcon },
 ]
 
-export default function BottomNav() {
+export default function Navigation() {
   const { user } = db.useAuth()
   const location = useLocation()
 

@@ -706,7 +706,7 @@ Rules:
   return completion.choices[0]?.message?.content ?? ''
 }
 
-export interface MachineGuide {
+export interface MachineAnalysis {
   machineName: string
   confidence: 'high' | 'medium' | 'low'
   targetMuscles: { primary: string[]; secondary: string[] }
@@ -716,7 +716,7 @@ export interface MachineGuide {
   tips: string[]
 }
 
-export async function analyzeMachineImage(imageDataUrl: string): Promise<MachineGuide> {
+export async function analyzeMachineImage(imageDataUrl: string): Promise<MachineAnalysis> {
   const prompt = `You are an expert personal trainer and gym equipment specialist. Analyze this image of gym equipment.
 
 Respond ONLY with valid JSON — no markdown, no explanation, no code block — using exactly this structure:
@@ -767,7 +767,7 @@ Rules:
 
   const raw = completion.choices[0]?.message?.content ?? '{}'
   const jsonMatch = raw.match(/\{[\s\S]*\}/)
-  return JSON.parse(jsonMatch ? jsonMatch[0] : raw) as MachineGuide
+  return JSON.parse(jsonMatch ? jsonMatch[0] : raw) as MachineAnalysis
 }
 
 export async function analyzeImportedPlan(plan: string, profileContext: string): Promise<string> {

@@ -46,7 +46,7 @@ const floatVariants = [
   { y: [0, -7, 0], duration: 7.2 },
 ]
 
-export default function Home() {
+export default function Landing() {
   const navigate = useNavigate()
   const { user } = db.useAuth()
   const [activeFeature, setActiveFeature] = useState(0)

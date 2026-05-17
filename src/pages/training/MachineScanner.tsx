@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { HiCamera, HiPhotograph } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { analyzeMachineImage, type MachineGuide } from '@/lib/gemini'
+import { analyzeMachineImage, type MachineAnalysis } from '@/lib/gemini'
 
 type State = 'idle' | 'loading' | 'result' | 'error'
 type ResultTab = 'guide' | 'muscles' | 'safety'
@@ -50,10 +50,10 @@ const HOW_STEPS = [
   { icon: '📋', title: 'Get your guide', desc: 'Setup, steps, muscles and safety' },
 ]
 
-export default function MachineGuide() {
+export default function MachineScanner() {
   const [state, setState] = useState<State>('idle')
   const [preview, setPreview] = useState<string | null>(null)
-  const [guide, setGuide] = useState<MachineGuide | null>(null)
+  const [guide, setGuide] = useState<MachineAnalysis | null>(null)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<ResultTab>('guide')
   const [checkedSetup, setCheckedSetup] = useState<Set<number>>(new Set())

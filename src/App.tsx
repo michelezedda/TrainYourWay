@@ -1,6 +1,6 @@
 import { Component, type ReactNode, useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import BottomNav from '@/components/layout/BottomNav'
+import Navigation from '@/components/layout/Navigation'
 import AuthGuard from '@/components/layout/AuthGuard'
 import Landing from '@/pages/onboarding/Landing'
 import Auth from '@/pages/onboarding/Auth'
@@ -107,7 +107,7 @@ function AppLayout() {
           <Route path="/*"             element={<AuthGuard />} />
         </Routes>
       </div>
-      <BottomNav />
+      <Navigation />
     </div>
   )
 }
