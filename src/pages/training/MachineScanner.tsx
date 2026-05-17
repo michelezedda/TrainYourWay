@@ -359,7 +359,7 @@ export default function MachineScanner() {
           </motion.div>
         </AnimatePresence>
 
-        <div className="mt-4 pb-10">
+        <div className="mt-4 pb-nav">
           <button
             onClick={reset}
             className="w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
@@ -424,6 +424,17 @@ export default function MachineScanner() {
             Take a Photo
           </button>
         </div>
+
+        {/* Upload CTA */}
+
+        <button
+          onClick={() => { fileRef.current?.removeAttribute('capture'); fileRef.current?.click() }}
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 text-sm font-semibold transition-all active:scale-[0.98] mt-4"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.65)' }}
+        >
+          <HiPhotograph className="w-4 h-4" />
+          Upload from library
+        </button>
       </motion.div>
 
       {/* Feature cards 2x2 */}
@@ -488,7 +499,7 @@ export default function MachineScanner() {
       {/* Tips */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.28 }}
-        className="mb-5"
+        className="mb-6"
       >
         <p className="text-[11px] font-bold text-white/25 uppercase tracking-wider mb-3 px-1">For best results</p>
         <div className="grid grid-cols-3 gap-2">
@@ -507,20 +518,6 @@ export default function MachineScanner() {
             </div>
           ))}
         </div>
-      </motion.div>
-
-      {/* Upload CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}
-      >
-        <button
-          onClick={() => { fileRef.current?.removeAttribute('capture'); fileRef.current?.click() }}
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 text-sm font-semibold transition-all active:scale-[0.98] mb-10"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.65)' }}
-        >
-          <HiPhotograph className="w-4 h-4" />
-          Upload from library
-        </button>
       </motion.div>
     </main>
   )
