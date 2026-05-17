@@ -160,9 +160,26 @@ export default function BottomNav() {
           borderRight: '1px solid rgba(255,255,255,0.07)',
         }}
       >
-        <div className="px-3 mb-8">
-          <h1 className="text-2xl font-black gradient-text leading-tight">UPLYFT</h1>
-          <p className="text-[11px] text-white/30 mt-0.5">Train. Evolve. Repeat.</p>
+        <div className="px-3 mb-8 flex items-center gap-3">
+          <svg width="34" height="34" viewBox="0 0 100 100" fill="none" style={{ flexShrink: 0 }}>
+            <defs>
+              <radialGradient id="navLogoGrad" cx="32%" cy="26%" r="72%">
+                <stop offset="0%" stopColor="#C026D3" />
+                <stop offset="48%" stopColor="#7C3AED" />
+                <stop offset="100%" stopColor="#3B5CF0" />
+              </radialGradient>
+            </defs>
+            <circle cx="50" cy="50" r="50" fill="url(#navLogoGrad)" />
+            <path
+              transform="rotate(28, 50, 50)"
+              d="M50,13 C37,37 37,37 13,50 C37,63 37,63 50,87 C63,63 63,63 87,50 C63,37 63,37 50,13 Z"
+              fill="white"
+            />
+          </svg>
+          <div>
+            <h1 className="text-2xl font-black gradient-text leading-tight">UPLYFT</h1>
+            <p className="text-[11px] text-white/30 mt-0.5">Train. Evolve. Repeat.</p>
+          </div>
         </div>
 
         <nav className="flex flex-col gap-1 flex-1">

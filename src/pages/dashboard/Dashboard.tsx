@@ -631,15 +631,34 @@ export default function Dashboard() {
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
       </motion.div>
 
-      <div className="flex justify-center items-center pb-10 overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.4, y: 60 }}
-        whileInView={{ opacity: 1, scale: 1, y: 0 }}
-        viewport={{ once: false, amount: 0.6 }}
-        transition={{ type: 'spring', stiffness: 280, damping: 14, mass: 0.85 }}
-      >
-        <img src="/public/uplift.png" alt="uplift logo" className="w-[200px]" />
-      </motion.div>
+      <div className="flex justify-center items-center pb-10 overflow-hidden pt-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.4, y: 60 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.6 }}
+          transition={{ type: 'spring', stiffness: 280, damping: 14, mass: 0.85 }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <svg width="64" height="64" viewBox="0 0 100 100" fill="none">
+              <defs>
+                <radialGradient id="dashLogoGrad" cx="32%" cy="26%" r="72%">
+                  <stop offset="0%" stopColor="#C026D3" />
+                  <stop offset="48%" stopColor="#7C3AED" />
+                  <stop offset="100%" stopColor="#3B5CF0" />
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="50" fill="url(#dashLogoGrad)" />
+              <path
+                transform="rotate(28, 50, 50)"
+                d="M50,13 C37,37 37,37 13,50 C37,63 37,63 50,87 C63,63 63,63 87,50 C63,37 63,37 50,13 Z"
+                fill="white"
+              />
+            </svg>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[2.8rem] font-black tracking-tight gradient-text">UPLYFT</span>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </motion.main>
   )
