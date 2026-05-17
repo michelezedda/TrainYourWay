@@ -195,6 +195,13 @@ const stepVariants = {
 }
 const stepTransition = { duration: 0.24, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
 
+// ── Name sanitizer ─────────────────────────────────────────────────────────────
+function sanitizeName(raw: string): string {
+  const stripped = raw.replace(/\s/g, '')
+  if (!stripped) return ''
+  return stripped[0].toUpperCase() + stripped.slice(1).toLowerCase()
+}
+
 // ── Step labels ────────────────────────────────────────────────────────────────
 const TOTAL_STEPS = 15
 const STEP_LABELS = ['Your Name', 'Welcome', 'About You', 'Birthday', 'Metrics', 'Your Level', 'Goals', 'Your Plan', 'Equipment', 'Schedule', 'Your Diet', 'Restrictions', 'Space', 'Launch']
@@ -719,8 +726,11 @@ export default function Questionnaire() {
                       autoComplete="given-name"
                       style={{ fontSize: 22 }}
                       value={form.name}
-                      onChange={(e) => update({ name: e.target.value })}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && form.name.trim().length >= 2) handleNext() }}
+                      onChange={(e) => update({ name: sanitizeName(e.target.value) })}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ') { e.preventDefault(); return }
+                        if (e.key === 'Enter' && form.name.length >= 2) handleNext()
+                      }}
                     />
                   </motion.div>
 
