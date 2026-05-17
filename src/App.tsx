@@ -2,6 +2,7 @@ import { Component, type ReactNode, useState, useEffect, lazy, Suspense } from '
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navigation from '@/components/layout/Navigation'
 import AuthGuard from '@/components/layout/AuthGuard'
+import ScrollToTop from '@/components/layout/ScrollToTop'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 const Landing = lazy(() => import('@/pages/onboarding/Landing'))
@@ -120,6 +121,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthSync />
+        <ScrollToTop />
         <LocaleProvider>
         <MoodProvider>
         <div className="ambient-bg" aria-hidden>

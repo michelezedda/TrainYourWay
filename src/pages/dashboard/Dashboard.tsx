@@ -236,8 +236,6 @@ export default function Dashboard() {
   const userId = getUserId()
   const navigate = useNavigate()
 
-  useEffect(() => { window.scrollTo(0, 0) }, [])
-
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const { mood, selectMood } = useMood()
   const [moodAnim, setMoodAnim] = useState<{ idx: number; tick: number } | null>(null)
