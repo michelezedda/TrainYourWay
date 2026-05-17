@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { Link } from 'react-router-dom'
 import { HiArrowNarrowRight } from 'react-icons/hi'
 import { motion } from 'framer-motion'
@@ -104,6 +105,7 @@ function getRecommendation(weekSessions: WellnessSession[]): typeof SESSION_CARD
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Wellness() {
+  usePageTitle('Mindspace')
   const { user } = db.useAuth()
   const { data: profileData } = db.useQuery({
     userProfiles: { $: { where: { userId: user?.id ?? '' } } },

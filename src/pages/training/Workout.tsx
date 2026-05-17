@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { AnimatePresence, motion } from 'framer-motion'
 import { HiPencil, HiUpload, HiRefresh, HiChevronDown, HiLockClosed } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
@@ -359,6 +360,7 @@ function NoPlanState() {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function Workout() {
+  usePageTitle('Workout')
   const userId = getUserId()
   const navigate = useNavigate()
   const { formatDateShort, weekStart } = useLocale()

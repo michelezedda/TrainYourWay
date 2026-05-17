@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiCamera, HiPhotograph } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { analyzeMachineImage, type MachineAnalysis } from '@/lib/gemini'
@@ -51,6 +52,7 @@ const HOW_STEPS = [
 ]
 
 export default function MachineScanner() {
+  usePageTitle('Machine Scanner')
   const [state, setState] = useState<State>('idle')
   const [preview, setPreview] = useState<string | null>(null)
   const [guide, setGuide] = useState<MachineAnalysis | null>(null)

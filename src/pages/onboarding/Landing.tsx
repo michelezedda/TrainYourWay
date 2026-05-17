@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { HiArrowNarrowRight } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -47,6 +48,7 @@ const floatVariants = [
 ]
 
 export default function Landing() {
+  usePageTitle()
   const navigate = useNavigate()
   const { user } = db.useAuth()
   const [activeFeature, setActiveFeature] = useState(0)

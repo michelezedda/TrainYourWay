@@ -1,4 +1,5 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { useLocale } from '@/context/LocaleContext'
@@ -124,6 +125,7 @@ function LeaderboardTab() {
 }
 
 export default function Community() {
+  usePageTitle('Community')
   const [tab, setTab] = useState<Tab>('finds')
 
   return (

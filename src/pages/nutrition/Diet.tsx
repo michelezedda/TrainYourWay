@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiChevronLeft, HiChevronRight, HiPencil, HiCamera, HiInformationCircle, HiArrowRight } from 'react-icons/hi'
 import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
@@ -365,6 +366,7 @@ function ManualInput({ st, unit, onFoodSubmit, onQuantitySubmit, onBack, onChang
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Diet() {
+  usePageTitle('Nutrition')
   const today = localDateStr()
   const [selectedDate, setSelectedDate] = useState(today)
   const [activeMeal, setActiveMeal]     = useState<Meal | null>(null)

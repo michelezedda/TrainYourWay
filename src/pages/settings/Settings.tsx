@@ -1,4 +1,5 @@
-﻿import { useState, useRef } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiPencil, HiChevronRight, HiLogout, HiTrash, HiCamera } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import { db } from '@/lib/db'
@@ -38,6 +39,7 @@ function readAndResizeImage(file: File): Promise<string> {
 }
 
 export default function Settings() {
+  usePageTitle('Settings')
   const userId = getUserId()
   const navigate = useNavigate()
 

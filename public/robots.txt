@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth
+Disallow: /questionnaire
+Disallow: /generating
+Disallow: /reevaluate
+Disallow: /onboarding-summary
+Disallow: /dashboard
+Disallow: /workout
+Disallow: /diet
+Disallow: /scanner
+Disallow: /machine
+Disallow: /wellness
+Disallow: /community
+Disallow: /me
+Disallow: /support
+Disallow: /import
+
+Sitemap: https://uplyft.vercel.app/sitemap.xml

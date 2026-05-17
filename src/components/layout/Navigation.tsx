@@ -83,13 +83,15 @@ export default function Navigation() {
         className="md:hidden fixed bottom-0 inset-x-0 z-50 flex justify-center px-4"
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
-        <nav className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2 backdrop-blur-sm">
+        <nav aria-label="Main navigation" className="liquid-pill flex items-center w-full max-w-sm px-2 py-2 gap-0.5 mb-2 backdrop-blur-sm">
           {LEFT_NAV.map(({ to, label, Icon }) => {
             const active = isActive(to)
             return (
               <Link
                 key={to}
                 to={to}
+                aria-label={label}
+                aria-current={active ? 'page' : undefined}
                 className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
                 style={{
                   background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
@@ -100,7 +102,7 @@ export default function Navigation() {
                 <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
                   {label}
                 </span>
-                <span className="w-1 h-1 rounded-full transition-all duration-200"
+                <span className="w-1 h-1 rounded-full transition-all duration-200" aria-hidden
                   style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
               </Link>
             )
@@ -108,6 +110,8 @@ export default function Navigation() {
 
           <Link
             to="/dashboard"
+            aria-label="Home"
+            aria-current={homeActive ? 'page' : undefined}
             className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full transition-all duration-200 active:scale-95"
             style={{
               background: homeActive
@@ -122,7 +126,7 @@ export default function Navigation() {
             <span className="font-semibold leading-none" style={{ fontSize: 10, color: homeActive ? '#e9d5ff' : 'rgba(255,255,255,0.45)' }}>
               Home
             </span>
-            <span className="w-1 h-1 rounded-full transition-all duration-200"
+            <span className="w-1 h-1 rounded-full transition-all duration-200" aria-hidden
               style={{ background: '#c084fc', opacity: homeActive ? 1 : 0, boxShadow: homeActive ? '0 0 6px #c084fc' : 'none' }} />
           </Link>
 
@@ -132,6 +136,8 @@ export default function Navigation() {
               <Link
                 key={to}
                 to={to}
+                aria-label={label}
+                aria-current={active ? 'page' : undefined}
                 className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-full transition-all duration-200 active:scale-95"
                 style={{
                   background: active ? 'rgba(192,132,252,0.12)' : 'transparent',
@@ -142,7 +148,7 @@ export default function Navigation() {
                 <span className="font-medium leading-none" style={{ fontSize: 10, color: active ? '#d8b4fe' : 'rgba(255,255,255,0.38)' }}>
                   {label}
                 </span>
-                <span className="w-1 h-1 rounded-full transition-all duration-200"
+                <span className="w-1 h-1 rounded-full transition-all duration-200" aria-hidden
                   style={{ background: '#c084fc', opacity: active ? 1 : 0, boxShadow: active ? '0 0 6px #c084fc' : 'none' }} />
               </Link>
             )
@@ -182,7 +188,7 @@ export default function Navigation() {
           </div>
         </div>
 
-        <nav className="flex flex-col gap-1 flex-1">
+        <nav aria-label="Main navigation" className="flex flex-col gap-1 flex-1">
           {ALL_NAV.map(({ to, label, Icon }) => {
             const active = isActive(to)
             const isHome = to === '/dashboard'
@@ -190,6 +196,7 @@ export default function Navigation() {
               <Link
                 key={to}
                 to={to}
+                aria-current={active ? 'page' : undefined}
                 className="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 active:scale-[0.97]"
                 style={active
                   ? isHome

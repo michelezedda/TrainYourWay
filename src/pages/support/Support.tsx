@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiChevronDown, HiChevronLeft, HiChevronRight, HiRefresh, HiCheck, HiPhotograph, HiInformationCircle, HiPaperAirplane } from 'react-icons/hi'
 import { id } from '@instantdb/react'
 import emailjs from '@emailjs/browser'
@@ -142,6 +143,7 @@ function TicketCard({ ticket }: { ticket: StoredTicket }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Support() {
+  usePageTitle('Support')
   const userId = getUserId()
 
   const { data: ticketsData } = db.useQuery({

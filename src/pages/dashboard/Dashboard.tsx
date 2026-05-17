@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate as motionAnimate } from 'framer-motion'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiArrowNarrowRight } from 'react-icons/hi'
 import { Link, useNavigate } from 'react-router-dom'
 import { id } from '@instantdb/react'
@@ -230,6 +231,7 @@ const itemVariants = {
 }
 
 export default function Dashboard() {
+  usePageTitle('Dashboard')
   const today = localDateStr()
   const userId = getUserId()
   const navigate = useNavigate()

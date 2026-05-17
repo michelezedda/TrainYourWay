@@ -1,11 +1,12 @@
-import { Component, type ReactNode, useState, useEffect } from 'react'
+import { Component, type ReactNode, useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navigation from '@/components/layout/Navigation'
 import AuthGuard from '@/components/layout/AuthGuard'
-import Landing from '@/pages/onboarding/Landing'
-import Auth from '@/pages/onboarding/Auth'
-import Questionnaire from '@/pages/onboarding/Questionnaire'
 import LoadingSpinner from '@/components/LoadingSpinner'
+
+const Landing = lazy(() => import('@/pages/onboarding/Landing'))
+const Auth = lazy(() => import('@/pages/onboarding/Auth'))
+const Questionnaire = lazy(() => import('@/pages/onboarding/Questionnaire'))
 import { db } from '@/lib/db'
 import { setAuthUserId } from '@/lib/userId'
 import { MoodProvider } from '@/context/MoodContext'
@@ -100,12 +101,14 @@ function AppLayout() {
   return (
     <div className="relative min-h-screen flex flex-col" style={{ zIndex: 1 }}>
       <div className={`flex-1 ${user ? 'md:pl-56' : ''}`}>
-        <Routes>
-          <Route path="/"              element={<Landing />} />
-          <Route path="/auth"          element={<Auth />} />
-          <Route path="/questionnaire" element={<Questionnaire />} />
-          <Route path="/*"             element={<AuthGuard />} />
-        </Routes>
+        <Suspense fallback={<AppLoadingScreen />}>
+          <Routes>
+            <Route path="/"              element={<Landing />} />
+            <Route path="/auth"          element={<Auth />} />
+            <Route path="/questionnaire" element={<Questionnaire />} />
+            <Route path="/*"             element={<AuthGuard />} />
+          </Routes>
+        </Suspense>
       </div>
       <Navigation />
     </div>

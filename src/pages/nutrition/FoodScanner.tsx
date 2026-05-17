@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { usePageTitle } from '@/lib/pageMeta'
 import { HiShare, HiPlus, HiCamera, HiInformationCircle, HiStar, HiChevronLeft } from 'react-icons/hi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { id } from '@instantdb/react'
@@ -722,6 +723,7 @@ const RESULT_TABS: { id: ResultTab; label: string }[] = [
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function FoodScanner() {
+  usePageTitle('Food Scanner')
   const videoRef = useRef<HTMLVideoElement>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
   const scanning = useRef(false)
