@@ -631,8 +631,15 @@ export default function Dashboard() {
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
       </motion.div>
 
-      <div className="flex justify-center items-center pb-10">
+      <div className="flex justify-center items-center pb-10 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.4, y: 60 }}
+        whileInView={{ opacity: 1, scale: 1, y: 0 }}
+        viewport={{ once: false, amount: 0.6 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 14, mass: 0.85 }}
+      >
         <img src="/public/uplift.png" alt="uplift logo" className="w-[200px]" />
+      </motion.div>
       </div>
     </motion.main>
   )
