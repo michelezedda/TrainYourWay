@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { HiArrowNarrowRight } from 'react-icons/hi'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { id } from '@instantdb/react'
 import ExerciseModal from '@/components/ExerciseModal'
 import { getWeeklyWorkoutDays, readFiredMap } from '@/components/PlanView'
@@ -12,7 +13,6 @@ import { useMood, MOODS } from '@/context/MoodContext'
 
 const DAILY_GOAL = 8
 const ML_PER_GLASS = 250
-const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -217,10 +217,25 @@ function FeatureCard({ to, emoji, label, sub, accent }: { to: string; emoji: str
   )
 }
 
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+}
+const itemVariants = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
+}
+
 export default function Dashboard() {
   const today = toDateStr(new Date())
   const userId = getUserId()
-  const navigate = useNavigate()
+
+
+  const [shouldAnimate] = useState(() => {
+    const seen = sessionStorage.getItem('tyw-dash-animated')
+    if (!seen) { sessionStorage.setItem('tyw-dash-animated', '1'); return true }
+    return false
+  })
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const { mood, selectMood } = useMood()
@@ -317,24 +332,28 @@ export default function Dashboard() {
 
   const todayIsRest = !!latestPlan && (!todayWorkout || todayWorkout.exercises[0] === 'Rest Day')
 
-  const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
 
   return (
-    <main className="w-full md:max-w-2xl lg:max-w-4xl md:mx-auto px-4 pt-6 pb-nav space-y-3.5 animate-fade-in">
+    <motion.main
+      className="w-full md:max-w-2xl lg:max-w-4xl md:mx-auto px-4 pt-6 pb-nav space-y-3.5"
+      variants={containerVariants}
+      initial={shouldAnimate ? 'hidden' : false}
+      animate="visible"
+    >
       {selectedExercise && (
         <ExerciseModal name={selectedExercise} onClose={() => setSelectedExercise(null)} />
       )}
 
       {/* Greeting */}
-      <div className="mb-2">
+      <motion.div variants={itemVariants} className="mb-2">
         <h1 className="text-3xl font-black tracking-tight gradient-text">{getGreeting(userProfile?.name)}</h1>
         <p className="text-white/40 text-sm mt-1 font-medium">
           {latestPlan ? "Here's your day at a glance." : "Let's get you started."}
         </p>
-      </div>
+      </motion.div>
 
       {/* Daily progress rings */}
-      <div className="glass-card p-4">
+      <motion.div variants={itemVariants} className="glass-card p-4">
         <div className="flex justify-between items-start">
           <MiniRing
             ringId="ring-cal"
@@ -369,10 +388,10 @@ export default function Dashboard() {
             color2="#22D3EE"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Diet Summary Card */}
-      <div className="glass-card p-5">
+      <motion.div variants={itemVariants} className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <p className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Daily Calories</p>
           <Link to="/diet" className="text-xs font-semibold" style={{ color: '#c084fc' }}>Details</Link>
@@ -383,9 +402,10 @@ export default function Dashboard() {
           <MacroBar label="Protein" current={todayProtein} max={targets.protein} gradient="linear-gradient(90deg,#22D3EE,#34d399)" />
           <MacroBar label="Fat" current={todayFat} max={targets.fat} gradient="linear-gradient(90deg,#f97316,#facc15)" />
         </div>
-      </div>
+      </motion.div>
 
       {/* Today's Workout Card */}
+      <motion.div variants={itemVariants}>
       {latestPlan ? (
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-3">
@@ -422,29 +442,11 @@ export default function Dashboard() {
               <p className="text-sm text-white/38">Rest day - recover and recharge.</p>
             </div>
           )}
-          <div className="flex gap-2">
-            <Link to="/workout">
+          <div className="flex gap-2 mt-4">
+            <Link to="/workout" className="flex-1">
               <button
-                onClick={() => {
-                  if (!canEvolve || !latestPlan) return
-                  navigate('/reevaluate', {
-                    state: {
-                      planId: latestPlan.id,
-                      originalPlan: latestPlan.plan,
-                      userName: latestPlan.userName,
-                      fitnessLevel: latestPlan.fitnessLevel ?? '',
-                      goals: latestPlan.goals ?? '[]',
-                      equipment: latestPlan.equipment ?? '[]',
-                    },
-                  })
-                }}
-                className="px-4 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97] text-[#c084fc]"
-                style={
-                  {
-                    background: 'rgba(168,85,247,0.15)',
-                    border: '1px solid rgba(168,85,247,0.4)'
-                  }
-                }
+                className="w-full py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
+                style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }}
               >
                 View Plan
               </button>
@@ -457,10 +459,10 @@ export default function Dashboard() {
                 ? { background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.22)' }
                 : todayIsRest
                   ? { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.07)' }
-                  : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }
+                  : { background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }
               }
             >
-              {alreadyLoggedToday ? '✓ Logged today' : todayIsRest ? 'Rest day' : 'Log workout'}
+              {alreadyLoggedToday ? '✓ Logged' : todayIsRest ? 'Rest Day' : 'Evolve'}
             </button>
           </div>
         </div>
@@ -495,9 +497,10 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      </motion.div>
 
       {/* Mood + Hydration: stacked on mobile, side-by-side on md */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
 
         {/* Mood Tracker */}
         <div className="glass-card p-5">
@@ -591,36 +594,38 @@ export default function Dashboard() {
           </div>
         </div>
 
-      </div>{/* end mood+hydration grid */}
+      </motion.div>{/* end mood+hydration grid */}
 
       {/* Daily coaching insight */}
-      {(() => {
-        const insight = getDailyInsight()
-        return (
-          <div
-            className="flex items-start gap-3 px-4 py-3.5 rounded-2xl mb-4"
-            style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)' }}
-          >
-            <span className="flex-shrink-0 mt-0.5 text-base" style={{ color: 'rgba(192,132,252,0.7)' }}>✦</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
-                {insight.label}
-              </p>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                {insight.tip}
-              </p>
+      <motion.div variants={itemVariants}>
+        {(() => {
+          const insight = getDailyInsight()
+          return (
+            <div
+              className="flex items-start gap-3 px-4 py-3.5 rounded-2xl"
+              style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)' }}
+            >
+              <span className="flex-shrink-0 mt-0.5 text-base" style={{ color: 'rgba(192,132,252,0.7)' }}>✦</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
+                  {insight.label}
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  {insight.tip}
+                </p>
+              </div>
             </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
+      </motion.div>
 
       {/* Feature Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
+      <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
         <FeatureCard to="/scanner" emoji="📷" label="Food Scan" sub="Scan barcodes" accent="168,85,247" />
         <FeatureCard to="/machine" emoji="🏋️" label="Machine Guide" sub="Photo any machine" accent="34,211,238" />
         <FeatureCard to="/wellness" emoji="🧠" label="Mindspace" sub="Mental wellness" accent="99,102,241" />
         <FeatureCard to="/community" emoji="🏆" label="Community" sub="Leaderboard" accent="249,115,22" />
-      </div>
-    </main>
+      </motion.div>
+    </motion.main>
   )
 }

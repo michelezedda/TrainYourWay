@@ -33,9 +33,9 @@ const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 const ALL_WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 const LEVEL_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  beginner:     { bg: 'rgba(34,197,94,0.12)',  color: '#86efac', border: 'rgba(34,197,94,0.3)'  },
-  intermediate: { bg: 'rgba(234,179,8,0.12)',  color: '#fde68a', border: 'rgba(234,179,8,0.3)'  },
-  advanced:     { bg: 'rgba(239,68,68,0.12)',  color: '#fca5a5', border: 'rgba(239,68,68,0.3)'  },
+  beginner: { bg: 'rgba(34,197,94,0.12)', color: '#86efac', border: 'rgba(34,197,94,0.3)' },
+  intermediate: { bg: 'rgba(234,179,8,0.12)', color: '#fde68a', border: 'rgba(234,179,8,0.3)' },
+  advanced: { bg: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
 }
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ function buildPlanChain(plans: Plan[]): Plan[] {
   const root = roots.sort((a, b) => b.createdAt - a.createdAt)[0]
   const chain = [root]
   let current = root
-  for (;;) {
+  for (; ;) {
     const child = plans.find(p => p.parentPlanId === current.id)
     if (!child) break
     chain.push(child)
@@ -373,26 +373,26 @@ export default function Workout() {
   const navigate = useNavigate()
   const { formatDateShort, weekStart } = useLocale()
 
-  const [selectedExercise, setSelectedExercise]     = useState<string | null>(null)
-  const [planExpanded, setPlanExpanded]             = useState(true)
-  const [expandedVersionId, setExpandedVersionId]   = useState<string | null>(null)
-  const [confirmStartOver, setConfirmStartOver]     = useState(false)
-  const [startingOver, setStartingOver]             = useState(false)
-  const [injuryState, setInjuryState]               = useState<InjuryState | null>(() => getInjuryState())
-  const [showTriage, setShowTriage]                 = useState(false)
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
+  const [planExpanded, setPlanExpanded] = useState(true)
+  const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null)
+  const [confirmStartOver, setConfirmStartOver] = useState(false)
+  const [startingOver, setStartingOver] = useState(false)
+  const [injuryState, setInjuryState] = useState<InjuryState | null>(() => getInjuryState())
+  const [showTriage, setShowTriage] = useState(false)
 
   const { isLoading, error, data } = db.useQuery({
-    workoutPlans:       { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
+    workoutPlans: { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
     workoutCompletions: { $: { where: { userId } } },
     leaderboardEntries: { $: { where: { userId } } },
   })
 
-  const plans          = (data?.workoutPlans       ?? []) as Plan[]
-  const completions    = (data?.workoutCompletions ?? []) as Completion[]
+  const plans = (data?.workoutPlans ?? []) as Plan[]
+  const completions = (data?.workoutCompletions ?? []) as Completion[]
   const leaderboardEntry = ((data?.leaderboardEntries ?? []) as LeaderboardEntry[])[0] ?? null
 
-  const chain          = useMemo(() => buildPlanChain(plans), [plans])
-  const latestPlan     = chain[chain.length - 1]
+  const chain = useMemo(() => buildPlanChain(plans), [plans])
+  const latestPlan = chain[chain.length - 1]
   const previousVersions = chain.slice(0, -1).reverse()
 
   const today = useMemo(todayString, [])
@@ -417,7 +417,7 @@ export default function Workout() {
 
   const handleWorkoutComplete = useCallback(async (_dayName: string, _exerciseCount: number, _setsCount: number) => {
     if (completions.some(c => c.date === today)) return
-    const newDates  = [...completions.map(c => c.date), today]
+    const newDates = [...completions.map(c => c.date), today]
     const newStreak = calcWeeklyStreak(newDates, weekStart, today)
     const completionTx = db.tx.workoutCompletions[id()].update({ userId, date: today, createdAt: Date.now() })
     const txns = leaderboardEntry
@@ -486,10 +486,10 @@ export default function Workout() {
 
   // ── Derived from current plan ─────────────────────────────────────────────────
 
-  const goals       = parseList(latestPlan.goals ?? '[]')
+  const goals = parseList(latestPlan.goals ?? '[]')
   const dayOverrides = parseRecord(latestPlan.dayOverrides ?? '{}')
   const blockedDays = getBlockedDays(latestPlan.workoutDays)
-  const lvl         = LEVEL_STYLE[latestPlan.fitnessLevel] ?? null
+  const lvl = LEVEL_STYLE[latestPlan.fitnessLevel] ?? null
   const injuryAdvice = injuryState ? getInjuryAdvice(injuryState) : null
 
   return (
@@ -567,11 +567,11 @@ export default function Workout() {
                   ? <HiRefresh className="w-3.5 h-3.5" />
                   : <HiLockClosed className="w-3 h-3" />
                 }
-                {canEvolve ? 'Evolve' : `${daysUntilEvolve}d`}
+                Evolve
               </button>
               {!canEvolve && (
                 <p className="text-[10px] text-white/25 text-right leading-tight">
-                  Evolves every 4 weeks
+                  Reactivates in {daysUntilEvolve}d
                 </p>
               )}
             </div>
