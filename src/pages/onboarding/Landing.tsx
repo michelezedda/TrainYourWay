@@ -315,7 +315,7 @@ export default function Landing() {
               style={{ fontSize: 'clamp(2rem, 3.2vw, 3rem)' }}
             >
               Your AI fitness coach,<br />
-              <span className="text-white/35">built for </span>
+              <span className="text-white">built for </span>
               <span
                 className="inline-block"
                 style={{ overflow: 'hidden', verticalAlign: 'bottom', height: '1.15em' }}
