@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "UPLYFT",
+    "slug": "uplyft-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#030014",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.uplyft.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "UPLYFT uses the camera to scan barcodes and identify gym equipment.",
+        "NSPhotoLibraryUsageDescription": "UPLYFT accesses your photos to upload workout space images."
+      }
+    },
+    "android": {
+      "package": "com.uplyft.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "UPLYFT uses the camera to scan barcodes and identify gym equipment."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UPLYFT accesses your photos to upload workout space images."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#A855F7"
+        }
+      ]
+    ],
+    "extra": {
+      "instantdbAppId": "EXPO_PUBLIC_INSTANTDB_APP_ID",
+      "groqApiKey": "EXPO_PUBLIC_GROQ_API_KEY"
+    }
+  }
+}
