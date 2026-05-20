@@ -752,9 +752,9 @@ export default function DietScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.45]} style={StyleSheet.absoluteFillObject} />
-        <LinearGradient colors={['rgba(168,85,247,0.09)', 'transparent']} style={styles.orbTopLeft} />
-        <LinearGradient colors={['rgba(34,211,238,0.07)', 'transparent']} style={styles.orbBottomRight} />
+        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.65]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['rgba(168,85,247,0.07)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.orbTopLeft} />
+        <LinearGradient colors={['rgba(34,211,238,0.05)', 'transparent']} start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} style={styles.orbBottomRight} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -876,8 +876,8 @@ export default function DietScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  orbTopLeft: { position: 'absolute', top: -80, left: -80, width: 300, height: 300, borderRadius: 150 },
-  orbBottomRight: { position: 'absolute', bottom: 100, right: -80, width: 260, height: 260, borderRadius: 130 },
+  orbTopLeft: { position: 'absolute', top: 0, left: 0, width: '60%', height: '40%' },
+  orbBottomRight: { position: 'absolute', bottom: 0, right: 0, width: '55%', height: '38%' },
   scroll: { padding: Spacing.md, gap: Spacing.md, paddingBottom: 116 },
 
   titleMask: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5, color: Colors.purple },

@@ -243,13 +243,17 @@ export default function GeneratingScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Ambient orbs */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.45]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.65]} style={StyleSheet.absoluteFillObject} />
         <LinearGradient
-          colors={['rgba(168,85,247,0.15)', 'transparent']}
+          colors={['rgba(168,85,247,0.10)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.orbTop}
         />
         <LinearGradient
-          colors={['rgba(34,211,238,0.10)', 'transparent']}
+          colors={['rgba(34,211,238,0.07)', 'transparent']}
+          start={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 0 }}
           style={styles.orbBottom}
         />
       </View>
@@ -312,12 +316,12 @@ export default function GeneratingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   orbTop: {
-    position: 'absolute', top: -100, left: -100,
-    width: 400, height: 400, borderRadius: 200,
+    position: 'absolute', top: 0, left: 0,
+    width: '65%', height: '45%',
   },
   orbBottom: {
-    position: 'absolute', bottom: -80, right: -80,
-    width: 320, height: 320, borderRadius: 160,
+    position: 'absolute', bottom: 0, right: 0,
+    width: '60%', height: '42%',
   },
   content: {
     flex: 1,

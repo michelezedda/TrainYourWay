@@ -92,7 +92,7 @@ const ringStyles = StyleSheet.create({
   ring: { width: 80, height: 80, borderRadius: 40 },
   inner: {
     position: 'absolute', width: 73, height: 73, borderRadius: 37,
-    backgroundColor: '#050510', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#090920', alignItems: 'center', justifyContent: 'center',
   },
 })
 
@@ -200,7 +200,7 @@ export default function MachineScannerScreen() {
             <View style={styles.previewWrap}>
               <Image source={{ uri: preview }} style={styles.previewImg} resizeMode="cover" />
               <LinearGradient
-                colors={['transparent', 'rgba(5,5,16,0.95)']}
+                colors={['transparent', 'rgba(9,9,32,0.95)']}
                 style={styles.previewOverlay}
               >
                 <View style={styles.previewBottom}>

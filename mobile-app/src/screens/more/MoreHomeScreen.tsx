@@ -59,7 +59,7 @@ export default function MoreHomeScreen() {
     <SafeAreaView style={styles.container}>
       <LinearGradient
         colors={['#0f0a2e', Colors.bg]}
-        locations={[0, 0.45]}
+        locations={[0, 0.65]}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />

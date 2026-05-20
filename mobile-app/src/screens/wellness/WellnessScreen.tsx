@@ -90,8 +90,9 @@ function getRecommendation(weekSessions: WellnessSession[]) {
 
 // ── Ambient orb ───────────────────────────────────────────────────────────────
 
-function AmbientOrb({ color, size, style, delay }: {
+function AmbientOrb({ color, size, style, delay, gradStart, gradEnd }: {
   color: string; size: number; style?: object; delay: number
+  gradStart?: { x: number; y: number }; gradEnd?: { x: number; y: number }
 }) {
   const scale = useRef(new Animated.Value(1)).current
 
@@ -110,8 +111,15 @@ function AmbientOrb({ color, size, style, delay }: {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, transform: [{ scale }] }, style]}
-    />
+      style={[{ width: size, height: size, transform: [{ scale }] }, style]}
+    >
+      <LinearGradient
+        colors={[color, 'transparent']}
+        start={gradStart ?? { x: 0.5, y: 0.5 }}
+        end={gradEnd ?? { x: 1, y: 1 }}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </Animated.View>
   )
 }
 
@@ -210,14 +218,14 @@ export default function WellnessScreen() {
       {/* Background gradient tint */}
       <LinearGradient
         colors={['#0f0a2e', Colors.bg]}
-        locations={[0, 0.45]}
+        locations={[0, 0.65]}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
       {/* Ambient orbs */}
       <View style={styles.orbsContainer} pointerEvents="none">
-        <AmbientOrb color="rgba(34,211,238,0.07)" size={320} style={styles.orb1} delay={0} />
-        <AmbientOrb color="rgba(99,102,241,0.07)" size={280} style={styles.orb2} delay={4000} />
+        <AmbientOrb color="rgba(34,211,238,0.09)" size={380} style={styles.orb1} delay={0} gradStart={{ x: 1, y: 0 }} gradEnd={{ x: 0, y: 1 }} />
+        <AmbientOrb color="rgba(99,102,241,0.08)" size={340} style={styles.orb2} delay={4000} gradStart={{ x: 0, y: 1 }} gradEnd={{ x: 1, y: 0 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

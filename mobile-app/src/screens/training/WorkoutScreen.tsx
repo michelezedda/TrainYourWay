@@ -290,7 +290,7 @@ function WorkoutCelebration({
 const celebStyles = StyleSheet.create({
   container: {
     marginVertical: 8, borderRadius: 28, overflow: 'hidden', padding: 24,
-    backgroundColor: 'rgba(10,10,30,0.95)',
+    backgroundColor: 'rgba(18,14,44,0.92)',
     borderWidth: 1, borderColor: 'rgba(168,85,247,0.35)',
     shadowColor: '#A855F7', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 30,
   },
@@ -765,9 +765,9 @@ export default function WorkoutScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.45]} style={StyleSheet.absoluteFillObject} />
-        <LinearGradient colors={['rgba(168,85,247,0.10)', 'transparent']} style={styles.orbTopRight} />
-        <LinearGradient colors={['rgba(34,211,238,0.07)', 'transparent']} style={styles.orbBottomLeft} />
+        <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.65]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['rgba(168,85,247,0.08)', 'transparent']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={styles.orbTopRight} />
+        <LinearGradient colors={['rgba(34,211,238,0.06)', 'transparent']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={styles.orbBottomLeft} />
       </View>
       {/* Header */}
       <View style={styles.header}>
@@ -1099,8 +1099,8 @@ export default function WorkoutScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  orbTopRight: { position: 'absolute', top: -80, right: -60, width: 300, height: 300, borderRadius: 150 },
-  orbBottomLeft: { position: 'absolute', bottom: 100, left: -80, width: 260, height: 260, borderRadius: 130 },
+  orbTopRight: { position: 'absolute', top: 0, right: 0, width: '60%', height: '40%' },
+  orbBottomLeft: { position: 'absolute', bottom: 0, left: 0, width: '55%', height: '38%' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: Spacing.md, paddingTop: 8, paddingBottom: 116 },
   header: {

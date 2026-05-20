@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   bg: {
-    backgroundColor: 'rgba(10,7,26,0.82)',
+    backgroundColor: 'rgba(20,15,50,0.72)',
   },
   specularRim: {
     position: 'absolute',

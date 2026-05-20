@@ -593,15 +593,19 @@ export default function DashboardScreen() {
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
         <LinearGradient
           colors={['#0f0a2e', Colors.bg]}
-          locations={[0, 0.45]}
+          locations={[0, 0.65]}
           style={StyleSheet.absoluteFillObject}
         />
         <LinearGradient
-          colors={['rgba(168,85,247,0.12)', 'transparent']}
+          colors={['rgba(168,85,247,0.09)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.orbTopLeft}
         />
         <LinearGradient
-          colors={['rgba(34,211,238,0.08)', 'transparent']}
+          colors={['rgba(34,211,238,0.06)', 'transparent']}
+          start={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 0 }}
           style={styles.orbBottomRight}
         />
       </View>
@@ -857,12 +861,12 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   orbTopLeft: {
-    position: 'absolute', top: -80, left: -80,
-    width: 320, height: 320, borderRadius: 160,
+    position: 'absolute', top: 0, left: 0,
+    width: '60%', height: '42%',
   },
   orbBottomRight: {
-    position: 'absolute', bottom: 100, right: -100,
-    width: 280, height: 280, borderRadius: 140,
+    position: 'absolute', bottom: 0, right: 0,
+    width: '55%', height: '38%',
   },
   scroll: { padding: Spacing.md, gap: Spacing.md },
   section: { marginBottom: 0 },

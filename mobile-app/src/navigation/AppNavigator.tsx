@@ -311,7 +311,7 @@ const tabStyles = StyleSheet.create({
     elevation: 20,
   },
   pillTint: {
-    backgroundColor: 'rgba(6,6,18,0.92)',
+    backgroundColor: 'rgba(12,10,32,0.88)',
   },
   // Apple rim lighting: thin bright line at the top glass edge
   pillRim: {

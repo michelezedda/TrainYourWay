@@ -681,7 +681,7 @@ export default function ResultsScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.45]} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
+      <LinearGradient colors={['#0f0a2e', Colors.bg]} locations={[0, 0.65]} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
       {/* Top progress bar */}
       <View style={s.progressTrack}>
         <Animated.View style={[s.progressFill, { width: progressWidth }]} />

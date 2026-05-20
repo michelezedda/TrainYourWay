@@ -1598,12 +1598,16 @@ export default function QuestionnaireScreen() {
 
       {/* Ambient orbs */}
       <LinearGradient
-        colors={['rgba(168,85,247,0.14)', 'transparent']}
+        colors={['rgba(168,85,247,0.09)', 'transparent']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={styles.orbTop}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['rgba(34,211,238,0.10)', 'transparent']}
+        colors={['rgba(34,211,238,0.07)', 'transparent']}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
         style={styles.orbBottom}
         pointerEvents="none"
       />
@@ -1691,8 +1695,8 @@ const styles = StyleSheet.create({
   },
 
   // Orbs
-  orbTop: { position: 'absolute', top: '-5%', right: '-20%', width: W * 0.7, height: W * 0.7, borderRadius: W * 0.35 },
-  orbBottom: { position: 'absolute', bottom: '5%', left: '-20%', width: W * 0.7, height: W * 0.7, borderRadius: W * 0.35 },
+  orbTop: { position: 'absolute', top: 0, right: 0, width: '65%', height: '45%' },
+  orbBottom: { position: 'absolute', bottom: 0, left: 0, width: '60%', height: '42%' },
 
   // Progress
   progressWrap: { paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 8 },

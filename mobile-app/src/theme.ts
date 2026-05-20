@@ -1,7 +1,7 @@
 export const Colors = {
-  bg: '#050510',
-  cardBg: 'rgba(255,255,255,0.07)',
-  cardBorder: 'rgba(255,255,255,0.11)',
+  bg: '#090920',
+  cardBg: 'rgba(255,255,255,0.08)',
+  cardBorder: 'rgba(255,255,255,0.13)',
   purple: '#A855F7',
   purpleLight: '#C084FC',
   purpleDim: 'rgba(168,85,247,0.12)',

@@ -42,16 +42,16 @@ const styles = StyleSheet.create({
   glass: {
     borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(255,255,255,0.16)',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.52,
+    shadowOpacity: 0.36,
     shadowRadius: 28,
     elevation: 8,
   },
   base: {
-    backgroundColor: 'rgba(10,7,26,0.86)',
+    backgroundColor: 'rgba(20,15,50,0.68)',
   },
   specularRim: {
     position: 'absolute',

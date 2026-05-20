@@ -522,7 +522,7 @@ const s = StyleSheet.create({
     height: SHEET_MAX_H,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    backgroundColor: 'rgba(14,7,30,0.99)',
+    backgroundColor: 'rgba(22,14,48,0.97)',
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: 'rgba(255,255,255,0.08)',
