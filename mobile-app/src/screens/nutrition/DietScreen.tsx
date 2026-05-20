@@ -14,6 +14,7 @@ import { getNutritionProfile, loadNutritionProfile, calculateTargets, type Daily
 import { useLocale } from '@/context/LocaleContext'
 import { type Unit } from '@/lib/units'
 import { localDateStr, shiftDateStr } from '@/lib/utils'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GradientText from '@/components/GradientText'
 
@@ -619,6 +620,7 @@ const mealStyles = StyleSheet.create({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function DietScreen() {
+  const insets = useSafeAreaInsets()
   const userId = getUserId()
   const today = localDateStr()
   const { unit, formatDateWithWeekday } = useLocale()
@@ -754,7 +756,7 @@ export default function DietScreen() {
         <LinearGradient colors={['rgba(168,85,247,0.09)', 'transparent']} style={styles.orbTopLeft} />
         <LinearGradient colors={['rgba(34,211,238,0.07)', 'transparent']} style={styles.orbBottomRight} />
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           {/* Header */}

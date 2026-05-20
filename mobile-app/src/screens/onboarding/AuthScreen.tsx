@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { db } from '@/lib/db'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GradientText from '@/components/GradientText'
@@ -14,6 +15,7 @@ const { width: W } = Dimensions.get('window')
 type AuthStep = 'email' | 'code'
 
 export default function AuthScreen() {
+  const insets = useSafeAreaInsets()
   const [step, setStep] = useState<AuthStep>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -72,6 +74,7 @@ export default function AuthScreen() {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
         >
           <ScrollView
             contentContainerStyle={styles.scroll}

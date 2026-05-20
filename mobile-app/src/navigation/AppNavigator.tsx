@@ -247,6 +247,10 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={[tabStyles.container, { paddingBottom: bottomPad }]}>
       <View style={tabStyles.pill}>
+        {/* ── Pill material ── */}
+        <View style={[StyleSheet.absoluteFillObject, tabStyles.pillTint]} />
+        {/* Top specular rim — Apple rim lighting on the glass edge */}
+        <View style={tabStyles.pillRim} pointerEvents="none" />
         {visibleRoutes.map(route => {
           const routeIndex = state.routes.indexOf(route)
           const focused = state.index === routeIndex
@@ -286,21 +290,38 @@ const tabStyles = StyleSheet.create({
   },
   pill: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(6,6,18,0.88)',
+    // No backgroundColor here — absolute BlurView + tint handles it.
+    // overflow:hidden is critical: clips BlurView to pill shape.
+    overflow: 'hidden',
     borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.11)',
+    // Slightly brighter border than before (glass edge catches light)
+    borderColor: 'rgba(255,255,255,0.14)',
     paddingHorizontal: 8,
     paddingVertical: 8,
     gap: 2,
     width: '100%',
     maxWidth: 420,
     marginBottom: 8,
+    // Multi-layer shadow: ambient (large) + key light (close, sharp)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.65,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.7,
+    shadowRadius: 28,
     elevation: 20,
+  },
+  pillTint: {
+    backgroundColor: 'rgba(6,6,18,0.92)',
+  },
+  // Apple rim lighting: thin bright line at the top glass edge
+  pillRim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    zIndex: 1,
   },
   tabOuter: {
     flex: 1,
@@ -319,8 +340,9 @@ const tabStyles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tabActive: {
-    backgroundColor: 'rgba(192,132,252,0.12)',
-    borderColor: 'rgba(168,85,247,0.22)',
+    // Slightly stronger fill so it reads clearly above the frosted blur layer
+    backgroundColor: 'rgba(192,132,252,0.16)',
+    borderColor: 'rgba(168,85,247,0.28)',
   },
   homeTab: {
     flex: 1,

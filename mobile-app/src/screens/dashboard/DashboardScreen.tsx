@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { LinearGradient } from 'expo-linear-gradient'
-import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg'
+import Svg, { Circle, Path, Defs, LinearGradient as SvgLinearGradient, RadialGradient, Stop } from 'react-native-svg'
 import { id } from '@instantdb/react-native'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
@@ -546,6 +546,33 @@ export default function DashboardScreen() {
   const canEvolve = latestPlan ? Date.now() - latestPlan.createdAt >= FOUR_WEEKS_MS : false
   const insight = getDailyInsight()
 
+  const brandAnim = useRef(new Animated.Value(0)).current
+  const brandVisible = useRef(false)
+  const brandY = useRef(0)
+  const brandH = useRef(80)
+  const scrollViewH = useRef(0)
+  const brandOpacity = useRef(brandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' })).current
+  const brandScale = useRef(brandAnim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1], extrapolate: 'clamp' })).current
+  const brandTranslateY = useRef(brandAnim.interpolate({ inputRange: [0, 1], outputRange: [60, 0], extrapolate: 'clamp' })).current
+
+  const handleScroll = (e: { nativeEvent: { contentOffset: { y: number }; layoutMeasurement: { height: number } } }) => {
+    const scrollY = e.nativeEvent.contentOffset.y
+    scrollViewH.current = e.nativeEvent.layoutMeasurement.height
+    const ey = brandY.current
+    const eh = brandH.current
+    const vh = scrollViewH.current
+    const visible = Math.max(0, Math.min(ey + eh, scrollY + vh) - Math.max(ey, scrollY))
+    const ratio = visible / Math.max(1, eh)
+    if (ratio >= 0.6 && !brandVisible.current) {
+      brandVisible.current = true
+      brandAnim.setValue(0)
+      Animated.spring(brandAnim, { toValue: 1, stiffness: 280, damping: 14, mass: 0.85, useNativeDriver: true }).start()
+    } else if (ratio < 0.6 && brandVisible.current) {
+      brandVisible.current = false
+      Animated.spring(brandAnim, { toValue: 0, stiffness: 280, damping: 14, mass: 0.85, useNativeDriver: true }).start()
+    }
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Ambient background orbs */}
@@ -568,6 +595,8 @@ export default function DashboardScreen() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: TAB_BAR_HEIGHT + insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
 
         {/* Greeting */}
@@ -783,6 +812,29 @@ export default function DashboardScreen() {
           ))}
         </Animated.View>
 
+        {/* UPLYFT Branding */}
+        <Animated.View
+          onLayout={e => { brandY.current = e.nativeEvent.layout.y; brandH.current = e.nativeEvent.layout.height }}
+          style={[styles.brandingSection, { opacity: brandOpacity, transform: [{ scale: brandScale }, { translateY: brandTranslateY }] }]}
+        >
+          <Svg width={64} height={64} viewBox="0 0 100 100">
+            <Defs>
+              <RadialGradient id="brandGrad" cx="32%" cy="26%" r="72%">
+                <Stop offset="0%" stopColor="#C026D3" />
+                <Stop offset="48%" stopColor="#7C3AED" />
+                <Stop offset="100%" stopColor="#3B5CF0" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx="50" cy="50" r="50" fill="url(#brandGrad)" />
+            <Path
+              d="M50,13 C37,37 37,37 13,50 C37,63 37,63 50,87 C63,63 63,63 87,50 C63,37 63,37 50,13 Z"
+              fill="white"
+              transform="rotate(28, 50, 50)"
+            />
+          </Svg>
+          <GradientText style={styles.brandingText} colors={['#A855F7', '#22D3EE']}>UPLYFT</GradientText>
+        </Animated.View>
+
       </ScrollView>
     </View>
   )
@@ -874,4 +926,7 @@ const styles = StyleSheet.create({
   },
   featureLabel: { ...Typography.body, fontWeight: '700', color: Colors.textPrimary },
   featureSub: { ...Typography.caption, color: Colors.textMuted },
+
+  brandingSection: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40, paddingTop: 24, gap: 12, overflow: 'hidden' },
+  brandingText: { fontSize: 22, fontWeight: '900', letterSpacing: 4 },
 })

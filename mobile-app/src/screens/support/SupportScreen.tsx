@@ -7,6 +7,7 @@ import { id } from '@instantdb/react-native'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { draftSupportTicket } from '@/lib/gemini'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GlassCard from '@/components/GlassCard'
 import GradientText from '@/components/GradientText'
@@ -66,6 +67,7 @@ const ticketStyles = StyleSheet.create({
 })
 
 export default function SupportScreen() {
+  const insets = useSafeAreaInsets()
   const userId = getUserId()
   const [view, setView] = useState<'new' | 'tickets'>('new')
   const [step, setStep] = useState<Step>('category')
@@ -155,7 +157,7 @@ export default function SupportScreen() {
 
       {/* New ticket view */}
       {view === 'new' && (
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
             {/* Done state */}

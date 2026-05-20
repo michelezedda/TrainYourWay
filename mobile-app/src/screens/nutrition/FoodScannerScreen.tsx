@@ -13,9 +13,11 @@ import { fetchProduct, type OFFProduct, type ScanHistoryEntry } from '@/lib/open
 import { scoreProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
 import { loadNutritionProfile } from '@/lib/nutrition'
 import { storageGetAsync, storageSetAsync } from '@/lib/storage'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GlassCard from '@/components/GlassCard'
 import GradientText from '@/components/GradientText'
+import BackButton from '@/components/BackButton'
 
 const HISTORY_KEY = 'tyw_scan_history'
 const MAX_HISTORY = 20
@@ -73,6 +75,7 @@ const macroStyles = StyleSheet.create({
 })
 
 export default function FoodScannerScreen() {
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const userId = getUserId()
 
@@ -175,9 +178,7 @@ export default function FoodScannerScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <GradientText containerStyle={{ flex: 1 }} style={styles.headerTitle}>Food Scanner</GradientText>
         </View>
         <View style={styles.center}>
@@ -198,9 +199,7 @@ export default function FoodScannerScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <GradientText containerStyle={{ flex: 1 }} style={styles.headerTitle}>Food Scanner</GradientText>
         </View>
         <View style={styles.center}>
@@ -229,7 +228,7 @@ export default function FoodScannerScreen() {
           </TouchableOpacity>
           <GradientText containerStyle={{ flex: 1 }} style={styles.headerTitle}>Scanning</GradientText>
         </View>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
           <View style={styles.scannerContainer}>
             <CameraView
               style={styles.camera}
@@ -450,9 +449,7 @@ export default function FoodScannerScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <GradientText containerStyle={{ flex: 1 }} style={styles.headerTitle}>Food Scanner</GradientText>
       </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

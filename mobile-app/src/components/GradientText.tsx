@@ -20,7 +20,7 @@ export default function GradientText({
   containerStyle,
   colors = DEFAULT_COLORS,
   start = { x: 0, y: 0 },
-  end = { x: 1, y: 0 },
+  end = { x: 1, y: 1 },
   numberOfLines,
 }: Props) {
   const masked = (

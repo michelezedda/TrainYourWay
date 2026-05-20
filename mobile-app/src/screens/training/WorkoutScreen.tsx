@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
   ActivityIndicator, TextInput, Animated, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import Markdown from 'react-native-markdown-display'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import GradientText from '@/components/GradientText'
@@ -19,13 +18,14 @@ import { localDateStr, parseJsonList, parseJsonRecord } from '@/lib/utils'
 import { generateDayWorkout } from '@/lib/gemini'
 import {
   DAY_NAMES, DAY_SHORT,
-  sanitizePlan, transformExercises,
+  sanitizePlan,
   parseWeeklySchedule, parseDayChunks, parseSectionContent,
   getWeeklyWorkoutDays, getDefaultDayIdx,
   extractExerciseKeys, countTotalSets,
   readDoneMap, readSetsMap, readFiredMap,
   writeDoneMap, writeSetsMap, writeFiredMap,
   clearWeekPersistence, evictOldWeekIfNeeded,
+  parseDayItems,
 } from '@/lib/planUtils'
 import { convertPlanUnits } from '@/lib/units'
 import { useLocale } from '@/context/LocaleContext'
@@ -74,7 +74,7 @@ function buildPlanChain(plans: Plan[]): Plan[] {
   const root = roots.sort((a, b) => b.createdAt - a.createdAt)[0]
   const chain = [root]
   let current = root
-  for (;;) {
+  for (; ;) {
     const child = plans.find(p => p.parentPlanId === current.id)
     if (!child) break
     chain.push(child)
@@ -122,15 +122,15 @@ function PlanName({ planId, name }: { planId: string; name: string }) {
       style={planNameStyles.row}
       activeOpacity={0.7}
     >
-      <GradientText style={planNameStyles.name} numberOfLines={1}>{name || 'My Plan'}</GradientText>
-      <Ionicons name="pencil-outline" size={13} color="rgba(255,255,255,0.2)" style={{ marginLeft: 5 }} />
+      <Text style={planNameStyles.name} numberOfLines={1}>{name || 'My Plan'}</Text>
+      <Ionicons name="pencil-outline" size={13} color="rgba(255,255,255,0.25)" style={{ marginLeft: 5 }} />
     </TouchableOpacity>
   )
 }
 
 const planNameStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  name: { ...Typography.h3, fontSize: 18, marginBottom: 0 },
+  name: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
   input: {
     fontSize: 18, fontWeight: '800', color: '#fff',
     backgroundColor: 'rgba(255,255,255,0.05)',
@@ -316,6 +316,71 @@ const celebStyles = StyleSheet.create({
   tip: { fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center', fontStyle: 'italic', lineHeight: 17 },
 })
 
+// ── Simple native markdown renderer (replaces react-native-markdown-display) ───
+
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+  if (parts.length === 1) return text
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <Text key={i} style={{ fontWeight: '700', color: 'rgba(255,255,255,0.9)' }}>{part.slice(2, -2)}</Text>
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <Text key={i} style={{ fontStyle: 'italic', color: '#a78bfa' }}>{part.slice(1, -1)}</Text>
+    }
+    return <Text key={i}>{part}</Text>
+  })
+}
+
+function SimpleMarkdown({ text }: { text: string }) {
+  const lines = text.split('\n')
+  return (
+    <View>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim()
+        if (!trimmed) return <View key={idx} style={{ height: 6 }} />
+        if (trimmed.startsWith('## ')) {
+          return <Text key={idx} style={simpleMdStyles.h2}>{trimmed.slice(3)}</Text>
+        }
+        if (trimmed.startsWith('### ')) {
+          return <Text key={idx} style={simpleMdStyles.h3}>{trimmed.slice(4)}</Text>
+        }
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          return (
+            <View key={idx} style={simpleMdStyles.bulletRow}>
+              <Text style={simpleMdStyles.bulletDot}>•</Text>
+              <Text style={simpleMdStyles.bulletText}>{renderInline(trimmed.slice(2))}</Text>
+            </View>
+          )
+        }
+        if (/^\d+\.\s/.test(trimmed)) {
+          const num = trimmed.match(/^(\d+)\./)?.[1] ?? ''
+          return (
+            <View key={idx} style={simpleMdStyles.bulletRow}>
+              <Text style={simpleMdStyles.bulletDot}>{num}.</Text>
+              <Text style={simpleMdStyles.bulletText}>{renderInline(trimmed.replace(/^\d+\.\s*/, ''))}</Text>
+            </View>
+          )
+        }
+        return <Text key={idx} style={simpleMdStyles.para}>{renderInline(trimmed)}</Text>
+      })}
+    </View>
+  )
+}
+
+const simpleMdStyles = StyleSheet.create({
+  h2: {
+    color: 'rgba(255,255,255,0.9)', fontWeight: '700', fontSize: 14,
+    marginTop: 14, marginBottom: 4,
+    paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  h3: { color: Colors.purpleLight, fontWeight: '700', fontSize: 13, marginTop: 10, marginBottom: 3 },
+  para: { color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20, marginBottom: 3 },
+  bulletRow: { flexDirection: 'row', gap: 7, marginBottom: 3, alignItems: 'flex-start' },
+  bulletDot: { color: 'rgba(255,255,255,0.35)', fontSize: 13, lineHeight: 20, minWidth: 14, flexShrink: 0 },
+  bulletText: { flex: 1, color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20 },
+})
+
 // ── Collapsible section ────────────────────────────────────────────────────────
 
 function CollapsibleSection({ title, icon, content }: { title: string; icon: string; content: string }) {
@@ -333,7 +398,7 @@ function CollapsibleSection({ title, icon, content }: { title: string; icon: str
       </TouchableOpacity>
       {open && (
         <View style={sectionStyles.body}>
-          <Markdown style={mdStyles}>{content}</Markdown>
+          <SimpleMarkdown text={content} />
         </View>
       )}
     </GlassCard>
@@ -352,14 +417,6 @@ const sectionStyles = StyleSheet.create({
   },
 })
 
-const mdStyles = {
-  body: { color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20 },
-  heading2: { color: '#fff', fontWeight: '700' as const, fontSize: 14, marginBottom: 6, marginTop: 12 },
-  strong: { color: '#fff', fontWeight: '700' as const },
-  bullet_list: { marginBottom: 8 },
-  list_item: { color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20 },
-}
-
 // ── Day workout renderer ───────────────────────────────────────────────────────
 
 function DayContent({
@@ -374,29 +431,34 @@ function DayContent({
   onSetsDone: (key: string, setsDone: boolean[]) => void
   onGuideClick: (name: string) => void
 }) {
-  const transformed = useMemo(
-    () => transformExercises(sanitizePlan(convertPlanUnits(dayBody, unit))),
+  const items = useMemo(
+    () => parseDayItems(sanitizePlan(convertPlanUnits(dayBody, unit))),
     [dayBody, unit],
   )
 
-  const customRules = {
-    fence: (node: { content: string; sourceInfo?: string; info?: string }, _children: unknown, _parent: unknown, _styles: unknown) => {
-      const lang = node.sourceInfo ?? node.info ?? ''
-      if (lang.trim() === 'exercise') {
-        const ek = (node.content.split('\n')[0] ?? '')
-          .replace(/^\d+\.\s*/, '')
-          .replace(/\s*\*+[^*]+\*+\s*/g, '')
-          .trim()
-        const fullKey = `${dayName}:${ek}`
+  return (
+    <View style={{ paddingTop: 4 }}>
+      <Text style={dayContentStyles.hint}>
+        <Text style={{ color: Colors.purpleLight }}>▶ </Text>
+        Tap any exercise for a guide. Log weights below.
+      </Text>
+      {items.map((item, idx) => {
+        if (item.type === 'heading') {
+          return (
+            <View key={idx} style={dayContentStyles.sectionHeadRow}>
+              <View style={dayContentStyles.sectionHeadBar} />
+              <Text style={dayContentStyles.sectionHead}>{item.text}</Text>
+            </View>
+          )
+        }
+        const fullKey = `${dayName}:${item.exerciseKey}`
         return (
           <ExerciseCard
-            key={ek}
-            content={node.content}
-            exerciseKey={ek}
-            weight={weights[ek] ?? ''}
-            onWeightChange={(v) => {
-              void setWeight(planId, ek, v)
-            }}
+            key={item.exerciseKey}
+            content={item.content}
+            exerciseKey={item.exerciseKey}
+            weight={weights[item.exerciseKey] ?? ''}
+            onWeightChange={(v) => { void setWeight(planId, item.exerciseKey, v) }}
             onGuideClick={onGuideClick}
             initialDone={doneMap[fullKey] === true}
             initialSetsDone={setsMap[fullKey]}
@@ -404,20 +466,10 @@ function DayContent({
             onSetsDone={(key, sets) => onSetsDone(`${dayName}:${key}`, sets)}
           />
         )
-      }
-      return null
-    },
-  }
-
-  return (
-    <View style={{ paddingTop: 4 }}>
-      <Text style={dayContentStyles.hint}>Tap any exercise for a guide. Log weights below.</Text>
-      <Markdown
-        style={dayMdStyles}
-        rules={customRules as any}
-      >
-        {transformed}
-      </Markdown>
+      })}
+      {items.length === 0 && (
+        <Text style={dayContentStyles.empty}>No exercises found for this day.</Text>
+      )}
     </View>
   )
 }
@@ -425,20 +477,24 @@ function DayContent({
 const dayContentStyles = StyleSheet.create({
   hint: {
     fontSize: 12, color: 'rgba(255,255,255,0.3)',
-    marginBottom: 8, paddingHorizontal: 2,
+    marginBottom: 8, paddingHorizontal: 2, lineHeight: 18,
+  },
+  sectionHeadRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginTop: 16, marginBottom: 4,
+  },
+  sectionHeadBar: {
+    width: 3, height: 18, borderRadius: 2,
+    backgroundColor: Colors.purple,
+  },
+  sectionHead: {
+    color: Colors.purpleLight, fontWeight: '700', fontSize: 14, flex: 1,
+  },
+  empty: {
+    fontSize: 13, color: 'rgba(255,255,255,0.3)',
+    textAlign: 'center', paddingVertical: 24,
   },
 })
-
-const dayMdStyles = {
-  body: { color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20 },
-  heading3: {
-    color: Colors.purpleLight, fontWeight: '700' as const, fontSize: 15,
-    marginTop: 16, marginBottom: 6,
-  },
-  strong: { color: '#fff', fontWeight: '700' as const },
-  bullet_list: { marginBottom: 8 },
-  list_item: { color: 'rgba(255,255,255,0.65)', fontSize: 13 },
-}
 
 // ── Version history ────────────────────────────────────────────────────────────
 
@@ -471,7 +527,7 @@ function VersionHistory({
             </TouchableOpacity>
             {isExpanded && version.plan && (
               <View style={[histStyles.expandedBody, { paddingHorizontal: 12 }]}>
-                <Markdown style={mdStyles}>{sanitizePlan(version.plan)}</Markdown>
+                <SimpleMarkdown text={sanitizePlan(version.plan)} />
               </View>
             )}
           </GlassCard>
@@ -731,36 +787,59 @@ export default function WorkoutScreen() {
       </View>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <PlanName planId={latestPlan.id} name={latestPlan.userName || 'My Plan'} />
-          <View style={styles.fitnessRow}>
-            <View style={[
-              styles.levelBadge,
-              { backgroundColor: latestPlan.fitnessLevel === 'advanced' ? 'rgba(239,68,68,0.12)' : 'rgba(234,179,8,0.12)' },
-            ]}>
-              <Text style={[
-                styles.levelText,
-                { color: latestPlan.fitnessLevel === 'advanced' ? '#fca5a5' : latestPlan.fitnessLevel === 'beginner' ? '#86efac' : '#fde68a' },
-              ]}>
-                {latestPlan.fitnessLevel || 'intermediate'}
+        {/* Row 1: "My Plan" title + action buttons */}
+        <View style={styles.headerRow1}>
+          <View style={{ flex: 1 }}>
+            <GradientText style={styles.pageTitleText}>My Plan</GradientText>
+            <Text style={styles.pageSubtitle}>
+              {chain.length > 1
+                ? `${chain.length - 1} evolution${chain.length > 2 ? 's' : ''} from original`
+                : 'Original plan'}
+            </Text>
+          </View>
+          {/* Action buttons */}
+          <View style={styles.headerBtns}>
+            <TouchableOpacity
+              style={[styles.injuredBtn, injuryState?.active && styles.injuredBtnActive]}
+              onPress={() => setShowTriage(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 12 }}>🩹</Text>
+              <Text style={[styles.injuredBtnText, injuryState?.active && styles.injuredBtnTextActive]}>
+                {injuryState?.active ? 'Injured' : 'Injured?'}
               </Text>
-            </View>
-            {weekStreak > 0 && (
-              <Text style={styles.streakText}>🔥 {weekStreak}w streak</Text>
-            )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.importBtn}
+              onPress={() => navigation.navigate('Import')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.importBtnText}>Import</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.headerBtns}>
-          <TouchableOpacity
-            style={[styles.injuredBtn, injuryState?.active && styles.injuredBtnActive]}
-            onPress={() => setShowTriage(true)}
-            activeOpacity={0.8}
-          >
-            <Text style={{ fontSize: 12 }}>🩹</Text>
-            <Text style={[styles.injuredBtnText, injuryState?.active && styles.injuredBtnTextActive]}>
-              {injuryState?.active ? 'Injured' : 'Injured?'}
-            </Text>
-          </TouchableOpacity>
+
+        {/* Row 2: Plan name + level badge + evolve + streak */}
+        <View style={styles.headerRow2}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <PlanName planId={latestPlan.id} name={latestPlan.userName || 'My Plan'} />
+            <View style={styles.fitnessRow}>
+              <View style={[
+                styles.levelBadge,
+                { backgroundColor: latestPlan.fitnessLevel === 'advanced' ? 'rgba(239,68,68,0.12)' : latestPlan.fitnessLevel === 'beginner' ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)' },
+              ]}>
+                <Text style={[
+                  styles.levelText,
+                  { color: latestPlan.fitnessLevel === 'advanced' ? '#fca5a5' : latestPlan.fitnessLevel === 'beginner' ? '#86efac' : '#fde68a' },
+                ]}>
+                  {latestPlan.fitnessLevel || 'intermediate'}
+                </Text>
+              </View>
+              {weekStreak > 0 && (
+                <Text style={styles.streakText}>🔥 {weekStreak}w streak</Text>
+              )}
+            </View>
+          </View>
           {canEvolve ? (
             <TouchableOpacity
               style={styles.evolveBtn}
@@ -784,289 +863,282 @@ export default function WorkoutScreen() {
               <Text style={styles.evolveLockedText}>{daysUntilEvolve}d</Text>
             </View>
           ) : null}
-          <TouchableOpacity
-            style={styles.importBtn}
-            onPress={() => navigation.navigate('Import')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.importBtnText}>Import</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Injury banner */}
-        {injuryState && <InjuryBanner injuryState={injuryState} onRecovered={() => void handleRecovered()} />}
-
-        {/* Day selector */}
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 14 }}
-          contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {DAY_NAMES.map((day, i) => {
-            const label = schedule[day] ?? ''
-            const isBlocked = blockedDays.includes(day)
-            const isRestDay = !isBlocked && (!label || /rest/i.test(label))
-            const isSel = selectedDay === i
-            const isDayCompleted = !isBlocked && exerciseKeys.length > 0 &&
-              extractExerciseKeys(
-                (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
-              ).every(k => doneMap[`${day}:${k}`] === true) &&
-              extractExerciseKeys(
-                (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
-              ).length > 0
+          {/* Injury banner */}
+          {injuryState && <InjuryBanner injuryState={injuryState} onRecovered={() => void handleRecovered()} />}
 
-            const shortLabel = isBlocked ? 'Blocked'
-              : isRestDay ? 'Rest'
-              : (label.split(/[-,]/)[0].trim().slice(0, 10))
+          {/* Day selector */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginBottom: 14 }}
+            contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+          >
+            {DAY_NAMES.map((day, i) => {
+              const label = schedule[day] ?? ''
+              const isBlocked = blockedDays.includes(day)
+              const isRestDay = !isBlocked && (!label || /rest/i.test(label))
+              const isSel = selectedDay === i
+              const isDayCompleted = !isBlocked && exerciseKeys.length > 0 &&
+                extractExerciseKeys(
+                  (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
+                ).every(k => doneMap[`${day}:${k}`] === true) &&
+                extractExerciseKeys(
+                  (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
+                ).length > 0
 
-            return (
-              <TouchableOpacity
-                key={day}
-                onPress={() => setSelectedDay(i)}
-                style={[
-                  styles.dayTab,
-                  isSel && isBlocked && styles.dayTabSelBlocked,
-                  isSel && isRestDay && styles.dayTabSelRest,
-                  isSel && !isRestDay && !isBlocked && isDayCompleted && styles.dayTabSelComplete,
-                  isSel && !isRestDay && !isBlocked && !isDayCompleted && styles.dayTabSel,
-                  !isSel && isBlocked && styles.dayTabBlocked,
-                  !isSel && isRestDay && styles.dayTabRest,
-                  !isSel && !isBlocked && isDayCompleted && styles.dayTabComplete,
-                ]}
-                activeOpacity={0.7}
-              >
-                {isBlocked && !isSel && (
-                  <Ionicons name="lock-closed" size={10} color="rgba(255,255,255,0.2)" />
+              const shortLabel = isBlocked ? 'Blocked'
+                : isRestDay ? 'Rest'
+                  : (label.split(/[-,]/)[0].trim().slice(0, 10))
+
+              return (
+                <TouchableOpacity
+                  key={day}
+                  onPress={() => setSelectedDay(i)}
+                  style={[
+                    styles.dayTab,
+                    isSel && isBlocked && styles.dayTabSelBlocked,
+                    isSel && isRestDay && styles.dayTabSelRest,
+                    isSel && !isRestDay && !isBlocked && isDayCompleted && styles.dayTabSelComplete,
+                    isSel && !isRestDay && !isBlocked && !isDayCompleted && styles.dayTabSel,
+                    !isSel && isBlocked && styles.dayTabBlocked,
+                    !isSel && isRestDay && styles.dayTabRest,
+                    !isSel && !isBlocked && isDayCompleted && styles.dayTabComplete,
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  {isBlocked && !isSel && (
+                    <Ionicons name="lock-closed" size={10} color="rgba(255,255,255,0.2)" />
+                  )}
+                  <Text style={[
+                    styles.dayTabShort,
+                    {
+                      color: isSel && isBlocked ? 'rgba(255,255,255,0.4)'
+                        : isSel && !isRestDay && isDayCompleted ? '#d1fae5'
+                          : isSel && !isRestDay ? '#e9d5ff'
+                            : isSel && isRestDay ? 'rgba(255,255,255,0.5)'
+                              : isBlocked ? 'rgba(255,255,255,0.2)'
+                                : isDayCompleted ? 'rgba(74,222,128,0.8)'
+                                  : isRestDay ? 'rgba(255,255,255,0.25)'
+                                    : 'rgba(255,255,255,0.75)',
+                    },
+                  ]}>
+                    {DAY_SHORT[i]}
+                  </Text>
+                  <Text style={[
+                    styles.dayTabLabel,
+                    {
+                      color: isSel && isBlocked ? 'rgba(255,255,255,0.3)'
+                        : isSel && !isRestDay && isDayCompleted ? 'rgba(134,239,172,0.85)'
+                          : isSel && !isRestDay ? 'rgba(216,180,254,0.8)'
+                            : isSel && isRestDay ? 'rgba(255,255,255,0.3)'
+                              : isBlocked ? 'rgba(255,255,255,0.15)'
+                                : isDayCompleted ? 'rgba(134,239,172,0.55)'
+                                  : isRestDay ? 'rgba(255,255,255,0.18)'
+                                    : 'rgba(255,255,255,0.4)',
+                    },
+                  ]}>
+                    {shortLabel}
+                  </Text>
+                  <View style={[
+                    styles.dayTabDot,
+                    {
+                      backgroundColor: isSel && isBlocked ? 'rgba(255,255,255,0.2)'
+                        : isSel && isDayCompleted ? '#4ade80'
+                          : isSel && isRestDay ? 'rgba(255,255,255,0.35)'
+                            : isSel ? '#c084fc'
+                              : isDayCompleted ? 'rgba(74,222,128,0.55)'
+                                : isRestDay ? 'rgba(255,255,255,0.1)'
+                                  : isBlocked ? 'rgba(255,255,255,0.08)'
+                                    : 'rgba(255,255,255,0.25)',
+                      opacity: isSel ? 1 : 0.6,
+                    },
+                  ]} />
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
+
+          {/* Day card */}
+          <GlassCard style={{ marginBottom: 16, padding: 0 }}>
+            {/* Day header */}
+            <View style={[
+              styles.dayHeader,
+              isCurrentDayBlocked ? styles.dayHeaderBlocked
+                : isRest ? styles.dayHeaderRest
+                  : allDone ? styles.dayHeaderDone
+                    : styles.dayHeaderActive,
+            ]}>
+              <View>
+                <Text style={styles.dayName}>{currentDayName}</Text>
+                {!isRest && !isCurrentDayBlocked && selectedLabel && (
+                  <Text style={styles.dayFocus}>{selectedLabel}</Text>
                 )}
-                <Text style={[
-                  styles.dayTabShort,
-                  {
-                    color: isSel && isBlocked ? 'rgba(255,255,255,0.4)'
-                      : isSel && !isRestDay && isDayCompleted ? '#d1fae5'
-                      : isSel && !isRestDay ? '#e9d5ff'
-                      : isSel && isRestDay ? 'rgba(255,255,255,0.5)'
-                      : isBlocked ? 'rgba(255,255,255,0.2)'
-                      : isDayCompleted ? 'rgba(74,222,128,0.8)'
-                      : isRestDay ? 'rgba(255,255,255,0.25)'
-                      : 'rgba(255,255,255,0.75)',
-                  },
-                ]}>
-                  {DAY_SHORT[i]}
-                </Text>
-                <Text style={[
-                  styles.dayTabLabel,
-                  {
-                    color: isSel && isBlocked ? 'rgba(255,255,255,0.3)'
-                      : isSel && !isRestDay && isDayCompleted ? 'rgba(134,239,172,0.85)'
-                      : isSel && !isRestDay ? 'rgba(216,180,254,0.8)'
-                      : isSel && isRestDay ? 'rgba(255,255,255,0.3)'
-                      : isBlocked ? 'rgba(255,255,255,0.15)'
-                      : isDayCompleted ? 'rgba(134,239,172,0.55)'
-                      : isRestDay ? 'rgba(255,255,255,0.18)'
-                      : 'rgba(255,255,255,0.4)',
-                  },
-                ]}>
-                  {shortLabel}
-                </Text>
+              </View>
+              <View style={styles.dayBadgeRow}>
+                {exerciseKeys.length > 0 && !isRest && !isCurrentDayBlocked && (
+                  <View style={[styles.exerciseCount, allDone && styles.exerciseCountDone]}>
+                    <Text style={[styles.exerciseCountText, { color: allDone ? '#4ade80' : '#c084fc' }]}>
+                      {doneCount}/{exerciseKeys.length}
+                    </Text>
+                  </View>
+                )}
                 <View style={[
-                  styles.dayTabDot,
-                  {
-                    backgroundColor: isSel && isBlocked ? 'rgba(255,255,255,0.2)'
-                      : isSel && isDayCompleted ? '#4ade80'
-                      : isSel && isRestDay ? 'rgba(255,255,255,0.35)'
-                      : isSel ? '#c084fc'
-                      : isDayCompleted ? 'rgba(74,222,128,0.55)'
-                      : isRestDay ? 'rgba(255,255,255,0.1)'
-                      : isBlocked ? 'rgba(255,255,255,0.08)'
-                      : 'rgba(255,255,255,0.25)',
-                    opacity: isSel ? 1 : 0.6,
-                  },
-                ]} />
-              </TouchableOpacity>
-            )
-          })}
-        </ScrollView>
-
-        {/* Day card */}
-        <GlassCard style={{ marginBottom: 16, padding: 0 }}>
-          {/* Day header */}
-          <View style={[
-            styles.dayHeader,
-            isCurrentDayBlocked ? styles.dayHeaderBlocked
-              : isRest ? styles.dayHeaderRest
-              : allDone ? styles.dayHeaderDone
-              : styles.dayHeaderActive,
-          ]}>
-            <View>
-              <Text style={styles.dayName}>{currentDayName}</Text>
-              {!isRest && !isCurrentDayBlocked && selectedLabel && (
-                <Text style={styles.dayFocus}>{selectedLabel}</Text>
-              )}
-            </View>
-            <View style={styles.dayBadgeRow}>
-              {exerciseKeys.length > 0 && !isRest && !isCurrentDayBlocked && (
-                <View style={[styles.exerciseCount, allDone && styles.exerciseCountDone]}>
-                  <Text style={[styles.exerciseCountText, { color: allDone ? '#4ade80' : '#c084fc' }]}>
-                    {doneCount}/{exerciseKeys.length}
+                  styles.statusBadge,
+                  isCurrentDayBlocked ? styles.statusBadgeBlocked
+                    : isRest ? styles.statusBadgeRest
+                      : allDone ? styles.statusBadgeDone
+                        : styles.statusBadgeActive,
+                ]}>
+                  <Text style={[
+                    styles.statusText,
+                    {
+                      color: isCurrentDayBlocked ? 'rgba(255,255,255,0.25)'
+                        : isRest ? 'rgba(255,255,255,0.3)'
+                          : allDone ? '#86efac'
+                            : '#d8b4fe',
+                    },
+                  ]}>
+                    {isCurrentDayBlocked ? 'Blocked' : isRest ? 'Rest Day' : allDone ? 'Complete' : 'Active'}
                   </Text>
                 </View>
-              )}
-              <View style={[
-                styles.statusBadge,
-                isCurrentDayBlocked ? styles.statusBadgeBlocked
-                  : isRest ? styles.statusBadgeRest
-                  : allDone ? styles.statusBadgeDone
-                  : styles.statusBadgeActive,
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  {
-                    color: isCurrentDayBlocked ? 'rgba(255,255,255,0.25)'
-                      : isRest ? 'rgba(255,255,255,0.3)'
-                      : allDone ? '#86efac'
-                      : '#d8b4fe',
-                  },
-                ]}>
-                  {isCurrentDayBlocked ? 'Blocked' : isRest ? 'Rest Day' : allDone ? 'Complete' : 'Active'}
-                </Text>
               </View>
             </View>
-          </View>
 
-          {/* Day body */}
-          <View style={styles.dayBody}>
-            {isCurrentDayBlocked ? (
-              <View style={styles.blockedContent}>
-                <Ionicons name="lock-closed" size={28} color="rgba(255,255,255,0.15)" style={{ marginBottom: 10 }} />
-                <Text style={styles.blockedTitle}>Day not in your schedule</Text>
-                <Text style={styles.blockedBody}>
-                  This day was not part of your original schedule. You can unblock it or generate a custom workout.
+            {/* Day body */}
+            <View style={styles.dayBody}>
+              {isCurrentDayBlocked ? (
+                <View style={styles.blockedContent}>
+                  <Ionicons name="lock-closed" size={28} color="rgba(255,255,255,0.15)" style={{ marginBottom: 10 }} />
+                  <Text style={styles.blockedTitle}>Day not in your schedule</Text>
+                  <Text style={styles.blockedBody}>
+                    This day was not part of your original schedule. You can unblock it or generate a custom workout.
+                  </Text>
+                  <View style={styles.blockedBtns}>
+                    <TouchableOpacity
+                      style={styles.blockedUnblockBtn}
+                      onPress={() => handleUnblockDay(currentDayName)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="lock-open-outline" size={14} color="#d8b4fe" />
+                      <Text style={styles.blockedUnblockText}>Unblock Day</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.blockedGenerateBtn}
+                      onPress={() => void handleGenerateDayWorkout(currentDayName)}
+                      disabled={generatingDayFor === currentDayName}
+                      activeOpacity={0.8}
+                    >
+                      {generatingDayFor === currentDayName ? (
+                        <ActivityIndicator size="small" color="#22D3EE" />
+                      ) : (
+                        <>
+                          <Ionicons name="sparkles-outline" size={14} color="#22D3EE" />
+                          <Text style={styles.blockedGenerateText}>Generate Workout</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : isRest ? (
+                <View style={styles.restContent}>
+                  <Text style={{ fontSize: 36, lineHeight: 46, textAlign: 'center', marginBottom: 10 }}>😴</Text>
+                  <Text style={styles.restTitle}>Rest Day</Text>
+                  <Text style={styles.restBody}>
+                    Recovery is part of the programme. Prioritise sleep and hydration today.
+                  </Text>
+                </View>
+              ) : dayBody ? (
+                <DayContent
+                  dayName={currentDayName}
+                  dayBody={dayBody}
+                  unit={unit}
+                  planId={latestPlan.id}
+                  weights={weightsMap}
+                  doneMap={doneMap}
+                  setsMap={setsMap}
+                  onDone={handleDone}
+                  onSetsDone={handleSetsDone}
+                  onGuideClick={setGuideExercise}
+                />
+              ) : (
+                <Text style={styles.noDayContent}>No workout content found for this day.</Text>
+              )}
+            </View>
+          </GlassCard>
+
+          {/* Workout celebration */}
+          {showCelebration && exerciseKeys.length > 0 && !isRest && (
+            <WorkoutCelebration
+              exerciseCount={celebrationData.exerciseCount}
+              setsCount={celebrationData.setsCount}
+              weekStreak={weekStreak}
+              weekWorkouts={weekWorkouts + 1}
+              weeklyTarget={weeklyTarget}
+              dayFocus={selectedLabel || undefined}
+              onDismiss={() => setShowCelebration(false)}
+            />
+          )}
+
+          {/* Summary sections */}
+          {overview && <CollapsibleSection title="Plan Overview" icon="📋" content={overview} />}
+          {progression && <CollapsibleSection title="Progression Plan" icon="📈" content={progression} />}
+          {nutritionSection && <CollapsibleSection title="Nutrition Tips" icon="🥗" content={nutritionSection} />}
+
+          {/* Version history */}
+          <VersionHistory
+            versions={previousVersions}
+            expandedId={expandedVersionId}
+            onToggle={id => setExpandedVersionId(p => p === id ? null : id)}
+            formatDateShort={formatDateShort}
+          />
+
+          {/* Start over */}
+          <View style={styles.startOverSection}>
+            {!confirmStartOver ? (
+              <TouchableOpacity onPress={() => setConfirmStartOver(true)} activeOpacity={0.7}>
+                <Text style={styles.startOverLink}>Start over with a new plan</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.startOverConfirm}>
+                <Text style={styles.startOverWarning}>
+                  This permanently deletes your current plan
+                  {chain.length > 1 ? ` and all ${chain.length} versions` : ''}. Cannot be undone.
                 </Text>
-                <View style={styles.blockedBtns}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
                   <TouchableOpacity
-                    style={styles.blockedUnblockBtn}
-                    onPress={() => handleUnblockDay(currentDayName)}
-                    activeOpacity={0.8}
+                    style={styles.startOverConfirmBtn}
+                    onPress={() => void handleStartOver()}
+                    disabled={startingOver}
+                    activeOpacity={0.85}
                   >
-                    <Ionicons name="lock-open-outline" size={14} color="#d8b4fe" />
-                    <Text style={styles.blockedUnblockText}>Unblock Day</Text>
+                    {startingOver
+                      ? <ActivityIndicator color="#fca5a5" size="small" />
+                      : <Text style={styles.startOverConfirmText}>Yes, start over</Text>
+                    }
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.blockedGenerateBtn}
-                    onPress={() => void handleGenerateDayWorkout(currentDayName)}
-                    disabled={generatingDayFor === currentDayName}
+                    style={styles.startOverCancelBtn}
+                    onPress={() => setConfirmStartOver(false)}
                     activeOpacity={0.8}
                   >
-                    {generatingDayFor === currentDayName ? (
-                      <ActivityIndicator size="small" color="#22D3EE" />
-                    ) : (
-                      <>
-                        <Ionicons name="sparkles-outline" size={14} color="#22D3EE" />
-                        <Text style={styles.blockedGenerateText}>Generate Workout</Text>
-                      </>
-                    )}
+                    <Text style={styles.startOverCancelText}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-            ) : isRest ? (
-              <View style={styles.restContent}>
-                <Text style={{ fontSize: 36, lineHeight: 46, textAlign: 'center', marginBottom: 10 }}>😴</Text>
-                <Text style={styles.restTitle}>Rest Day</Text>
-                <Text style={styles.restBody}>
-                  Recovery is part of the programme. Prioritise sleep and hydration today.
-                </Text>
-              </View>
-            ) : dayBody ? (
-              <DayContent
-                dayName={currentDayName}
-                dayBody={dayBody}
-                unit={unit}
-                planId={latestPlan.id}
-                weights={weightsMap}
-                doneMap={doneMap}
-                setsMap={setsMap}
-                onDone={handleDone}
-                onSetsDone={handleSetsDone}
-                onGuideClick={setGuideExercise}
-              />
-            ) : (
-              <Text style={styles.noDayContent}>No workout content found for this day.</Text>
             )}
           </View>
-        </GlassCard>
 
-        {/* Workout celebration */}
-        {showCelebration && exerciseKeys.length > 0 && !isRest && (
-          <WorkoutCelebration
-            exerciseCount={celebrationData.exerciseCount}
-            setsCount={celebrationData.setsCount}
-            weekStreak={weekStreak}
-            weekWorkouts={weekWorkouts + 1}
-            weeklyTarget={weeklyTarget}
-            dayFocus={selectedLabel || undefined}
-            onDismiss={() => setShowCelebration(false)}
-          />
-        )}
-
-        {/* Summary sections */}
-        {overview && <CollapsibleSection title="Plan Overview" icon="📋" content={overview} />}
-        {progression && <CollapsibleSection title="Progression Plan" icon="📈" content={progression} />}
-        {nutritionSection && <CollapsibleSection title="Nutrition Tips" icon="🥗" content={nutritionSection} />}
-
-        {/* Version history */}
-        <VersionHistory
-          versions={previousVersions}
-          expandedId={expandedVersionId}
-          onToggle={id => setExpandedVersionId(p => p === id ? null : id)}
-          formatDateShort={formatDateShort}
-        />
-
-        {/* Start over */}
-        <View style={styles.startOverSection}>
-          {!confirmStartOver ? (
-            <TouchableOpacity onPress={() => setConfirmStartOver(true)} activeOpacity={0.7}>
-              <Text style={styles.startOverLink}>Start over with a new plan</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.startOverConfirm}>
-              <Text style={styles.startOverWarning}>
-                This permanently deletes your current plan
-                {chain.length > 1 ? ` and all ${chain.length} versions` : ''}. Cannot be undone.
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TouchableOpacity
-                  style={styles.startOverConfirmBtn}
-                  onPress={() => void handleStartOver()}
-                  disabled={startingOver}
-                  activeOpacity={0.85}
-                >
-                  {startingOver
-                    ? <ActivityIndicator color="#fca5a5" size="small" />
-                    : <Text style={styles.startOverConfirmText}>Yes, start over</Text>
-                  }
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.startOverCancelBtn}
-                  onPress={() => setConfirmStartOver(false)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.startOverCancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          <View style={{ height: 100 }} />
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <ExerciseModal
@@ -1091,16 +1163,23 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: Spacing.md, paddingTop: 8, paddingBottom: 116 },
   header: {
-    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingTop: Spacing.md, paddingBottom: 10,
+    paddingHorizontal: Spacing.md, paddingTop: Spacing.md, paddingBottom: 12,
+    gap: 10,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)',
   },
+  headerRow1: {
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+  },
+  pageTitleText: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
+  pageSubtitle: { color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 1, fontWeight: '500' },
+  headerRow2: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   fitnessRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   levelBadge: {
     paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8,
   },
   levelText: { fontSize: 11, fontWeight: '600', textTransform: 'capitalize' },
   streakText: { fontSize: 12, color: 'rgba(255,255,255,0.45)' },
-  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 },
+  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
   injuredBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 10, paddingVertical: 7, borderRadius: 20,

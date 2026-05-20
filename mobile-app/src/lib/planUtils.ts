@@ -20,18 +20,21 @@ export function transformExercises(text: string): string {
     const trimmed = lines[i].trim()
     if (/^\*\*\d+\./.test(trimmed)) {
       const name = trimmed.replace(/^\*\*/, '').replace(/\*+$/, '').trim()
-      const nextTrimmed = lines[i + 1]?.trim() ?? ''
-      if (/^Sets:/i.test(nextTrimmed)) {
-        const meta = nextTrimmed
-        const after = lines[i + 2]?.trim() ?? ''
+      let j = i + 1
+      while (j < lines.length && !lines[j].trim()) j++
+      const nextTrimmed = lines[j]?.trim() ?? ''
+      if (/^Sets\s*:/i.test(nextTrimmed)) {
+        let k = j + 1
+        while (k < lines.length && !lines[k].trim()) k++
+        const after = lines[k]?.trim() ?? ''
         const isTip = after.startsWith('*') && !after.startsWith('**') && after.endsWith('*')
         const tip = isTip ? after.slice(1, -1).trim() : ''
         result.push('```exercise')
         result.push(name)
-        result.push(meta)
+        result.push(nextTrimmed)
         if (tip) result.push(tip)
         result.push('```')
-        i += isTip ? 3 : 2
+        i = isTip ? k + 1 : k
         continue
       }
     }
@@ -152,6 +155,47 @@ export function getDefaultDayIdx(schedule: Record<string, string>): number {
   return today
 }
 
+// ── Day content parser (replaces Markdown fence-rule approach) ────────────────
+
+export type DayItem =
+  | { type: 'heading'; text: string }
+  | { type: 'exercise'; content: string; exerciseKey: string }
+
+export function parseDayItems(text: string): DayItem[] {
+  const lines = text.split('\n')
+  const items: DayItem[] = []
+  let i = 0
+  while (i < lines.length) {
+    const trimmed = lines[i].trim()
+    if (trimmed.startsWith('### ')) {
+      const heading = trimmed.slice(4).replace(/^Day\s+\d+:\s*/i, '').trim()
+      if (heading) items.push({ type: 'heading', text: heading })
+      i++; continue
+    }
+    if (/^\*\*\d+\./.test(trimmed)) {
+      const name = trimmed.replace(/^\*\*/, '').replace(/\*+$/, '').trim()
+      let j = i + 1
+      while (j < lines.length && !lines[j].trim()) j++
+      const nextTrimmed = lines[j]?.trim() ?? ''
+      if (/^Sets\s*:/i.test(nextTrimmed)) {
+        const meta = nextTrimmed
+        let k = j + 1
+        while (k < lines.length && !lines[k].trim()) k++
+        const after = lines[k]?.trim() ?? ''
+        const isTip = after.startsWith('*') && !after.startsWith('**') && after.endsWith('*')
+        const tip = isTip ? after.slice(1, -1).trim() : ''
+        const content = [name, meta, ...(tip ? [tip] : [])].join('\n')
+        const exerciseKey = name.replace(/^\d+\.\s*/, '').replace(/\s*\*+[^*]+\*+\s*/g, '').trim()
+        if (exerciseKey) items.push({ type: 'exercise', content, exerciseKey })
+        i = isTip ? k + 1 : k
+        continue
+      }
+    }
+    i++
+  }
+  return items
+}
+
 // ── Exercise keys for tracking ─────────────────────────────────────────────────
 
 export function extractExerciseKeys(rawText: string): string[] {
@@ -160,8 +204,10 @@ export function extractExerciseKeys(rawText: string): string[] {
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim()
     if (/^\*\*\d+\./.test(trimmed)) {
-      const nextLine = lines[i + 1]?.trim() ?? ''
-      if (/^Sets:/i.test(nextLine)) {
+      let j = i + 1
+      while (j < lines.length && !lines[j].trim()) j++
+      const nextLine = lines[j]?.trim() ?? ''
+      if (/^Sets\s*:/i.test(nextLine)) {
         const name = trimmed.replace(/^\*\*/, '').replace(/\*+$/, '').trim()
         const key = name.replace(/^\d+\.\s*/, '').replace(/\s*\*+[^*]+\*+\s*/g, '').trim()
         if (key && !keys.includes(key)) keys.push(key)

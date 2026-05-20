@@ -4,18 +4,21 @@ import {
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { id } from '@instantdb/react-native'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
 import { extractPlanFromImage, analyzeImportedPlan, improveImportedPlan } from '@/lib/gemini'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
+import BackButton from '@/components/BackButton'
 import type { RootStackParamList } from '@/navigation/types'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 
 export default function ImportScreen() {
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation<Nav>()
   const userId = getUserId()
   const [planText, setPlanText] = useState('')
@@ -115,13 +118,11 @@ export default function ImportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>Import Plan</Text>
       </View>
 
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.desc}>
             Import a workout plan from an image or paste the text directly.

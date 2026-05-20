@@ -4,11 +4,13 @@ import {
   TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { saveJournalEntry, getJournalEntries, saveSession, type JournalEntry } from '@/lib/wellness'
 import { useLocale } from '@/context/LocaleContext'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GlassCard from '@/components/GlassCard'
 import GradientText from '@/components/GradientText'
+import BackButton from '@/components/BackButton'
 
 const PROMPTS = [
   'What made you smile today?',
@@ -91,6 +93,7 @@ const entryStyles = StyleSheet.create({
 type ViewType = 'write' | 'done'
 
 export default function JournalScreen() {
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const [viewType, setViewType] = useState<ViewType>('write')
   const [content, setContent] = useState('')
@@ -127,9 +130,7 @@ export default function JournalScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <GradientText containerStyle={{ flex: 1 }} style={styles.headerTitle} colors={['#34D399', '#22D3EE']}>Journal</GradientText>
         </View>
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -167,16 +168,14 @@ export default function JournalScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={styles.headerTextCol}>
           <GradientText style={styles.headerTitle} colors={['#34D399', '#22D3EE']}>Journal</GradientText>
           <Text style={styles.subtitle}>Reflect. Release. Grow.</Text>
         </View>
       </View>
 
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           <GlassCard style={styles.promptCard}>

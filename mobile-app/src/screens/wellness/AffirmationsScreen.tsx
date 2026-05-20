@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } fr
 import { useNavigation } from '@react-navigation/native'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GradientText from '@/components/GradientText'
+import BackButton from '@/components/BackButton'
 
 interface Affirmation {
   text: string
@@ -59,9 +60,7 @@ export default function AffirmationsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={styles.headerTextCol}>
           <GradientText style={styles.title} colors={['#FBBF24', '#A855F7']}>Affirmations</GradientText>
           <Text style={styles.subtitle}>Words that remind you who you are.</Text>

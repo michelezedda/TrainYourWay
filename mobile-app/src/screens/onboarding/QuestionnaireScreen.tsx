@@ -1176,9 +1176,9 @@ export default function QuestionnaireScreen() {
             ].map(({ icon, label, desc }) => (
               <View key={label} style={styles.planFeatureItem}>
                 <Text style={styles.planFeatureIcon}>{icon}</Text>
-                <View>
-                  <Text style={styles.planFeatureLabel}>{label}</Text>
-                  <Text style={styles.planFeatureDesc}>{desc}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.planFeatureLabel} numberOfLines={2}>{label}</Text>
+                  <Text style={styles.planFeatureDesc} numberOfLines={2}>{desc}</Text>
                 </View>
               </View>
             ))}
@@ -1575,9 +1575,6 @@ export default function QuestionnaireScreen() {
             />
             <GhostButton label="Maybe later" onPress={handleSubmit} />
           </View>
-          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Back</Text>
-          </TouchableOpacity>
         </View>
       )
     }
@@ -1630,12 +1627,6 @@ export default function QuestionnaireScreen() {
         </View>
       )}
 
-      {/* Back button (shown for non-intro, non-auto-advance steps) */}
-      {step > 0 && step !== 2 && step < 14 && (
-        <TouchableOpacity onPress={handleBack} style={styles.backBtn} activeOpacity={0.7}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-      )}
 
       {isFullscreen ? (
         <Animated.View style={[styles.flex, { opacity: fadeAnim, transform: [{ translateX: slideAnim }, { scale: scaleExitAnim }] }]}>

@@ -1,5 +1,6 @@
-import { View, type ViewStyle, type StyleProp, StyleSheet, Platform } from 'react-native'
-import { Colors, Radius } from '@/theme'
+import { View, type ViewStyle, type StyleProp, StyleSheet } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Radius } from '@/theme'
 
 interface GlassCardProps {
   children: React.ReactNode
@@ -9,32 +10,59 @@ interface GlassCardProps {
 
 export default function GlassCard({ children, style, padding = 16 }: GlassCardProps) {
   return (
-    <View style={[styles.card, { padding }, style]}>
-      {/* Simulates the inset top highlight of the web glass-card */}
-      <View style={styles.topHighlight} pointerEvents="none" />
-      {children}
+    <View style={[styles.glass, style]}>
+      {/* ── Backdrop ── */}
+      <View style={[StyleSheet.absoluteFillObject, styles.base]} />
+
+      {/* Brand vibrancy: purple ambient bleed from above (Apple: "color from
+          content spills onto glass surface"). Kept at 4% — barely visible but
+          adds warmth and brand character to the material. */}
+      <LinearGradient
+        colors={['rgba(168,85,247,0.07)', 'rgba(168,85,247,0.0)']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.55 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
+
+      {/* Top specular rim — Apple's signature edge highlight.
+          A thin bright line at the top edge simulates light hitting the glass
+          rim at a sharp angle. White at high opacity fades down fast. */}
+      <View style={styles.specularRim} pointerEvents="none" />
+
+      {/* Content */}
+      <View style={{ padding }}>
+        {children}
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.cardBg,
+  glass: {
     borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: 'rgba(255,255,255,0.14)',
     overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 32 },
-      android: { elevation: 0 },
-    }),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.52,
+    shadowRadius: 28,
+    elevation: 8,
   },
-  topHighlight: {
+  base: {
+    backgroundColor: 'rgba(10,7,26,0.86)',
+  },
+  specularRim: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
+    // Apple rim height is typically 1–2px. We use 1.5 for visibility.
     height: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.13)',
+    // Bright white fading from center outward would be ideal, but RN doesn't
+    // support horizontal gradient on a 1.5px View efficiently. A solid
+    // semi-transparent white reads identically at this scale.
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
 })

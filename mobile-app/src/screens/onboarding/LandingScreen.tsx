@@ -4,6 +4,7 @@ import {
   Animated, Easing, Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import Svg, { Ellipse, Defs, RadialGradient as SvgRadialGradient, Stop, Line } from 'react-native-svg'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/navigation/types'
@@ -62,8 +63,12 @@ export default function LandingScreen() {
   // Orb animations
   const orb1X = useRef(new Animated.Value(0)).current
   const orb1Y = useRef(new Animated.Value(0)).current
+  const orb1Scale = useRef(new Animated.Value(1)).current
   const orb2X = useRef(new Animated.Value(0)).current
   const orb2Y = useRef(new Animated.Value(0)).current
+  const orb2Scale = useRef(new Animated.Value(1.06)).current
+  const orb3X = useRef(new Animated.Value(0)).current
+  const orb3Y = useRef(new Animated.Value(0)).current
 
   // Card transition animation
   const cardOpacity = useRef(new Animated.Value(1)).current
@@ -78,6 +83,9 @@ export default function LandingScreen() {
 
   // Button press scale
   const btnScale = useRef(new Animated.Value(1)).current
+
+  // Shine sweep — ambient light pass across the feature card
+  const shineAnim = useRef(new Animated.Value(0)).current
 
   // Entrance animations
   const logoAnim = useRef(new Animated.Value(0)).current
@@ -98,44 +106,70 @@ export default function LandingScreen() {
       Animated.timing(ctaAnim, { toValue: 1, duration: 400, delay: 380, easing: ease, useNativeDriver: true }),
     ]).start()
 
-    // Orb float loops — matches web 22s/28s ease-in-out cycles
+    // Orb float loops — exact web keyframes: orb1 22s, orb2 28s, orb3 18s (5s delay)
     const orbEase = Easing.inOut(Easing.ease)
-    const floatOrb1 = () => Animated.loop(
+
+    // Orb 1: x[0,40,-20,0] y[0,-30,40,0] scale[1,1.12,0.94,1]
+    Animated.loop(
       Animated.sequence([
         Animated.parallel([
           Animated.timing(orb1X, { toValue: 40, duration: 8000, easing: orbEase, useNativeDriver: true }),
           Animated.timing(orb1Y, { toValue: -30, duration: 8000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb1Scale, { toValue: 1.12, duration: 8000, easing: orbEase, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.timing(orb1X, { toValue: -20, duration: 7000, easing: orbEase, useNativeDriver: true }),
-          Animated.timing(orb1Y, { toValue: 20, duration: 7000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb1Y, { toValue: 40, duration: 7000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb1Scale, { toValue: 0.94, duration: 7000, easing: orbEase, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.timing(orb1X, { toValue: 0, duration: 7000, easing: orbEase, useNativeDriver: true }),
           Animated.timing(orb1Y, { toValue: 0, duration: 7000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb1Scale, { toValue: 1, duration: 7000, easing: orbEase, useNativeDriver: true }),
         ]),
       ])
     ).start()
 
-    const floatOrb2 = () => Animated.loop(
+    // Orb 2: x[0,-35,25,0] y[0,30,-40,0] scale[1.06,0.94,1.14,1.06]
+    Animated.loop(
       Animated.sequence([
         Animated.parallel([
           Animated.timing(orb2X, { toValue: -35, duration: 10000, easing: orbEase, useNativeDriver: true }),
           Animated.timing(orb2Y, { toValue: 30, duration: 10000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb2Scale, { toValue: 0.94, duration: 10000, easing: orbEase, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.timing(orb2X, { toValue: 25, duration: 9000, easing: orbEase, useNativeDriver: true }),
           Animated.timing(orb2Y, { toValue: -40, duration: 9000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb2Scale, { toValue: 1.14, duration: 9000, easing: orbEase, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.timing(orb2X, { toValue: 0, duration: 9000, easing: orbEase, useNativeDriver: true }),
           Animated.timing(orb2Y, { toValue: 0, duration: 9000, easing: orbEase, useNativeDriver: true }),
+          Animated.timing(orb2Scale, { toValue: 1.06, duration: 9000, easing: orbEase, useNativeDriver: true }),
         ]),
       ])
     ).start()
 
-    floatOrb1()
-    floatOrb2()
+    // Orb 3: x[0,18,-14,0] y[0,14,-18,0] — 5s delay matching web
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb3X, { toValue: 18, duration: 6000, easing: orbEase, useNativeDriver: true }),
+            Animated.timing(orb3Y, { toValue: 14, duration: 6000, easing: orbEase, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb3X, { toValue: -14, duration: 6000, easing: orbEase, useNativeDriver: true }),
+            Animated.timing(orb3Y, { toValue: -18, duration: 6000, easing: orbEase, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb3X, { toValue: 0, duration: 6000, easing: orbEase, useNativeDriver: true }),
+            Animated.timing(orb3Y, { toValue: 0, duration: 6000, easing: orbEase, useNativeDriver: true }),
+          ]),
+        ])
+      ).start()
+    }, 5000)
   }, [])
 
   // Cycle features — matches web: exit scale+y+opacity 320ms, enter y+opacity 420ms ease [0.4,0,0.2,1]
@@ -184,6 +218,21 @@ export default function LandingScreen() {
     return () => clearInterval(t)
   }, [goalIdxCurrent])
 
+  // Shine sweep loop — 1.1s sweep, 3.2s pause, repeat. Matches web glass reflective premium feel.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>
+    let active = true
+    const ease = Easing.bezier(0.4, 0, 0.6, 1)
+    const run = () => {
+      if (!active) return
+      shineAnim.setValue(0)
+      Animated.timing(shineAnim, { toValue: 1, duration: 1100, easing: ease, useNativeDriver: true })
+        .start(({ finished }) => { if (finished && active) timer = setTimeout(run, 3200) })
+    }
+    timer = setTimeout(run, 1800)
+    return () => { active = false; clearTimeout(timer); shineAnim.stopAnimation() }
+  }, [])
+
   if (user) {
     // Navigate to app if already signed in
     navigation.reset({ index: 0, routes: [{ name: 'App' }] })
@@ -191,6 +240,12 @@ export default function LandingScreen() {
   }
 
   const feature = FEATURES[activeFeature]
+
+  const cardWidth = W - 2 * Spacing.lg
+  const shineTranslate = shineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-(66), cardWidth + 10],
+  })
 
   const makeEntrance = (anim: Animated.Value, dy = 20) => ({
     opacity: anim,
@@ -200,10 +255,62 @@ export default function LandingScreen() {
   return (
     <View style={styles.container}>
 
-      {/* Ambient background orbs */}
-      <Animated.View style={[styles.orb1, { transform: [{ translateX: orb1X }, { translateY: orb1Y }] }]} />
-      <Animated.View style={[styles.orb2, { transform: [{ translateX: orb2X }, { translateY: orb2Y }] }]} />
-      <Animated.View style={styles.orb3} />
+      {/* Background: SVG radial-gradient orbs + grid — exact web parity */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+
+        {/* Orb 1: purple top-left — radial rgba(168,85,247,0.24)→transparent 65%, matches blur(80px) */}
+        <Animated.View style={[styles.orbContainer1, { transform: [{ translateX: orb1X }, { translateY: orb1Y }, { scale: orb1Scale }] }]}>
+          <Svg width={W * 0.65} height={W * 0.65}>
+            <Defs>
+              <SvgRadialGradient id="landingOrb1" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#A855F7" stopOpacity={0.24} />
+                <Stop offset="65%" stopColor="#A855F7" stopOpacity={0} />
+                <Stop offset="100%" stopColor="#A855F7" stopOpacity={0} />
+              </SvgRadialGradient>
+            </Defs>
+            <Ellipse cx={W * 0.325} cy={W * 0.325} rx={W * 0.325} ry={W * 0.325} fill="url(#landingOrb1)" />
+          </Svg>
+        </Animated.View>
+
+        {/* Orb 2: cyan bottom-right — radial rgba(34,211,238,0.16)→transparent 65%, matches blur(80px) */}
+        <Animated.View style={[styles.orbContainer2, { transform: [{ translateX: orb2X }, { translateY: orb2Y }, { scale: orb2Scale }] }]}>
+          <Svg width={W * 0.65} height={W * 0.65}>
+            <Defs>
+              <SvgRadialGradient id="landingOrb2" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#22D3EE" stopOpacity={0.16} />
+                <Stop offset="65%" stopColor="#22D3EE" stopOpacity={0} />
+                <Stop offset="100%" stopColor="#22D3EE" stopOpacity={0} />
+              </SvgRadialGradient>
+            </Defs>
+            <Ellipse cx={W * 0.325} cy={W * 0.325} rx={W * 0.325} ry={W * 0.325} fill="url(#landingOrb2)" />
+          </Svg>
+        </Animated.View>
+
+        {/* Orb 3: purple center — radial rgba(168,85,247,0.07)→transparent 70%, matches blur(60px) */}
+        <Animated.View style={[styles.orbContainer3, { transform: [{ translateX: orb3X }, { translateY: orb3Y }] }]}>
+          <Svg width={W * 0.4} height={W * 0.4}>
+            <Defs>
+              <SvgRadialGradient id="landingOrb3" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#A855F7" stopOpacity={0.07} />
+                <Stop offset="70%" stopColor="#A855F7" stopOpacity={0} />
+                <Stop offset="100%" stopColor="#A855F7" stopOpacity={0} />
+              </SvgRadialGradient>
+            </Defs>
+            <Ellipse cx={W * 0.2} cy={W * 0.2} rx={W * 0.2} ry={W * 0.2} fill="url(#landingOrb3)" />
+          </Svg>
+        </Animated.View>
+
+        {/* Grid: 72px pitch, 2% opacity white lines — matches web grid overlay */}
+        <Svg width={W} height={H} style={StyleSheet.absoluteFillObject}>
+          {Array.from({ length: Math.ceil(W / 72) + 1 }).map((_, i) => (
+            <Line key={`gv${i}`} x1={i * 72} y1={0} x2={i * 72} y2={H} stroke="#ffffff" strokeOpacity={0.02} strokeWidth={1} />
+          ))}
+          {Array.from({ length: Math.ceil(H / 72) + 1 }).map((_, i) => (
+            <Line key={`gh${i}`} x1={0} y1={i * 72} x2={W} y2={i * 72} stroke="#ffffff" strokeOpacity={0.02} strokeWidth={1} />
+          ))}
+        </Svg>
+
+      </View>
 
       <SafeAreaView style={styles.safe}>
         <View style={styles.inner}>
@@ -238,6 +345,11 @@ export default function LandingScreen() {
                   borderColor: feature.borderColor,
                   opacity: cardOpacity,
                   transform: [{ translateY: cardY }, { scale: cardScale }],
+                  // Colored glow — matches web: `0 0 40px rgba(featureColor, 0.22)`
+                  shadowColor: feature.color,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowRadius: 40,
+                  shadowOpacity: 0.22,
                 },
               ]}
             >
@@ -247,6 +359,20 @@ export default function LandingScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
+                {/* Specular top rim — matches web: inset 0 1.5px 0 rgba(255,255,255,0.1) */}
+                <View pointerEvents="none" style={styles.specularRim} />
+                {/* Shine sweep — animated light pass, non-interactive */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[styles.shineBeam, { transform: [{ translateX: shineTranslate }] }]}
+                >
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ flex: 1 }}
+                  />
+                </Animated.View>
                 <View style={styles.featureCardTop}>
                   <Text style={styles.featureIcon}>{feature.icon}</Text>
                   <View style={[styles.badgePill, { backgroundColor: feature.color + '22', borderColor: feature.color + '44' }]}>
@@ -296,7 +422,7 @@ export default function LandingScreen() {
                 <LinearGradient
                   colors={['#A855F7', '#22D3EE']}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+                  end={{ x: 1, y: 1 }}
                   style={styles.primaryBtn}
                 >
                   <Text style={styles.primaryBtnText}>Build My Plan  →</Text>
@@ -323,7 +449,7 @@ export default function LandingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1, backgroundColor: '#030014' },
   safe: { flex: 1 },
   inner: {
     flex: 1,
@@ -333,26 +459,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  // Orbs
-  orb1: {
-    position: 'absolute', top: '-18%', left: '-12%',
-    width: W * 0.65, height: W * 0.65, borderRadius: W * 0.325,
-    backgroundColor: 'transparent',
-    // Simulated glow via shadow on a tinted view
-    shadowColor: '#A855F7', shadowOffset: { width: 0, height: 0 }, shadowRadius: 80, shadowOpacity: 0.35,
-    // Solid tinted layer
-    borderWidth: 0,
-    overflow: 'hidden',
+  // Orb containers — pixel coords matching web's percentage positions
+  orbContainer1: {
+    position: 'absolute',
+    top: H * -0.18,
+    left: W * -0.12,
   },
-  orb2: {
-    position: 'absolute', bottom: '-22%', right: '-12%',
-    width: W * 0.65, height: W * 0.65, borderRadius: W * 0.325,
-    shadowColor: '#22D3EE', shadowOffset: { width: 0, height: 0 }, shadowRadius: 80, shadowOpacity: 0.25,
+  orbContainer2: {
+    position: 'absolute',
+    bottom: H * -0.22,
+    right: W * -0.12,
   },
-  orb3: {
-    position: 'absolute', top: '35%', left: '30%',
-    width: W * 0.4, height: W * 0.4, borderRadius: W * 0.2,
-    shadowColor: '#A855F7', shadowOffset: { width: 0, height: 0 }, shadowRadius: 60, shadowOpacity: 0.1,
+  orbContainer3: {
+    position: 'absolute',
+    top: H * 0.35,
+    left: W * 0.30,
   },
 
   // Logo
@@ -373,8 +494,14 @@ const styles = StyleSheet.create({
   featureCard: {
     borderRadius: Radius.xxl, borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowRadius: 24, shadowOpacity: 0.5,
     elevation: 8,
+  },
+  specularRim: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  shineBeam: {
+    position: 'absolute', top: 0, bottom: 0, width: 56,
   },
   featureCardGradient: { padding: Spacing.lg, gap: Spacing.sm, minHeight: 160 },
   featureCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },

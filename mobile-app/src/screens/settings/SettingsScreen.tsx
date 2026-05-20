@@ -15,6 +15,7 @@ import { useLocale } from '@/context/LocaleContext'
 import { clearAllLocalData } from '@/lib/clearUserData'
 import { storageGetAsync, storageSetAsync, storageRemoveAsync } from '@/lib/storage'
 import { getNotificationPermission, requestNotificationPermission, type PermissionStatus } from '@/lib/notifications'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GlassCard from '@/components/GlassCard'
 import GradientText from '@/components/GradientText'
@@ -37,6 +38,7 @@ function Divider() {
 }
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation<Nav>()
   const userId = getUserId()
   const { unit, setUnit } = useLocale()
@@ -162,7 +164,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Header */}

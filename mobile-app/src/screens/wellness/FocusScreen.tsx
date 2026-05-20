@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 import { saveSession, formatDuration } from '@/lib/wellness'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GradientText from '@/components/GradientText'
+import BackButton from '@/components/BackButton'
 
 interface FocusMode {
   id: string
@@ -116,9 +117,7 @@ export default function FocusScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <View style={styles.headerTextCol}>
             <GradientText style={styles.title} colors={['#A855F7', '#818CF8']}>Focus</GradientText>
             <Text style={styles.subtitle}>Deep work sessions with structured rest.</Text>
@@ -212,9 +211,7 @@ export default function FocusScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.sessionHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.sessionBackBtn}>
-          <Text style={styles.sessionBackText}>✕</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={[styles.modePill, { backgroundColor: accent + '18', borderColor: accent + '35' }]}>
           <Text style={[styles.modePillText, { color: accent }]}>{mode.icon} {mode.name}</Text>
         </View>

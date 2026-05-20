@@ -5,6 +5,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import { saveSession, formatDuration } from '@/lib/wellness'
 import { Colors, Spacing, Radius, Typography } from '@/theme'
 import GradientText from '@/components/GradientText'
+import BackButton from '@/components/BackButton'
 import type { WellnessStackParamList } from '@/navigation/types'
 
 type Route = RouteProp<WellnessStackParamList, 'Session'>
@@ -230,9 +231,7 @@ export default function SessionScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
           <View style={styles.headerTextCol}>
             <GradientText style={styles.title} colors={[accent, 'rgba(34,211,238,0.9)']}>{def.title}</GradientText>
             <Text style={styles.subtitle}>{def.desc}</Text>
@@ -323,9 +322,7 @@ export default function SessionScreen() {
 
       {/* Header */}
       <View style={styles.sessionHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.sessionBackBtn}>
-          <Text style={styles.sessionBackText}>✕</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => navigation.goBack()} />
         <View style={styles.timerBadge}>
           <View style={[styles.timerDot, { backgroundColor: paused ? Colors.textDim : accent }]} />
           <Text style={styles.timerText}>{mm}:{ss}</Text>
