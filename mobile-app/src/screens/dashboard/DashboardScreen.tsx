@@ -61,46 +61,62 @@ function getTodayWorkout(planText: string): { dayName: string; exercises: string
 }
 
 
-// ── Mini ring (border trick) ──────────────────────────────────────────────────
+// ── Mini ring (SVG arc) ───────────────────────────────────────────────────────
 
 const OVERSHOOT = Easing.bezier(0.34, 1.2, 0.64, 1)
 
+const RING_SIZE = 58
+const RING_STROKE = 6
+const RING_R = (RING_SIZE - RING_STROKE) / 2
+const RING_CX = RING_SIZE / 2
+const RING_CY = RING_SIZE / 2
+const RING_START = 135
+const RING_SWEEP = 270
+
+function ringArc(startDeg: number, sweepDeg: number): string {
+  if (sweepDeg < 0.5) return ''
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const x1 = RING_CX + RING_R * Math.cos(toRad(startDeg))
+  const y1 = RING_CY + RING_R * Math.sin(toRad(startDeg))
+  const x2 = RING_CX + RING_R * Math.cos(toRad(startDeg + sweepDeg))
+  const y2 = RING_CY + RING_R * Math.sin(toRad(startDeg + sweepDeg))
+  const large = sweepDeg > 180 ? 1 : 0
+  return `M ${x1} ${y1} A ${RING_R} ${RING_R} 0 ${large} 1 ${x2} ${y2}`
+}
+
+const RING_TRACK = ringArc(RING_START, RING_SWEEP)
+
 function MiniRing({ pct, title, subtitle, color }: { pct: number; title: string; subtitle: string; color: string }) {
-  const targetPct = Math.round(Math.min(1, pct) * 100)
-  const anim = useRef(new Animated.Value(0)).current
+  const [animPct, setAnimPct] = useState(0)
   const [displayNum, setDisplayNum] = useState(0)
 
   useEffect(() => {
-    const countVal = new Animated.Value(0)
-    const listenerId = countVal.addListener(({ value }) => {
-      setDisplayNum(Math.max(0, Math.min(100, Math.round(value))))
+    const val = new Animated.Value(0)
+    const id = val.addListener(({ value }) => {
+      setAnimPct(value)
+      setDisplayNum(Math.round(Math.min(1, value) * 100))
     })
-    Animated.timing(anim, {
+    Animated.timing(val, {
       toValue: Math.min(1, pct),
       duration: 1000,
       delay: 80,
       easing: OVERSHOOT,
       useNativeDriver: false,
-    }).start()
-    Animated.timing(countVal, {
-      toValue: targetPct,
-      duration: 1000,
-      delay: 80,
-      easing: OVERSHOOT,
-      useNativeDriver: false,
-    }).start(() => countVal.removeListener(listenerId))
-    return () => countVal.removeAllListeners()
+    }).start(() => val.removeListener(id))
+    return () => val.removeAllListeners()
   }, [pct])
+
+  const fillSweep = RING_SWEEP * animPct
+  const fillPath = ringArc(RING_START, fillSweep)
 
   return (
     <View style={miniRingStyles.container}>
       <View style={miniRingStyles.track}>
-        <View style={[miniRingStyles.ring, { borderColor: 'rgba(255,255,255,0.07)' }]} />
-        <Animated.View style={[miniRingStyles.ring, miniRingStyles.fill, {
-          borderColor: color,
-          opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }),
-        }]} />
-        <View style={miniRingStyles.center}>
+        <Svg width={RING_SIZE} height={RING_SIZE}>
+          <Path d={RING_TRACK} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={RING_STROKE} strokeLinecap="round" />
+          {fillPath ? <Path d={fillPath} fill="none" stroke={color} strokeWidth={RING_STROKE} strokeLinecap="round" /> : null}
+        </Svg>
+        <View style={[StyleSheet.absoluteFillObject, miniRingStyles.center]}>
           <Text style={[miniRingStyles.pct, { color }]}>{displayNum}%</Text>
         </View>
       </View>
@@ -112,9 +128,7 @@ function MiniRing({ pct, title, subtitle, color }: { pct: number; title: string;
 
 const miniRingStyles = StyleSheet.create({
   container: { alignItems: 'center', gap: 5 },
-  track: { width: 58, height: 58, position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', width: 58, height: 58, borderRadius: 29, borderWidth: 6 },
-  fill: { borderRightColor: 'transparent', borderBottomColor: 'transparent' },
+  track: { width: RING_SIZE, height: RING_SIZE },
   center: { alignItems: 'center', justifyContent: 'center' },
   pct: { fontSize: 11, fontWeight: '800' },
   title: { fontSize: 10, fontWeight: '600', color: Colors.textMuted, textAlign: 'center' },

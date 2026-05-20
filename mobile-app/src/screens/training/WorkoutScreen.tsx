@@ -52,7 +52,7 @@ const RECOVERY_TIPS = [
   'Stretch for 5-10 min to reduce next-day soreness.',
   'A protein-rich meal in the next hour supports muscle repair.',
   'Stay hydrated today. Aim for at least 2L of water.',
-  'Sleep is when muscles grow. Prioritise 8 hours tonight.',
+  'Sleep is when muscles grow. Prioritize 8 hours tonight.',
   'Light mobility work tomorrow will speed up recovery.',
 ]
 
@@ -122,15 +122,26 @@ function PlanName({ planId, name }: { planId: string; name: string }) {
       style={planNameStyles.row}
       activeOpacity={0.7}
     >
-      <Text style={planNameStyles.name} numberOfLines={1}>{name || 'My Plan'}</Text>
+      <Text style={planNameStyles.name} numberOfLines={2}>{name || 'My Plan'}</Text>
       <Ionicons name="pencil-outline" size={13} color="rgba(255,255,255,0.25)" style={{ marginLeft: 5 }} />
     </TouchableOpacity>
   )
 }
 
 const planNameStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  name: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+  },
+  name: {
+    flexShrink: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.3,
+  },
   input: {
     fontSize: 18, fontWeight: '800', color: '#fff',
     backgroundColor: 'rgba(255,255,255,0.05)',
@@ -408,7 +419,7 @@ function CollapsibleSection({ title, icon, content }: { title: string; icon: str
 const sectionStyles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 14,
+    paddingHorizontal: 16, paddingVertical: 16,
   },
   title: { flex: 1, color: '#fff', fontWeight: '600', fontSize: 14 },
   body: {
@@ -821,7 +832,13 @@ export default function WorkoutScreen() {
 
         {/* Row 2: Plan name + level badge + evolve + streak */}
         <View style={styles.headerRow2}>
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View
+            style={{
+              flex: 1,
+              minWidth: 0,
+              paddingRight: 10,
+            }}
+          >
             <PlanName planId={latestPlan.id} name={latestPlan.userName || 'My Plan'} />
             <View style={styles.fitnessRow}>
               <View style={[
@@ -1163,17 +1180,29 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: Spacing.md, paddingTop: 8, paddingBottom: 116 },
   header: {
-    paddingHorizontal: Spacing.md, paddingTop: Spacing.md, paddingBottom: 12,
-    gap: 10,
+    paddingHorizontal: Spacing.md, paddingTop: Spacing.md, paddingBottom: 16,
+    gap: 14,
     borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   headerRow1: {
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
   },
   pageTitleText: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-  pageSubtitle: { color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 1, fontWeight: '500' },
-  headerRow2: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  fitnessRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  pageSubtitle: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 2, fontWeight: '500' },
+  headerRow2: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    minHeight: 58,
+  },
+  fitnessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
   levelBadge: {
     paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8,
   },
