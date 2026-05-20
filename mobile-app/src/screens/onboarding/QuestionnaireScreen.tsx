@@ -2038,7 +2038,7 @@ const styles = StyleSheet.create({
   customChipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   customChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
     backgroundColor: 'rgba(168,85,247,0.15)', borderWidth: 1, borderColor: 'rgba(168,85,247,0.40)',
   },
   customChipText: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary},
