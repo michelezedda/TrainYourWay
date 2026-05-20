@@ -15,7 +15,6 @@ import { loadWeights, setWeight } from '@/lib/exerciseWeights'
 import { getInjuryState, loadInjuryState, clearInjuryState, saveInjuryState, getInjuryAdvice, type InjuryState } from '@/lib/injuryStore'
 import { calcWeeklyStreak } from '@/lib/streaks'
 import { localDateStr, parseJsonList, parseJsonRecord } from '@/lib/utils'
-import { generateDayWorkout } from '@/lib/gemini'
 import {
   DAY_NAMES, DAY_SHORT,
   sanitizePlan,
@@ -42,7 +41,7 @@ const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000
 
 const ALL_WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-function getBlockedDays(workoutDays: string | undefined): string[] {
+function getRestDays(workoutDays: string | undefined): string[] {
   const stored = parseJsonList(workoutDays ?? '[]')
   if (stored.length === 0) return []
   return ALL_WEEK_DAYS.filter(d => !stored.includes(d))
@@ -587,7 +586,6 @@ export default function WorkoutScreen() {
   const [showTriage, setShowTriage] = useState(false)
   const [weightsMap, setWeightsMap] = useState<Record<string, string>>({})
   const [guideExercise, setGuideExercise] = useState<string | null>(null)
-  const [generatingDayFor, setGeneratingDayFor] = useState<string | null>(null)
 
   const { isLoading, data } = db.useQuery({
     workoutPlans: { $: { where: { userId }, order: { serverCreatedAt: 'desc' } } },
@@ -621,8 +619,8 @@ export default function WorkoutScreen() {
     [completions, weekStart, today],
   )
 
-  const blockedDays = useMemo(
-    () => latestPlan ? getBlockedDays(latestPlan.workoutDays) : [],
+  const restDays = useMemo(
+    () => latestPlan ? getRestDays(latestPlan.workoutDays) : [],
     [latestPlan?.workoutDays],
   )
   const dayOverrides = useMemo(
@@ -669,8 +667,7 @@ export default function WorkoutScreen() {
 
   const currentDayName = DAY_NAMES[selectedDay]
   const selectedLabel = schedule[currentDayName] ?? ''
-  const isCurrentDayBlocked = blockedDays.includes(currentDayName)
-  const isRest = !isCurrentDayBlocked && (!selectedLabel || /rest/i.test(selectedLabel))
+  const isRest = restDays.includes(currentDayName) || !selectedLabel || /rest/i.test(selectedLabel)
   const chunkIdx = dayToChunkIdx[selectedDay]
   const rawChunk = chunkIdx !== undefined ? (dayChunks[chunkIdx] ?? '') : ''
   const baseDayBody = rawChunk.replace(/^### Day \d+:[^\n]*\n?/, '').trim()
@@ -738,30 +735,6 @@ export default function WorkoutScreen() {
     await clearInjuryState()
     setInjuryState(null)
   }
-
-  const handleUnblockDay = useCallback((day: string) => {
-    if (!latestPlan) return
-    const current = parseJsonList(latestPlan.workoutDays ?? '[]')
-    void db.transact(db.tx.workoutPlans[latestPlan.id].update({
-      workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
-    }))
-  }, [latestPlan])
-
-  const handleGenerateDayWorkout = useCallback(async (day: string) => {
-    if (!latestPlan) return
-    setGeneratingDayFor(day)
-    try {
-      const workoutText = await generateDayWorkout(latestPlan.plan, day)
-      const newOverrides = { ...dayOverrides, [day]: workoutText }
-      const current = parseJsonList(latestPlan.workoutDays ?? '[]')
-      await db.transact(db.tx.workoutPlans[latestPlan.id].update({
-        dayOverrides: JSON.stringify(newOverrides),
-        workoutDays: JSON.stringify([...current.filter(d => d !== day), day]),
-      }))
-    } finally {
-      setGeneratingDayFor(null)
-    }
-  }, [latestPlan, dayOverrides])
 
   if (isLoading) {
     return (
@@ -901,10 +874,9 @@ export default function WorkoutScreen() {
           >
             {DAY_NAMES.map((day, i) => {
               const label = schedule[day] ?? ''
-              const isBlocked = blockedDays.includes(day)
-              const isRestDay = !isBlocked && (!label || /rest/i.test(label))
+              const isRestDay = restDays.includes(day) || (!label || /rest/i.test(label))
               const isSel = selectedDay === i
-              const isDayCompleted = !isBlocked && exerciseKeys.length > 0 &&
+              const isDayCompleted = exerciseKeys.length > 0 &&
                 extractExerciseKeys(
                   (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
                 ).every(k => doneMap[`${day}:${k}`] === true) &&
@@ -912,9 +884,8 @@ export default function WorkoutScreen() {
                   (() => { const ci = dayToChunkIdx[i]; const rc = ci !== undefined ? (dayChunks[ci] ?? '') : ''; return rc.replace(/^### Day \d+:[^\n]*\n?/, '').trim() })()
                 ).length > 0
 
-              const shortLabel = isBlocked ? 'Blocked'
-                : isRestDay ? 'Rest'
-                  : (label.split(/[-,]/)[0].trim().slice(0, 10))
+              const shortLabel = isRestDay ? 'Rest'
+                : (label.split(/[-,]/)[0].trim().slice(0, 10))
 
               return (
                 <TouchableOpacity
@@ -922,30 +893,23 @@ export default function WorkoutScreen() {
                   onPress={() => setSelectedDay(i)}
                   style={[
                     styles.dayTab,
-                    isSel && isBlocked && styles.dayTabSelBlocked,
                     isSel && isRestDay && styles.dayTabSelRest,
-                    isSel && !isRestDay && !isBlocked && isDayCompleted && styles.dayTabSelComplete,
-                    isSel && !isRestDay && !isBlocked && !isDayCompleted && styles.dayTabSel,
-                    !isSel && isBlocked && styles.dayTabBlocked,
+                    isSel && !isRestDay && isDayCompleted && styles.dayTabSelComplete,
+                    isSel && !isRestDay && !isDayCompleted && styles.dayTabSel,
                     !isSel && isRestDay && styles.dayTabRest,
-                    !isSel && !isBlocked && isDayCompleted && styles.dayTabComplete,
+                    !isSel && !isRestDay && isDayCompleted && styles.dayTabComplete,
                   ]}
                   activeOpacity={0.7}
                 >
-                  {isBlocked && !isSel && (
-                    <Ionicons name="lock-closed" size={10} color="rgba(255,255,255,0.2)" />
-                  )}
                   <Text style={[
                     styles.dayTabShort,
                     {
-                      color: isSel && isBlocked ? 'rgba(255,255,255,0.4)'
-                        : isSel && !isRestDay && isDayCompleted ? '#d1fae5'
-                          : isSel && !isRestDay ? '#e9d5ff'
-                            : isSel && isRestDay ? 'rgba(255,255,255,0.5)'
-                              : isBlocked ? 'rgba(255,255,255,0.2)'
-                                : isDayCompleted ? 'rgba(74,222,128,0.8)'
-                                  : isRestDay ? 'rgba(255,255,255,0.25)'
-                                    : 'rgba(255,255,255,0.75)',
+                      color: isSel && !isRestDay && isDayCompleted ? '#d1fae5'
+                        : isSel && !isRestDay ? '#e9d5ff'
+                          : isSel && isRestDay ? 'rgba(255,255,255,0.5)'
+                            : isDayCompleted ? 'rgba(74,222,128,0.8)'
+                              : isRestDay ? 'rgba(255,255,255,0.25)'
+                                : 'rgba(255,255,255,0.75)',
                     },
                   ]}>
                     {DAY_SHORT[i]}
@@ -953,14 +917,12 @@ export default function WorkoutScreen() {
                   <Text style={[
                     styles.dayTabLabel,
                     {
-                      color: isSel && isBlocked ? 'rgba(255,255,255,0.3)'
-                        : isSel && !isRestDay && isDayCompleted ? 'rgba(134,239,172,0.85)'
-                          : isSel && !isRestDay ? 'rgba(216,180,254,0.8)'
-                            : isSel && isRestDay ? 'rgba(255,255,255,0.3)'
-                              : isBlocked ? 'rgba(255,255,255,0.15)'
-                                : isDayCompleted ? 'rgba(134,239,172,0.55)'
-                                  : isRestDay ? 'rgba(255,255,255,0.18)'
-                                    : 'rgba(255,255,255,0.4)',
+                      color: isSel && !isRestDay && isDayCompleted ? 'rgba(134,239,172,0.85)'
+                        : isSel && !isRestDay ? 'rgba(216,180,254,0.8)'
+                          : isSel && isRestDay ? 'rgba(255,255,255,0.3)'
+                            : isDayCompleted ? 'rgba(134,239,172,0.55)'
+                              : isRestDay ? 'rgba(255,255,255,0.18)'
+                                : 'rgba(255,255,255,0.4)',
                     },
                   ]}>
                     {shortLabel}
@@ -968,14 +930,12 @@ export default function WorkoutScreen() {
                   <View style={[
                     styles.dayTabDot,
                     {
-                      backgroundColor: isSel && isBlocked ? 'rgba(255,255,255,0.2)'
-                        : isSel && isDayCompleted ? '#4ade80'
-                          : isSel && isRestDay ? 'rgba(255,255,255,0.35)'
-                            : isSel ? '#c084fc'
-                              : isDayCompleted ? 'rgba(74,222,128,0.55)'
-                                : isRestDay ? 'rgba(255,255,255,0.1)'
-                                  : isBlocked ? 'rgba(255,255,255,0.08)'
-                                    : 'rgba(255,255,255,0.25)',
+                      backgroundColor: isSel && isDayCompleted ? '#4ade80'
+                        : isSel && isRestDay ? 'rgba(255,255,255,0.35)'
+                          : isSel ? '#c084fc'
+                            : isDayCompleted ? 'rgba(74,222,128,0.55)'
+                              : isRestDay ? 'rgba(255,255,255,0.1)'
+                                : 'rgba(255,255,255,0.25)',
                       opacity: isSel ? 1 : 0.6,
                     },
                   ]} />
@@ -989,19 +949,18 @@ export default function WorkoutScreen() {
             {/* Day header */}
             <View style={[
               styles.dayHeader,
-              isCurrentDayBlocked ? styles.dayHeaderBlocked
-                : isRest ? styles.dayHeaderRest
-                  : allDone ? styles.dayHeaderDone
-                    : styles.dayHeaderActive,
+              isRest ? styles.dayHeaderRest
+                : allDone ? styles.dayHeaderDone
+                  : styles.dayHeaderActive,
             ]}>
               <View>
                 <Text style={styles.dayName}>{currentDayName}</Text>
-                {!isRest && !isCurrentDayBlocked && selectedLabel && (
+                {!isRest && selectedLabel && (
                   <Text style={styles.dayFocus}>{selectedLabel}</Text>
                 )}
               </View>
               <View style={styles.dayBadgeRow}>
-                {exerciseKeys.length > 0 && !isRest && !isCurrentDayBlocked && (
+                {exerciseKeys.length > 0 && !isRest && (
                   <View style={[styles.exerciseCount, allDone && styles.exerciseCountDone]}>
                     <Text style={[styles.exerciseCountText, { color: allDone ? '#4ade80' : '#c084fc' }]}>
                       {doneCount}/{exerciseKeys.length}
@@ -1010,21 +969,19 @@ export default function WorkoutScreen() {
                 )}
                 <View style={[
                   styles.statusBadge,
-                  isCurrentDayBlocked ? styles.statusBadgeBlocked
-                    : isRest ? styles.statusBadgeRest
-                      : allDone ? styles.statusBadgeDone
-                        : styles.statusBadgeActive,
+                  isRest ? styles.statusBadgeRest
+                    : allDone ? styles.statusBadgeDone
+                      : styles.statusBadgeActive,
                 ]}>
                   <Text style={[
                     styles.statusText,
                     {
-                      color: isCurrentDayBlocked ? 'rgba(255,255,255,0.25)'
-                        : isRest ? 'rgba(255,255,255,0.3)'
-                          : allDone ? '#86efac'
-                            : '#d8b4fe',
+                      color: isRest ? 'rgba(255,255,255,0.3)'
+                        : allDone ? '#86efac'
+                          : '#d8b4fe',
                     },
                   ]}>
-                    {isCurrentDayBlocked ? 'Blocked' : isRest ? 'Rest Day' : allDone ? 'Complete' : 'Active'}
+                    {isRest ? 'Rest Day' : allDone ? 'Complete' : 'Active'}
                   </Text>
                 </View>
               </View>
@@ -1032,40 +989,7 @@ export default function WorkoutScreen() {
 
             {/* Day body */}
             <View style={styles.dayBody}>
-              {isCurrentDayBlocked ? (
-                <View style={styles.blockedContent}>
-                  <Ionicons name="lock-closed" size={28} color="rgba(255,255,255,0.15)" style={{ marginBottom: 10 }} />
-                  <Text style={styles.blockedTitle}>Day not in your schedule</Text>
-                  <Text style={styles.blockedBody}>
-                    This day was not part of your original schedule. You can unblock it or generate a custom workout.
-                  </Text>
-                  <View style={styles.blockedBtns}>
-                    <TouchableOpacity
-                      style={styles.blockedUnblockBtn}
-                      onPress={() => handleUnblockDay(currentDayName)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons name="lock-open-outline" size={14} color="#d8b4fe" />
-                      <Text style={styles.blockedUnblockText}>Unblock Day</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.blockedGenerateBtn}
-                      onPress={() => void handleGenerateDayWorkout(currentDayName)}
-                      disabled={generatingDayFor === currentDayName}
-                      activeOpacity={0.8}
-                    >
-                      {generatingDayFor === currentDayName ? (
-                        <ActivityIndicator size="small" color="#22D3EE" />
-                      ) : (
-                        <>
-                          <Ionicons name="sparkles-outline" size={14} color="#22D3EE" />
-                          <Text style={styles.blockedGenerateText}>Generate Workout</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : isRest ? (
+              {isRest ? (
                 <View style={styles.restContent}>
                   <Text style={{ fontSize: 36, lineHeight: 46, textAlign: 'center', marginBottom: 10 }}>😴</Text>
                   <Text style={styles.restTitle}>Rest Day</Text>
@@ -1251,10 +1175,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(34,197,94,0.55)',
     backgroundColor: 'rgba(34,197,94,0.18)',
   },
-  dayTabSelBlocked: {
-    borderColor: 'rgba(255,255,255,0.15)', backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  dayTabBlocked: { borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'transparent' },
   dayTabRest: { borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'transparent' },
   dayTabComplete: { borderColor: 'rgba(34,197,94,0.28)', backgroundColor: 'rgba(34,197,94,0.07)' },
   dayTabShort: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -1268,7 +1188,6 @@ const styles = StyleSheet.create({
   dayHeaderRest: { backgroundColor: 'rgba(255,255,255,0.02)' },
   dayHeaderDone: { backgroundColor: 'rgba(34,197,94,0.05)', borderBottomColor: 'rgba(34,197,94,0.15)' },
   dayHeaderActive: { backgroundColor: 'rgba(168,85,247,0.05)' },
-  dayHeaderBlocked: { backgroundColor: 'transparent' },
   dayName: { fontSize: 20, fontWeight: '800', color: '#fff' },
   dayFocus: { fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
   dayBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -1286,31 +1205,11 @@ const styles = StyleSheet.create({
   statusBadgeRest: { borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'transparent' },
   statusBadgeDone: { borderColor: 'rgba(34,197,94,0.35)', backgroundColor: 'rgba(34,197,94,0.12)' },
   statusBadgeActive: { borderColor: 'rgba(168,85,247,0.35)', backgroundColor: 'rgba(168,85,247,0.12)' },
-  statusBadgeBlocked: { borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'transparent' },
   statusText: { fontSize: 12, fontWeight: '600' },
   dayBody: { padding: 16 },
   restContent: { paddingVertical: 24, alignItems: 'center' },
   restTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 6 },
   restBody: { fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', lineHeight: 20, maxWidth: 260 },
-  blockedContent: { paddingVertical: 24, alignItems: 'center' },
-  blockedTitle: { fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.55)', marginBottom: 6 },
-  blockedBody: { fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', lineHeight: 18, maxWidth: 260, marginBottom: 20 },
-  blockedBtns: { flexDirection: 'row', gap: 10 },
-  blockedUnblockBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
-    backgroundColor: 'rgba(168,85,247,0.1)',
-    borderWidth: 1, borderColor: 'rgba(168,85,247,0.25)',
-  },
-  blockedUnblockText: { color: '#d8b4fe', fontSize: 12, fontWeight: '600' },
-  blockedGenerateBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
-    backgroundColor: 'rgba(34,211,238,0.08)',
-    borderWidth: 1, borderColor: 'rgba(34,211,238,0.22)',
-    minWidth: 80,
-  },
-  blockedGenerateText: { color: '#22D3EE', fontSize: 12, fontWeight: '600' },
   noDayContent: { fontSize: 13, color: 'rgba(255,255,255,0.3)', textAlign: 'center', paddingVertical: 24 },
   noPlan: {
     flex: 1, padding: Spacing.lg, alignItems: 'center', justifyContent: 'center',
