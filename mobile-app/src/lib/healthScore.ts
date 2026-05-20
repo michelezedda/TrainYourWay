@@ -1,3 +1,5 @@
+import type { FoodProduct } from './food/types'
+
 export type NovaGroup = 1 | 2 | 3 | 4
 
 export interface FoodScore {
@@ -148,6 +150,39 @@ export function scoreProduct(
     const tags = data.allergens_tags.map(t => t.replace('en:', '').toLowerCase())
     for (const allergy of profile.allergies) {
       if (tags.some(t => t.includes(allergy.toLowerCase()))) {
+        allergenWarnings.push(`Contains ${allergy}`)
+      }
+    }
+  }
+
+  return { grade, gradeColor, gradeBg, gradeLabel, verdicts, allergenWarnings }
+}
+
+// Scorer for the new unified FoodProduct schema
+export function scoreNormalizedProduct(
+  product: FoodProduct,
+  profile: { allergies?: string[] } | null,
+): ScoredProduct {
+  const grade = (product.nutriscoreGrade?.toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E') ?? 'C'
+  const gradeColor = GRADE_COLOR[grade] ?? '#eab308'
+  const gradeBg = GRADE_BG[grade] ?? 'rgba(234,179,8,0.12)'
+  const gradeLabel = GRADE_LABELS[grade] ?? 'Unknown'
+
+  const verdicts: Verdict[] = []
+  if (grade === 'A' || grade === 'B') verdicts.push({ type: 'positive', text: 'Strong nutritional profile' })
+  if ((product.proteinPer100g ?? 0) >= 15) verdicts.push({ type: 'positive', text: 'Good protein source' })
+  if ((product.fiberPer100g ?? 0) >= 5) verdicts.push({ type: 'positive', text: 'High in fiber' })
+  if ((product.sugarsPer100g ?? 0) > 20) verdicts.push({ type: 'warning', text: 'High sugar content' })
+  if ((product.sodiumPer100g ?? 0) > 0.6) verdicts.push({ type: 'warning', text: 'High sodium' })
+  if (product.novaGroup === 3) verdicts.push({ type: 'warning', text: 'Processed food' })
+  if ((product.saturatedFatPer100g ?? 0) > 10) verdicts.push({ type: 'negative', text: 'High in saturated fat' })
+  if (product.novaGroup === 4) verdicts.push({ type: 'negative', text: 'Ultra-processed food' })
+  if (grade === 'D' || grade === 'E') verdicts.push({ type: 'negative', text: 'Poor nutritional quality' })
+
+  const allergenWarnings: string[] = []
+  if (profile?.allergies && product.allergens.length > 0) {
+    for (const allergy of profile.allergies) {
+      if (product.allergens.some(a => a.toLowerCase().includes(allergy.toLowerCase()))) {
         allergenWarnings.push(`Contains ${allergy}`)
       }
     }

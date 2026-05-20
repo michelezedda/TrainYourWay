@@ -9,8 +9,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { id } from '@instantdb/react-native'
 import { db } from '@/lib/db'
 import { getUserId } from '@/lib/userId'
-import { fetchProduct, type OFFProduct, type ScanHistoryEntry } from '@/lib/openFoodFacts'
-import { scoreProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
+import { lookupByBarcode, SOURCE_LABEL, type FoodProduct, type ScanHistoryEntry } from '@/lib/food/lookup'
+import { scoreNormalizedProduct, novaColor, type ScoredProduct } from '@/lib/healthScore'
 import { loadNutritionProfile } from '@/lib/nutrition'
 import { storageGetAsync, storageSetAsync } from '@/lib/storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -83,7 +83,7 @@ export default function FoodScannerScreen() {
   const [pageState, setPageState] = useState<PageState>('intro')
   const [barcode, setBarcode] = useState('')
   const [manualCode, setManualCode] = useState('')
-  const [product, setProduct] = useState<OFFProduct | null>(null)
+  const [product, setProduct] = useState<FoodProduct | null>(null)
   const [scored, setScored] = useState<ScoredProduct | null>(null)
   const [history, setHistory] = useState<ScanHistoryEntry[]>([])
   const [resultTab, setResultTab] = useState<ResultTab>('health')
@@ -117,16 +117,17 @@ export default function FoodScannerScreen() {
     setBarcode(code)
     setPageState('loading')
     try {
-      const data = await fetchProduct(code)
+      const data = await lookupByBarcode(code)
       if (!data) { setPageState('not-found'); return }
-      const score = scoreProduct(data, profile)
+      const score = scoreNormalizedProduct(data, profile)
       setProduct(data)
       setScored(score)
       setResultTab('health')
       setPageState('result')
       const entry: ScanHistoryEntry = {
-        barcode: code, name: data.product_name || '', brand: data.brands || '',
-        grade: score.grade, gradeColor: score.gradeColor, scannedAt: Date.now(),
+        barcode: code, name: data.name, brand: data.brand,
+        grade: score.grade, gradeColor: score.gradeColor,
+        source: data.source, scannedAt: Date.now(),
       }
       await addToScanHistory(entry)
       setHistory(await getScanHistory())
@@ -166,7 +167,7 @@ export default function FoodScannerScreen() {
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.purple} />
           <Text style={styles.loadingText}>Looking up product...</Text>
-          <Text style={styles.loadingSubtext}>Checking Open Food Facts database</Text>
+          <Text style={styles.loadingSubtext}>Checking USDA, Edamam, and food database...</Text>
         </View>
       </SafeAreaView>
     )
@@ -205,7 +206,7 @@ export default function FoodScannerScreen() {
         <View style={styles.center}>
           <Text style={{ fontSize: 48, lineHeight: 60, marginBottom: 16 }}>🔍</Text>
           <Text style={styles.emptyTitle}>Product not found</Text>
-          <Text style={styles.emptyBody}>This barcode is not in the Open Food Facts database yet.</Text>
+          <Text style={styles.emptyBody}>This product was not found in USDA, Edamam, or Open Food Facts. Try scanning the nutrition label instead.</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={startScanning}>
             <Text style={styles.primaryBtnText}>Try another product</Text>
           </TouchableOpacity>
@@ -275,7 +276,6 @@ export default function FoodScannerScreen() {
   // ── Result ─────────────────────────────────────────────────────────────────
 
   if (pageState === 'result' && product && scored) {
-    const n = product.nutriments ?? {}
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -289,16 +289,17 @@ export default function FoodScannerScreen() {
           <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }} style={styles.storyCapture}>
             {/* Product header */}
             <View style={styles.productHeader}>
-              {product.image_url ? (
-                <Image source={{ uri: product.image_url }} style={styles.productImage} resizeMode="cover" />
+              {product.imageUrl ? (
+                <Image source={{ uri: product.imageUrl }} style={styles.productImage} resizeMode="cover" />
               ) : (
                 <View style={styles.productImagePlaceholder}><Text style={{ fontSize: 32, lineHeight: 42 }}>🛒</Text></View>
               )}
               <View style={styles.productInfo}>
-                {product.brands && (
-                  <Text style={styles.brand}>{product.brands.split(',')[0].trim()}</Text>
-                )}
-                <Text style={styles.productName}>{product.product_name || 'Unknown product'}</Text>
+                {product.brand ? (
+                  <Text style={styles.brand}>{product.brand}</Text>
+                ) : null}
+                <Text style={styles.productName}>{product.name}</Text>
+                <Text style={styles.sourceTag}>{SOURCE_LABEL[product.source] ?? product.source}</Text>
               </View>
             </View>
 
@@ -308,12 +309,12 @@ export default function FoodScannerScreen() {
               <View style={styles.gradeInfo}>
                 <Text style={styles.gradeLabel}>{scored.gradeLabel}</Text>
                 <Text style={styles.gradeExpl}>{GRADE_EXPLANATION[scored.grade]}</Text>
-                {product.nova_group ? (
+                {product.novaGroup ? (
                   <View style={styles.novaRow}>
                     {[1, 2, 3, 4].map(i => (
-                      <View key={i} style={[styles.novaDot, { backgroundColor: i <= product.nova_group! ? novaColor(product.nova_group!) : 'rgba(255,255,255,0.15)' }]} />
+                      <View key={i} style={[styles.novaDot, { backgroundColor: i <= product.novaGroup! ? novaColor(product.novaGroup!) : 'rgba(255,255,255,0.15)' }]} />
                     ))}
-                    <Text style={styles.novaLabel}>NOVA {product.nova_group}</Text>
+                    <Text style={styles.novaLabel}>NOVA {product.novaGroup}</Text>
                   </View>
                 ) : null}
               </View>
@@ -360,10 +361,10 @@ export default function FoodScannerScreen() {
                   ))}
                 </View>
               </GlassCard>
-              {product.nova_group ? (
+              {product.novaGroup ? (
                 <GlassCard>
-                  <Text style={styles.sectionLabel}>NOVA Group {product.nova_group}</Text>
-                  <Text style={styles.novaExpl}>{NOVA_EXPLANATION[product.nova_group]}</Text>
+                  <Text style={styles.sectionLabel}>NOVA Group {product.novaGroup}</Text>
+                  <Text style={styles.novaExpl}>{NOVA_EXPLANATION[product.novaGroup]}</Text>
                 </GlassCard>
               ) : null}
               {scored.verdicts.length > 0 && (
@@ -389,18 +390,18 @@ export default function FoodScannerScreen() {
           {resultTab === 'nutrition' && (
             <GlassCard>
               <Text style={styles.sectionLabel}>Per 100g</Text>
-              {n['energy-kcal_100g'] != null && (
+              {product.kcalPer100g != null && (
                 <View style={macroStyles.row}>
                   <Text style={macroStyles.label}>Calories</Text>
-                  <Text style={[macroStyles.value, { color: Colors.purple }]}>{Math.round(n['energy-kcal_100g']!)} kcal</Text>
+                  <Text style={[macroStyles.value, { color: Colors.purple }]}>{Math.round(product.kcalPer100g)} kcal</Text>
                 </View>
               )}
-              <MacroRow label="Protein" value={n.proteins_100g ?? null} unit="g" color="#22D3EE" />
-              <MacroRow label="Carbs" value={n.carbohydrates_100g ?? null} unit="g" color={Colors.purple} />
-              <MacroRow label="Sugars" value={n.sugars_100g ?? null} unit="g" color="#ef4444" />
-              <MacroRow label="Fat" value={n.fat_100g ?? null} unit="g" color="#f97316" />
-              <MacroRow label="Sat. Fat" value={n['saturated-fat_100g'] ?? null} unit="g" color="#ef4444" />
-              <MacroRow label="Fiber" value={n.fiber_100g ?? null} unit="g" color="#22c55e" />
+              <MacroRow label="Protein" value={product.proteinPer100g} unit="g" color="#22D3EE" />
+              <MacroRow label="Carbs" value={product.carbsPer100g} unit="g" color={Colors.purple} />
+              <MacroRow label="Sugars" value={product.sugarsPer100g} unit="g" color="#ef4444" />
+              <MacroRow label="Fat" value={product.fatPer100g} unit="g" color="#f97316" />
+              <MacroRow label="Sat. Fat" value={product.saturatedFatPer100g} unit="g" color="#ef4444" />
+              <MacroRow label="Fiber" value={product.fiberPer100g} unit="g" color="#22c55e" />
             </GlassCard>
           )}
 
@@ -419,17 +420,17 @@ export default function FoodScannerScreen() {
                   </View>
                 </GlassCard>
               )}
-              {product.ingredients_text ? (
+              {product.ingredients ? (
                 <GlassCard>
                   <Text style={styles.sectionLabel}>Ingredients</Text>
-                  <Text style={styles.ingredients}>{product.ingredients_text}</Text>
+                  <Text style={styles.ingredients}>{product.ingredients}</Text>
                 </GlassCard>
               ) : null}
               <GlassCard>
                 <Text style={styles.sectionLabel}>Community Rating</Text>
                 <GymRatingWidget barcode={barcode} userId={userId} />
               </GlassCard>
-              {(scored.grade === 'A' || scored.grade === 'B') && (
+              {(scored.grade === 'A' || scored.grade === 'B') && product && (
                 <AddToFindsButton product={product} scored={scored} barcode={barcode} userId={userId} />
               )}
             </>
@@ -454,7 +455,7 @@ export default function FoodScannerScreen() {
       </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <GlassCard style={styles.heroCard}>
-          <Text style={styles.heroTag}>Powered by Open Food Facts</Text>
+          <Text style={styles.heroTag}>Powered by USDA, Edamam & Open Food Facts</Text>
           <GradientText style={styles.heroTitle}>Know what's inside your food</GradientText>
           <Text style={styles.heroDesc}>
             Scan a barcode for a health report covering nutrition, additives, allergens, and whether it fits your goals.
@@ -535,14 +536,14 @@ function GymRatingWidget({ barcode, userId }: { barcode: string; userId: string 
   )
 }
 
-function AddToFindsButton({ product, scored, barcode, userId }: { product: OFFProduct; scored: ScoredProduct; barcode: string; userId: string }) {
+function AddToFindsButton({ product, scored, barcode, userId }: { product: FoodProduct; scored: ScoredProduct; barcode: string; userId: string }) {
   const { data } = db.useQuery({ communityFinds: { $: { where: { barcode, sharedBy: userId } } } })
   const alreadyShared = ((data?.communityFinds ?? []) as unknown[]).length > 0
 
   const handleAdd = async () => {
     await db.transact(db.tx.communityFinds[id()].update({
-      barcode, productName: product.product_name || '', brand: product.brands?.split(',')[0]?.trim() || '',
-      grade: scored.grade, gradeColor: scored.gradeColor, imageUrl: product.image_url || '',
+      barcode, productName: product.name, brand: product.brand,
+      grade: scored.grade, gradeColor: scored.gradeColor, imageUrl: product.imageUrl ?? '',
       sharedBy: userId, sharedAt: Date.now(),
     }))
   }
@@ -610,6 +611,7 @@ const styles = StyleSheet.create({
   productImagePlaceholder: { width: 80, height: 80, borderRadius: Radius.xl, borderWidth: 1, borderColor: Colors.cardBorder, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
   productInfo: { flex: 1, justifyContent: 'center', gap: 4 },
   brand: { fontSize: 11, color: Colors.textDim, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
+  sourceTag: { fontSize: 9, color: Colors.textDim, fontWeight: '500', marginTop: 3, textTransform: 'uppercase', letterSpacing: 0.8 },
   productName: { ...Typography.h3, fontSize: 18, lineHeight: 24 },
   gradeHero: { borderRadius: Radius.xl, padding: Spacing.md, flexDirection: 'row', gap: Spacing.md, alignItems: 'center', borderWidth: 1.5, marginBottom: 4 },
   gradeLetter: { fontSize: 56, fontWeight: '900', lineHeight: 64 },

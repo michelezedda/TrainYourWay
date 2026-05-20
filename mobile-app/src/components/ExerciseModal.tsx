@@ -9,10 +9,18 @@ import Animated, {
 } from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
+import {
+  Svg, Defs, RadialGradient, Stop,
+  Circle, Rect, Ellipse, Path, G,
+} from 'react-native-svg'
 import { getExerciseInstructions, type ExerciseInstructions } from '@/lib/gemini'
 
-const { height: SCREEN_H } = Dimensions.get('window')
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 const SHEET_MAX_H = SCREEN_H * 0.92
+
+// SVG body dimensions – each body panel occupies half the card interior
+const SVG_W = Math.min(110, Math.floor((SCREEN_W - 92) / 2))
+const SVG_H = Math.round(SVG_W * 298 / 120)
 
 // ── Difficulty config ─────────────────────────────────────────────────────────
 
@@ -36,25 +44,161 @@ function displayMuscle(id: string) {
   return MUSCLE_DISPLAY[id] ?? id.replace(/_/g, ' ')
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Muscle body SVG helpers ────────────────────────────────────────────────────
 
-function SectionLabel({ children }: { children: string }) {
-  return <Text style={s.sectionLabel}>{children}</Text>
+type MuscleSet = Set<string>
+
+function muscleFill(id: string, p: MuscleSet, s: MuscleSet, pfx: string): string {
+  if (p.has(id)) return `url(#pg-${pfx})`
+  if (s.has(id)) return `url(#sg-${pfx})`
+  return 'transparent'
 }
 
-function MuscleChips({
-  primaryMuscles, secondaryMuscles,
-}: { primaryMuscles: string[]; secondaryMuscles: string[] }) {
+function SvgDefs({ pfx }: { pfx: string }) {
+  return (
+    <Defs>
+      <RadialGradient id={`bg-${pfx}`} cx="50%" cy="30%" r="70%">
+        <Stop offset="0%" stopColor="rgba(255,255,255,0.13)" />
+        <Stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+      </RadialGradient>
+      <RadialGradient id={`pg-${pfx}`} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
+        <Stop offset="0%" stopColor="#f43f5e" stopOpacity={1} />
+        <Stop offset="100%" stopColor="#9333ea" stopOpacity={0.55} />
+      </RadialGradient>
+      <RadialGradient id={`sg-${pfx}`} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
+        <Stop offset="0%" stopColor="#fbbf24" stopOpacity={0.95} />
+        <Stop offset="100%" stopColor="#f97316" stopOpacity={0.5} />
+      </RadialGradient>
+    </Defs>
+  )
+}
+
+function BodyBase({ pfx }: { pfx: string }) {
+  return (
+    <G fill={`url(#bg-${pfx})`} stroke="rgba(255,255,255,0.14)" strokeWidth={0.6} strokeLinejoin="round">
+      <Circle cx={60} cy={21} r={18.5} />
+      <Rect x={53} y={39} width={14} height={13} rx={5} />
+      <Ellipse cx={17} cy={68} rx={16} ry={11} />
+      <Ellipse cx={103} cy={68} rx={16} ry={11} />
+      <Path d="M 36,54 C 24,60 24,72 26,84 L 26,102 C 26,120 30,132 34,144 L 34,158 C 30,166 26,172 24,185 L 24,196 Q 42,202 60,202 Q 78,202 96,196 L 96,185 C 94,172 90,166 86,158 L 86,144 C 90,132 94,120 94,102 L 94,84 C 96,72 96,60 84,54 Z" />
+      <Rect x={6} y={62} width={20} height={74} rx={9} />
+      <Rect x={94} y={62} width={20} height={74} rx={9} />
+      <Rect x={8} y={133} width={17} height={58} rx={7} />
+      <Rect x={95} y={133} width={17} height={58} rx={7} />
+      <Ellipse cx={17} cy={197} rx={9} ry={6} />
+      <Ellipse cx={103} cy={197} rx={9} ry={6} />
+      <Rect x={28} y={198} width={28} height={76} rx={12} />
+      <Rect x={64} y={198} width={28} height={76} rx={12} />
+      <Rect x={30} y={270} width={24} height={62} rx={9} />
+      <Rect x={66} y={270} width={24} height={62} rx={9} />
+      <Ellipse cx={39} cy={296} rx={15} ry={6} />
+      <Ellipse cx={77} cy={296} rx={15} ry={6} />
+    </G>
+  )
+}
+
+function FrontMuscles({ p, s, pfx }: { p: MuscleSet; s: MuscleSet; pfx: string }) {
+  const f = (id: string) => muscleFill(id, p, s, pfx)
+  return (
+    <G strokeWidth={0} stroke="none">
+      <Ellipse cx={43} cy={80} rx={18} ry={15} fill={f('chest')} />
+      <Ellipse cx={77} cy={80} rx={18} ry={15} fill={f('chest')} />
+      <Ellipse cx={17} cy={68} rx={12} ry={10} fill={f('front_delts')} />
+      <Ellipse cx={103} cy={68} rx={12} ry={10} fill={f('front_delts')} />
+      <Ellipse cx={11} cy={99} rx={8} ry={21} fill={f('biceps')} />
+      <Ellipse cx={109} cy={99} rx={8} ry={21} fill={f('biceps')} />
+      <Ellipse cx={12} cy={154} rx={7} ry={17} fill={f('forearms')} />
+      <Ellipse cx={108} cy={154} rx={7} ry={17} fill={f('forearms')} />
+      <Rect x={49} y={106} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Rect x={61} y={106} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Rect x={49} y={121} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Rect x={61} y={121} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Rect x={49} y={136} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Rect x={61} y={136} width={10} height={12} rx={2.5} fill={f('abs')} />
+      <Ellipse cx={33} cy={128} rx={9} ry={16} transform="rotate(-15 33 128)" fill={f('obliques')} />
+      <Ellipse cx={87} cy={128} rx={9} ry={16} transform="rotate(15 87 128)" fill={f('obliques')} />
+      <Ellipse cx={46} cy={166} rx={11} ry={8} fill={f('hip_flexors')} />
+      <Ellipse cx={74} cy={166} rx={11} ry={8} fill={f('hip_flexors')} />
+      <Ellipse cx={42} cy={232} rx={14} ry={31} fill={f('quads')} />
+      <Ellipse cx={78} cy={232} rx={14} ry={31} fill={f('quads')} />
+      <Ellipse cx={53} cy={226} rx={8} ry={26} fill={f('adductors')} />
+      <Ellipse cx={67} cy={226} rx={8} ry={26} fill={f('adductors')} />
+      <Ellipse cx={40} cy={276} rx={8} ry={17} fill={f('calves_front')} />
+      <Ellipse cx={78} cy={276} rx={8} ry={17} fill={f('calves_front')} />
+    </G>
+  )
+}
+
+function BackMuscles({ p, s, pfx }: { p: MuscleSet; s: MuscleSet; pfx: string }) {
+  const f = (id: string) => muscleFill(id, p, s, pfx)
+  return (
+    <G strokeWidth={0} stroke="none">
+      <Path d="M 60,52 L 94,70 L 80,90 L 60,94 L 40,90 L 26,70 Z" fill={f('traps')} />
+      <Ellipse cx={17} cy={68} rx={12} ry={10} fill={f('rear_delts')} />
+      <Ellipse cx={103} cy={68} rx={12} ry={10} fill={f('rear_delts')} />
+      <Ellipse cx={60} cy={93} rx={18} ry={12} fill={f('rhomboids')} />
+      <Path d="M 26,82 L 8,136 L 33,148 L 48,106 Z" fill={f('lats')} />
+      <Path d="M 94,82 L 112,136 L 87,148 L 72,106 Z" fill={f('lats')} />
+      <Ellipse cx={9} cy={98} rx={9} ry={23} fill={f('triceps')} />
+      <Ellipse cx={111} cy={98} rx={9} ry={23} fill={f('triceps')} />
+      <Ellipse cx={12} cy={154} rx={7} ry={17} fill={f('forearms')} />
+      <Ellipse cx={108} cy={154} rx={7} ry={17} fill={f('forearms')} />
+      <Ellipse cx={50} cy={142} rx={9} ry={20} fill={f('lower_back')} />
+      <Ellipse cx={70} cy={142} rx={9} ry={20} fill={f('lower_back')} />
+      <Ellipse cx={43} cy={172} rx={17} ry={17} fill={f('glutes')} />
+      <Ellipse cx={77} cy={172} rx={17} ry={17} fill={f('glutes')} />
+      <Ellipse cx={42} cy={232} rx={14} ry={31} fill={f('hamstrings')} />
+      <Ellipse cx={78} cy={232} rx={14} ry={31} fill={f('hamstrings')} />
+      <Ellipse cx={41} cy={278} rx={11} ry={21} fill={f('calves')} />
+      <Ellipse cx={79} cy={278} rx={11} ry={21} fill={f('calves')} />
+    </G>
+  )
+}
+
+function MuscleMap({ primaryMuscles, secondaryMuscles }: {
+  primaryMuscles: string[]
+  secondaryMuscles: string[]
+}) {
   const total = primaryMuscles.length + secondaryMuscles.length
   if (!total) return null
+
+  const p = new Set(primaryMuscles)
+  const sec = new Set(secondaryMuscles)
+
   return (
     <View style={s.muscleCard}>
+      {/* Header row */}
       <View style={s.muscleHeader}>
         <Text style={s.muscleTitle}>Muscles Worked</Text>
         <View style={s.muscleCountChip}>
           <Text style={s.muscleCountText}>{total} muscle{total !== 1 ? 's' : ''}</Text>
         </View>
       </View>
+
+      {/* Front + Back side by side */}
+      <View style={s.muscleSvgRow}>
+        <View style={s.muscleSvgCol}>
+          <Svg width={SVG_W} height={SVG_H} viewBox="0 0 120 298">
+            <SvgDefs pfx="f" />
+            <BodyBase pfx="f" />
+            <FrontMuscles p={p} s={sec} pfx="f" />
+          </Svg>
+          <Text style={s.svgLabel}>Front</Text>
+        </View>
+
+        <View style={s.muscleDivider} />
+
+        <View style={s.muscleSvgCol}>
+          <Svg width={SVG_W} height={SVG_H} viewBox="0 0 120 298">
+            <SvgDefs pfx="b" />
+            <BodyBase pfx="b" />
+            <BackMuscles p={p} s={sec} pfx="b" />
+          </Svg>
+          <Text style={s.svgLabel}>Back</Text>
+        </View>
+      </View>
+
+      {/* Chip legend */}
       {primaryMuscles.length > 0 && (
         <View style={{ marginBottom: 10 }}>
           <Text style={s.primaryLabel}>Primary</Text>
@@ -81,6 +225,12 @@ function MuscleChips({
       )}
     </View>
   )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: string }) {
+  return <Text style={s.sectionLabel}>{children}</Text>
 }
 
 function DifficultyCard({ difficulty, reason }: {
@@ -210,7 +360,6 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
   const [instructions, setInstructions] = useState<ExerciseInstructions | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [showDemo, setShowDemo] = useState(false)
 
   const translateY = useSharedValue(SCREEN_H)
   const backdropOpacity = useSharedValue(0)
@@ -229,7 +378,6 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
       setLoading(true)
       setError(false)
       setInstructions(null)
-      setShowDemo(false)
       getExerciseInstructions(name)
         .then(setInstructions)
         .catch(() => setError(true))
@@ -264,14 +412,15 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
     ),
   }))
 
-  const query = encodeURIComponent(`${name} exercise proper form tutorial`)
+  const demoQuery = encodeURIComponent(`${name} exercise demo`)
+  const ytQuery = encodeURIComponent(`${name} exercise proper form tutorial`)
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={doClose} statusBarTranslucent>
       {/* Backdrop */}
       <Animated.View style={[StyleSheet.absoluteFillObject, s.backdrop, backdropStyle]} />
 
-      {/* Sheet wrapper - positioned at bottom */}
+      {/* Sheet wrapper */}
       <View style={s.sheetContainer} pointerEvents="box-none">
         <Animated.View style={[s.sheet, sheetStyle]}>
 
@@ -282,30 +431,15 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
             </View>
           </GestureDetector>
 
-          {/* Header */}
+          {/* Header - no difficulty chip here */}
           <View style={s.header}>
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={s.howToLabel}>How to do</Text>
               <Text style={s.exerciseName} numberOfLines={2}>{name}</Text>
             </View>
-            <View style={s.headerRight}>
-              {instructions?.difficulty && (
-                <View style={[
-                  s.diffChip,
-                  {
-                    backgroundColor: DIFFICULTY_CONFIG[instructions.difficulty].bg,
-                    borderColor: DIFFICULTY_CONFIG[instructions.difficulty].border,
-                  },
-                ]}>
-                  <Text style={[s.diffChipText, { color: DIFFICULTY_CONFIG[instructions.difficulty].color }]}>
-                    {instructions.difficulty}
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity onPress={doClose} style={s.closeBtn} activeOpacity={0.7}>
-                <Text style={s.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={doClose} style={s.closeBtn} activeOpacity={0.7}>
+              <Text style={s.closeBtnText}>✕</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Scrollable content */}
@@ -328,7 +462,7 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
             {!loading && instructions && (
               <>
                 {(instructions.primaryMuscles?.length > 0 || instructions.secondaryMuscles?.length > 0) && (
-                  <MuscleChips
+                  <MuscleMap
                     primaryMuscles={instructions.primaryMuscles ?? []}
                     secondaryMuscles={instructions.secondaryMuscles ?? []}
                   />
@@ -346,36 +480,23 @@ export default function ExerciseModal({ name, visible, onClose }: Props) {
               </>
             )}
 
-            {/* Watch Demo toggle */}
+            {/* Watch Demo */}
             <TouchableOpacity
-              onPress={() => setShowDemo(d => !d)}
-              style={[s.demoBtn, showDemo && s.demoBtnActive]}
+              onPress={() => Linking.openURL(`https://www.youtube.com/results?search_query=${demoQuery}`)}
+              style={s.demoBtn}
               activeOpacity={0.85}
             >
               <Text style={s.demoPlay}>▶</Text>
-              <Text style={[s.demoBtnText, showDemo && s.demoBtnTextActive]}>
-                {showDemo ? 'Hide Demo' : 'Watch Demo'}
-              </Text>
+              <Text style={s.demoBtnText}>Watch Demo</Text>
             </TouchableOpacity>
 
-            {showDemo && (
-              <TouchableOpacity
-                style={s.youtubeBtn}
-                onPress={() => Linking.openURL(`https://www.youtube.com/results?search_query=${query}`)}
-                activeOpacity={0.85}
-              >
-                <Text style={s.youtubeIcon}>▶</Text>
-                <Text style={s.youtubeBtnText}>Open on YouTube</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* YouTube link always shown */}
+            {/* Watch on YouTube */}
             <TouchableOpacity
               style={s.ytLinkBtn}
-              onPress={() => Linking.openURL(`https://www.youtube.com/results?search_query=${query}`)}
+              onPress={() => Linking.openURL(`https://www.youtube.com/results?search_query=${ytQuery}`)}
               activeOpacity={0.8}
             >
-              <Text style={[s.youtubeIcon, { color: '#ef4444', fontSize: 16 }]}>▶</Text>
+              <Text style={s.ytIcon}>▶</Text>
               <Text style={s.ytLinkText}>Watch on YouTube</Text>
             </TouchableOpacity>
 
@@ -441,19 +562,6 @@ const s = StyleSheet.create({
     letterSpacing: -0.3,
     lineHeight: 26,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-  },
-  diffChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  diffChipText: { fontSize: 10, fontWeight: '700' },
   closeBtn: {
     width: 32,
     height: 32,
@@ -461,6 +569,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
+    flexShrink: 0,
   },
   closeBtnText: { color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: '700' },
 
@@ -485,7 +594,7 @@ const s = StyleSheet.create({
   errorTitle: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '600', marginBottom: 4 },
   errorSub: { color: 'rgba(255,255,255,0.25)', fontSize: 12 },
 
-  // Muscles
+  // Muscle map card
   muscleCard: {
     padding: 16,
     borderRadius: 16,
@@ -497,7 +606,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   muscleTitle: {
     fontSize: 11,
@@ -515,6 +624,29 @@ const s = StyleSheet.create({
     borderColor: 'rgba(168,85,247,0.2)',
   },
   muscleCountText: { fontSize: 10, fontWeight: '600', color: 'rgba(168,85,247,0.8)' },
+  muscleSvgRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  muscleSvgCol: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  muscleDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  svgLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: 'rgba(255,255,255,0.2)',
+  },
   primaryLabel: {
     fontSize: 9,
     fontWeight: '700',
@@ -663,7 +795,7 @@ const s = StyleSheet.create({
   mistakeX: { color: '#ef4444', fontSize: 10, marginTop: 3, flexShrink: 0 },
   mistakeText: { flex: 1, fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 20 },
 
-  // Demo / YouTube buttons
+  // Watch Demo button
   demoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -675,28 +807,10 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(168,85,247,0.25)',
   },
-  demoBtnActive: {
-    backgroundColor: 'rgba(168,85,247,0.18)',
-    borderColor: 'rgba(168,85,247,0.45)',
-  },
   demoPlay: { color: 'rgba(192,132,252,0.75)', fontSize: 12 },
   demoBtnText: { fontSize: 14, fontWeight: '600', color: 'rgba(192,132,252,0.75)' },
-  demoBtnTextActive: { color: '#c084fc' },
 
-  youtubeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: 'rgba(239,68,68,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.2)',
-  },
-  youtubeIcon: { fontSize: 13, color: 'rgba(255,255,255,0.45)' },
-  youtubeBtnText: { fontSize: 14, fontWeight: '600', color: 'rgba(239,68,68,0.8)' },
-
+  // Watch on YouTube button
   ytLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -708,5 +822,6 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.09)',
   },
+  ytIcon: { fontSize: 16, color: '#ef4444' },
   ytLinkText: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.45)' },
 })
